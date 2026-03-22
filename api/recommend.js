@@ -10,6 +10,7 @@ export default async function handler(req, res) {
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   const SERPER_KEY = process.env.SERPER_API_KEY;
+  const BREVO_KEY = process.env.BREVO_API_KEY;
 
   if (!ANTHROPIC_KEY || !SERPER_KEY) {
     return res.status(500).json({ error: 'Missing API keys in environment variables' });
@@ -88,8 +89,6 @@ Remember: stay within NZ$${budget} budget, match the vibe closely, be specific w
 
     const claudeData = await claudeRes.json();
     const rawText = claudeData.content[0].text.trim();
-
-    // Strip any accidental markdown fences
     const clean = rawText.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
     products = parsed.products;
@@ -108,44 +107,29 @@ Remember: stay within NZ$${budget} budget, match the vibe closely, be specific w
     try {
       const query = `${product.searchQuery || product.name} buy NZ site:*.co.nz -site:nzherald.co.nz -site:stuff.co.nz -site:trademe.co.nz`;
 
-      // Organic search for direct retailer links
-      const organicRes = await fetch('https://google.serper.dev/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': SERPER_KEY
-        },
-        body: JSON.stringify({ q: query, gl: 'nz', hl: 'en', num: 5 })
-      });
-
-      // Shopping search for price + display name
-      const shoppingRes = await fetch('https://google.serper.dev/shopping', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': SERPER_KEY
-        },
-        body: JSON.stringify({ q: `${product.searchQuery || product.name} NZ`, gl: 'nz', hl: 'en', num: 5 })
-      });
-
-      // Image search
-      const imageRes = await fetch('https://google.serper.dev/images', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-API-KEY': SERPER_KEY
-        },
-        body: JSON.stringify({ q: `${product.name} product`, gl: 'nz', hl: 'en', num: 3 })
-      });
+      const [organicRes, shoppingRes, imageRes] = await Promise.all([
+        fetch('https://google.serper.dev/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
+          body: JSON.stringify({ q: query, gl: 'nz', hl: 'en', num: 5 })
+        }),
+        fetch('https://google.serper.dev/shopping', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
+          body: JSON.stringify({ q: `${product.searchQuery || product.name} NZ`, gl: 'nz', hl: 'en', num: 5 })
+        }),
+        fetch('https://google.serper.dev/images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
+          body: JSON.stringify({ q: `${product.name} product`, gl: 'nz', hl: 'en', num: 3 })
+        })
+      ]);
 
       const organicData = organicRes.ok ? await organicRes.json() : {};
       const shoppingData = shoppingRes.ok ? await shoppingRes.json() : {};
       const imageData = imageRes.ok ? await imageRes.json() : {};
 
-      // Extract buy link from organic results (direct retailer URL)
       const buyLink = organicData.organic?.[0]?.link || null;
-
-      // Extract store info from shopping results
       const shoppingItems = shoppingData.shopping || [];
       const stores = shoppingItems.slice(0, 3).map(s => ({
         name: s.source || s.store || 'Shop',
@@ -154,7 +138,6 @@ Remember: stay within NZ$${budget} budget, match the vibe closely, be specific w
         )?.link || s.link || '#'
       })).filter(s => s.name && s.name !== 'Shop');
 
-      // Price from first shopping result
       const rawPrice = shoppingItems[0]?.price || null;
       let price = null;
       if (rawPrice) {
@@ -162,33 +145,97 @@ Remember: stay within NZ$${budget} budget, match the vibe closely, be specific w
         price = match ? parseFloat(match).toFixed(0) : null;
       }
 
-      // Image from image search
       const imageUrl = imageData.images?.[0]?.imageUrl || null;
 
-      return {
-        name: product.name,
-        type: product.type,
-        reason: product.reason,
-        price,
-        buyLink,
-        imageUrl,
-        stores
-      };
+      return { name: product.name, type: product.type, reason: product.reason, price, buyLink, imageUrl, stores };
 
     } catch (err) {
       console.error(`Serper error for ${product.name}:`, err);
-      // Return product without enrichment rather than failing entirely
-      return {
-        name: product.name,
-        type: product.type,
-        reason: product.reason,
-        price: null,
-        buyLink: null,
-        imageUrl: null,
-        stores: []
-      };
+      return { name: product.name, type: product.type, reason: product.reason, price: null, buyLink: null, imageUrl: null, stores: [] };
     }
   }));
+
+  // ── STEP 3: Brevo → send results email to user ─────────────────────────────
+
+  if (BREVO_KEY && email) {
+    try {
+      // Build nice HTML for each product
+      const productRows = enriched.map((p, i) => `
+        <div style="margin-bottom:28px;padding:20px;background:#fffdf9;border-radius:12px;border:1px solid #e8ddd0;">
+          <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#7a9e7e;margin-bottom:4px;">${p.type || 'Gift Idea'}</div>
+          <div style="font-size:20px;font-weight:700;color:#3d2b1a;margin-bottom:8px;">${i+1}. ${p.name}</div>
+          <div style="font-size:14px;color:#7a6855;line-height:1.6;margin-bottom:12px;">${p.reason}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div style="font-size:18px;font-weight:700;color:#3d2b1a;">${p.price ? `NZ$${p.price} <span style="font-size:12px;color:#a89480;font-weight:400;">approx.</span>` : 'Price varies'}</div>
+            ${p.buyLink ? `<a href="${p.buyLink}" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Buy now →</a>` : ''}
+          </div>
+          ${p.stores && p.stores.length > 0 ? `<div style="margin-top:10px;font-size:12px;color:#9a8878;">Also available at: ${p.stores.map(s => s.name).join(', ')}</div>` : ''}
+        </div>
+      `).join('');
+
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>
+<body style="margin:0;padding:0;background:#faf6f0;font-family:'DM Sans',Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:36px;">
+      <div style="font-size:28px;font-weight:900;color:#3d2b1a;margin-bottom:4px;">🧞 ShopGenieAI</div>
+      <div style="font-size:13px;color:#9a8878;font-style:italic;">Your wish is my gift</div>
+    </div>
+
+    <!-- Intro -->
+    <div style="background:white;border-radius:18px;padding:32px;box-shadow:0 4px 24px rgba(61,43,26,0.08);border:1px solid #e8ddd0;margin-bottom:24px;">
+      <div style="font-size:22px;font-weight:700;color:#3d2b1a;margin-bottom:10px;">Here are your 3 gift picks! 🎁</div>
+      <div style="font-size:14px;color:#7a6855;line-height:1.6;">
+        Based on your quiz answers — shopping for <strong>${whoFor}</strong> for <strong>${occasion}</strong> 
+        with a budget of <strong>NZ$${budget}${budget >= 500 ? '+' : ''}</strong> — here's what your Genie found:
+      </div>
+    </div>
+
+    <!-- Products -->
+    <div style="background:white;border-radius:18px;padding:32px;box-shadow:0 4px 24px rgba(61,43,26,0.08);border:1px solid #e8ddd0;margin-bottom:24px;">
+      ${productRows}
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;margin-bottom:32px;">
+      <a href="https://shop-genie-ai-azure.vercel.app" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;box-shadow:0 6px 24px rgba(200,146,42,0.35);">
+        Find More Gifts 🧞
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;font-size:12px;color:#b5a190;border-top:1px solid #e8ddd0;padding-top:20px;">
+      Made in Aotearoa 🇳🇿 · ShopGenieAI · <a href="#" style="color:#b5a190;">Unsubscribe</a>
+    </div>
+
+  </div>
+</body>
+</html>`;
+
+      await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': BREVO_KEY
+        },
+        body: JSON.stringify({
+          sender: { name: 'ShopGenieAI', email: 'saym577@gmail.com' },
+          to: [{ email: email }],
+          subject: '🧞 Your 3 personalised gift picks from ShopGenieAI',
+          htmlContent
+        })
+      });
+
+      console.log(`Email sent to ${email}`);
+    } catch (emailErr) {
+      // Don't fail the whole request if email fails — just log it
+      console.error('Brevo email error:', emailErr);
+    }
+  }
 
   return res.status(200).json({ products: enriched });
 }
