@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ShopGenieAI — Gift Recommendations for New Zealanders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --cream: #faf6f0;
+    --warm-white: #fffdf9;
+    --ink: #1a1208;
+    --brown: #3d2b1a;
+    --gold: #c8922a;
+    --gold-light: #e8b84b;
+    --sage: #7a9e7e;
+    --terracotta: #c4623a;
+    --card-bg: #ffffff;
+    --border: #e8ddd0;
+    --shadow: 0 4px 24px rgba(61,43,26,0.10);
+    --shadow-hover: 0 12px 40px rgba(61,43,26,0.18);
+    --radius: 18px;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ---- DECORATIVE BG ---- */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(200,146,42,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 100%, rgba(122,158,126,0.10) 0%, transparent 55%),
+      radial-gradient(ellipse 40% 40% at 50% 50%, rgba(196,98,58,0.04) 0%, transparent 70%);
+  }
+
+  /* ---- HEADER ---- */
+  header {
+    position: relative; z-index: 10;
+    padding: 14px 40px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(250,246,240,0.92);
+    backdrop-filter: blur(12px);
+  }
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .logo-img {
+    width: 54px; height: 54px;
+    border-radius: 12px;
+    object-fit: cover;
+    box-shadow: 0 2px 12px rgba(61,43,26,0.15);
+  }
+  .logo-text {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--brown);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .logo-text span { color: var(--gold); }
+  .logo-tagline {
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: #9a8878;
+    font-style: italic;
+    font-family: var(--font-display);
+    display: block;
+  }
+  .header-tag {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--sage);
+    background: rgba(122,158,126,0.12);
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* ---- MAIN CONTAINER ---- */
+  main {
+    position: relative; z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  /* ---- HERO ---- */
+  #hero {
+    text-align: center;
+    animation: fadeUp 0.7s ease both;
+  }
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 6vw, 3.8rem);
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--brown);
+    margin-bottom: 18px;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--terracotta);
+  }
+  .hero-subtitle {
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: #6b5a47;
+    line-height: 1.6;
+    max-width: 480px;
+    margin: 0 auto 40px;
+  }
+  .btn-start {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, var(--gold), var(--terracotta));
+    color: white;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 16px 36px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(200,146,42,0.35);
+    transition: transform 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.01em;
+  }
+  .btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 32px rgba(200,146,42,0.45);
+  }
+  .hero-trust {
+    margin-top: 28px;
+    font-size: 0.82rem;
+    color: #9a8878;
+    font-weight: 400;
+  }
+  .hero-trust span { color: var(--sage); font-weight: 600; }
+
+  /* ---- QUIZ CARD ---- */
+  #quiz { display: none; animation: fadeUp 0.5s ease both; }
+  .quiz-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 44px 44px 40px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  @media (max-width: 600px) {
+    .quiz-card { padding: 28px 20px 24px; }
+  }
+
+  /* Progress */
+  .progress-wrap {
+    margin-bottom: 36px;
+  }
+  .progress-labels {
+    display: flex; justify-content: space-between;
+    font-size: 0.78rem; font-weight: 500;
+    color: #a89480;
+    margin-bottom: 8px;
+  }
+  .progress-bar-bg {
+    height: 5px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--terracotta));
+    border-radius: 10px;
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  /* Steps */
+  .step { display: none; }
+  .step.active { display: block; animation: fadeUp 0.4s ease both; }
+
+  .step-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+  }
+  .step-question {
+    font-family: var(--font-display);
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--brown);
+    line-height: 1.25;
+    margin-bottom: 28px;
+  }
+
+  /* Text/Email inputs */
+  .quiz-input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--ink);
+    background: var(--warm-white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .quiz-input:focus { border-color: var(--gold); }
+  .quiz-input::placeholder { color: #c4b09a; }
+
+  /* Option pills */
+  .options-grid {
+    display: flex; flex-wrap: wrap; gap: 10px;
+  }
+  .option-pill {
+    padding: 11px 20px;
+    border-radius: 50px;
+    border: 2px solid var(--border);
+    background: var(--warm-white);
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: #6b5a47;
+    cursor: pointer;
+    transition: all 0.18s;
+    user-select: none;
+  }
+  .option-pill:hover {
+    border-color: var(--gold-light);
+    background: rgba(200,146,42,0.06);
+    color: var(--brown);
+  }
+  .option-pill.selected {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, rgba(200,146,42,0.12), rgba(196,98,58,0.08));
+    color: var(--brown);
+    font-weight: 600;
+  }
+
+  /* Budget slider */
+  .budget-display {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--brown);
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .budget-display span { color: var(--gold); }
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 10px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--border) 0%);
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--terracotta));
+    box-shadow: 0 2px 8px rgba(200,146,42,0.4);
+    cursor: pointer;
+  }
+  .budget-labels {
+    display: flex; justify-content: space-between;
+    font-size: 0.78rem; color: #a89480;
+    margin-top: 10px;
+  }
+
+  /* Nav buttons */
+  .step-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 36px;
+  }
+  .btn-back {
+    background: none;
+    border: none;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #a89480;
+    cursor: pointer;
+    padding: 10px 0;
+    display: flex; align-items: center; gap: 6px;
+    transition: color 0.2s;
+  }
+  .btn-back:hover { color: var(--brown); }
+  .btn-next {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--brown);
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 13px 28px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.01em;
+  }
+  .btn-next:hover { background: var(--gold); transform: translateY(-1px); }
+  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-submit {
+    background: linear-gradient(135deg, var(--gold), var(--terracotta));
+    box-shadow: 0 4px 18px rgba(200,146,42,0.35);
+  }
+  .btn-submit:hover { background: linear-gradient(135deg, var(--gold-light), var(--terracotta)); }
+
+  /* ---- LOADING ---- */
+  #loading { display: none; text-align: center; padding: 80px 20px; animation: fadeUp 0.5s ease both; }
+  .loader-genie {
+    font-size: 3.5rem;
+    display: block;
+    margin-bottom: 20px;
+    animation: float 2s ease-in-out infinite;
+  }
+  .loader-title {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--brown);
+    margin-bottom: 10px;
+  }
+  .loader-sub { font-size: 0.95rem; color: #9a8878; }
+  .loader-dots { display: inline-flex; gap: 6px; margin-top: 24px; }
+  .loader-dots span {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+  .loader-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loader-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  /* ---- RESULTS ---- */
+  #results { display: none; animation: fadeUp 0.6s ease both; }
+  .results-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .results-eyebrow {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 10px;
+  }
+  .results-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 900;
+    color: var(--brown);
+    line-height: 1.15;
+  }
+  .results-title em { font-style: italic; color: var(--gold); }
+
+  /* Product cards */
+  .products-grid {
+    display: flex; flex-direction: column; gap: 24px;
+    margin-bottom: 40px;
+  }
+  .product-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    transition: box-shadow 0.25s, transform 0.25s;
+    animation: fadeUp 0.5s ease both;
+  }
+  .product-card:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-3px);
+  }
+  .product-card:nth-child(2) { animation-delay: 0.1s; }
+  .product-card:nth-child(3) { animation-delay: 0.2s; }
+  @media (max-width: 580px) {
+    .product-card { grid-template-columns: 1fr; }
+  }
+
+  .product-image-wrap {
+    position: relative;
+    overflow: hidden;
+    background: var(--cream);
+    min-height: 180px;
+  }
+  .product-image-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s;
+  }
+  .product-card:hover .product-image-wrap img { transform: scale(1.04); }
+  .product-rank {
+    position: absolute; top: 12px; left: 12px;
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--gold), var(--terracotta));
+    color: white;
+    font-weight: 700;
+    font-size: 0.82rem;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  .product-info {
+    padding: 24px 24px 20px;
+    display: flex; flex-direction: column;
+  }
+  .product-type-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 6px;
+  }
+  .product-name {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--brown);
+    line-height: 1.25;
+    margin-bottom: 8px;
+  }
+  .product-reason {
+    font-size: 0.88rem;
+    color: #7a6855;
+    line-height: 1.55;
+    flex: 1;
+    margin-bottom: 16px;
+  }
+  .product-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .product-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--brown);
+    font-family: var(--font-display);
+  }
+  .product-price small {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #a89480;
+    display: block;
+    line-height: 1;
+  }
+  .btn-buy {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, var(--gold), var(--terracotta));
+    color: white;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 10px 18px;
+    border-radius: 50px;
+    text-decoration: none;
+    transition: all 0.2s;
+    box-shadow: 0 3px 12px rgba(200,146,42,0.3);
+    white-space: nowrap;
+  }
+  .btn-buy:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(200,146,42,0.4); }
+
+  /* Stores list */
+  .stores-list {
+    margin-top: 8px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .store-chip {
+    font-size: 0.75rem;
+    background: rgba(122,158,126,0.12);
+    color: var(--sage);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+  .store-chip:hover { background: rgba(122,158,126,0.25); }
+
+  /* Restart */
+  .restart-section {
+    text-align: center;
+    padding-top: 8px;
+  }
+  .btn-restart {
+    background: none;
+    border: 2px solid var(--border);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #9a8878;
+    padding: 12px 28px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-restart:hover { border-color: var(--brown); color: var(--brown); }
+
+  /* Error */
+  #error { display: none; text-align: center; padding: 60px 20px; animation: fadeUp 0.5s ease both; }
+  .error-emoji { font-size: 3rem; display: block; margin-bottom: 16px; }
+  .error-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--brown);
+    margin-bottom: 10px;
+  }
+  .error-msg { font-size: 0.9rem; color: #9a8878; margin-bottom: 28px; }
+
+  /* ---- FOOTER ---- */
+  footer {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 24px;
+    font-size: 0.78rem;
+    color: #b5a190;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes dotPulse {
+    0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+    40% { transform: scale(1.2); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img class="logo-img" src="logo.png" alt="ShopGenieAI logo" />
+    <div class="logo-text">
+      Shop<span>Genie</span>AI
+      <span class="logo-tagline">Your wish is my gift</span>
+    </div>
+  </div>
+  <div class="header-tag">🇳🇿 NZ Gifts</div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section id="hero">
+    <img src="logo.png" alt="ShopGenieAI" style="width:180px;height:180px;border-radius:32px;object-fit:cover;box-shadow:0 8px 40px rgba(61,43,26,0.18);margin-bottom:24px;display:block;margin-left:auto;margin-right:auto;" />
+    <div class="hero-eyebrow">✨ AI-Powered Gift Finder</div>
+    <h1 class="hero-title">Find the <em>perfect</em> gift<br>for any Kiwi</h1>
+    <p class="hero-subtitle">Answer 6 quick questions and our Genie finds 3 hand-picked gift ideas available right here in New Zealand.</p>
+    <button class="btn-start" onclick="showQuiz()">
+      Start the Quiz <span>→</span>
+    </button>
+    <p class="hero-trust">Takes <span>under 2 minutes</span> · Free · No account needed</p>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="quiz">
+    <div class="quiz-card">
+      <div class="progress-wrap">
+        <div class="progress-labels">
+          <span id="progressLabel">Question 1 of 6</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Step 1: Email -->
+      <div class="step active" id="step1">
+        <div class="step-label">Step 1 — Contact</div>
+        <div class="step-question">What's your email address?</div>
+        <input type="email" class="quiz-input" id="q1" placeholder="you@example.co.nz" oninput="updateNext()" />
+        <div class="step-nav">
+          <span></span>
+          <button class="btn-next" id="next1" onclick="goTo(2)" disabled>Next →</button>
+        </div>
+      </div>
+
+      <!-- Step 2: Shopping for -->
+      <div class="step" id="step2">
+        <div class="step-label">Step 2 — The Gift</div>
+        <div class="step-question">What are you shopping for?</div>
+        <div class="options-grid" id="opts2">
+          <div class="option-pill" onclick="selectPill(this,'q2')">A Gift</div>
+          <div class="option-pill" onclick="selectPill(this,'q2')">Something for Me</div>
+          <div class="option-pill" onclick="selectPill(this,'q2')">Home & Living</div>
+          <div class="option-pill" onclick="selectPill(this,'q2')">Experiences</div>
+          <div class="option-pill" onclick="selectPill(this,'q2')">Fashion & Accessories</div>
+          <div class="option-pill" onclick="selectPill(this,'q2')">Tech & Gadgets</div>
+          <div class="option-pill" onclick="selectPill(this,'q2')">Food & Drink</div>
+          <div class="option-pill" onclick="selectPill(this,'q2')">Sports & Outdoors</div>
+        </div>
+        <div class="step-nav">
+          <button class="btn-back" onclick="goTo(1)">← Back</button>
+          <button class="btn-next" id="next2" onclick="goTo(3)" disabled>Next →</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Who it's for -->
+      <div class="step" id="step3">
+        <div class="step-label">Step 3 — The Person</div>
+        <div class="step-question">Who is this for?</div>
+        <div class="options-grid" id="opts3">
+          <div class="option-pill" onclick="selectPill(this,'q3')">Partner / Spouse</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Mum</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Dad</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Friend</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Child (under 12)</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Teen (13–17)</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Colleague / Boss</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Grandparent</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Sibling</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Myself</div>
+        </div>
+        <div class="step-nav">
+          <button class="btn-back" onclick="goTo(2)">← Back</button>
+          <button class="btn-next" id="next3" onclick="goTo(4)" disabled>Next →</button>
+        </div>
+      </div>
+
+      <!-- Step 4: Vibe (multi-select) -->
+      <div class="step" id="step4">
+        <div class="step-label">Step 4 — The Vibe</div>
+        <div class="step-question">What's the vibe? Pick up to 3.</div>
+        <div class="options-grid" id="opts4">
+          <div class="option-pill" onclick="selectMulti(this,'q4',3)">Trendy</div>
+          <div class="option-pill" onclick="selectMulti(this,'q4',3)">Practical</div>
+          <div class="option-pill" onclick="selectMulti(this,'q4',3)">Fun</div>
+          <div class="option-pill" onclick="selectMulti(this,'q4',3)">Quirky</div>
+          <div class="option-pill" onclick="selectMulti(this,'q4',3)">Eco-friendly</div>
+          <div class="option-pill" onclick="selectMulti(this,'q4',3)">Luxe</div>
+          <div class="option-pill" onclick="selectMulti(this,'q4',3)">Sporty</div>
+          <div class="option-pill" onclick="selectMulti(this,'q4',3)">Techy</div>
+          <div class="option-pill" onclick="selectMulti(this,'q4',3)">Sentimental</div>
+          <div class="option-pill" onclick="selectMulti(this,'q4',3)">Surprise me</div>
+        </div>
+        <div class="step-nav">
+          <button class="btn-back" onclick="goTo(3)">← Back</button>
+          <button class="btn-next" id="next4" onclick="goTo(5)" disabled>Next →</button>
+        </div>
+      </div>
+
+      <!-- Step 5: Budget + Occasion -->
+      <div class="step" id="step5">
+        <div class="step-label">Step 5 — Budget & Occasion</div>
+        <div class="step-question">What's your budget?</div>
+        <div class="budget-display"><span id="budgetVal">NZ$100</span></div>
+        <input type="range" id="q5budget" min="20" max="500" step="10" value="100"
+          oninput="updateBudget(this.value)" />
+        <div class="budget-labels"><span>NZ$20</span><span>NZ$500+</span></div>
+
+        <div style="margin-top:32px">
+          <div class="step-question" style="font-size:1.2rem;margin-bottom:16px">What's the occasion?</div>
+          <div class="options-grid" id="opts5">
+            <div class="option-pill" onclick="selectPill(this,'q5occ')">Birthday</div>
+            <div class="option-pill" onclick="selectPill(this,'q5occ')">Christmas</div>
+            <div class="option-pill" onclick="selectPill(this,'q5occ')">Anniversary</div>
+            <div class="option-pill" onclick="selectPill(this,'q5occ')">Valentine's Day</div>
+            <div class="option-pill" onclick="selectPill(this,'q5occ')">Mother's Day</div>
+            <div class="option-pill" onclick="selectPill(this,'q5occ')">Father's Day</div>
+            <div class="option-pill" onclick="selectPill(this,'q5occ')">Wedding / Engagement</div>
+            <div class="option-pill" onclick="selectPill(this,'q5occ')">New Baby</div>
+            <div class="option-pill" onclick="selectPill(this,'q5occ')">Graduation</div>
+            <div class="option-pill" onclick="selectPill(this,'q5occ')">Just Because</div>
+          </div>
+        </div>
+        <div class="step-nav">
+          <button class="btn-back" onclick="goTo(4)">← Back</button>
+          <button class="btn-next" id="next5" onclick="goTo(6)" disabled>Next →</button>
+        </div>
+      </div>
+
+      <!-- Step 6: Interests / Q6 -->
+      <div class="step" id="step6">
+        <div class="step-label">Step 6 — Personal Touch</div>
+        <div class="step-question">Any interests, hobbies, or favourite brands?</div>
+        <textarea class="quiz-input" id="q6" rows="4"
+          placeholder="e.g. loves hiking and cooking, big fan of Kathmandu and Kmart, into sustainable brands..."
+          style="resize:vertical; line-height:1.5"
+          oninput="updateNext6()"></textarea>
+        <div style="font-size:0.8rem;color:#b5a190;margin-top:8px">Optional but helps a lot — feel free to skip</div>
+        <div class="step-nav">
+          <button class="btn-back" onclick="goTo(5)">← Back</button>
+          <button class="btn-next btn-submit" id="next6" onclick="submitQuiz()">
+            Find My Gifts 🧞
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <section id="loading">
+    <img src="logo.png" alt="ShopGenieAI" style="width:110px;height:110px;border-radius:22px;object-fit:cover;margin-bottom:20px;animation:float 2s ease-in-out infinite;box-shadow:0 6px 24px rgba(61,43,26,0.15);" />
+    <div class="loader-title">Your Genie is thinking…</div>
+    <div class="loader-sub">Searching NZ stores for the perfect picks</div>
+    <div class="loader-dots">
+      <span></span><span></span><span></span>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="results">
+    <div class="results-header">
+      <div class="results-eyebrow">✨ Your personalised picks</div>
+      <h2 class="results-title">Here are your <em>3 gifts</em></h2>
+    </div>
+    <div class="products-grid" id="productsGrid"></div>
+    <div class="restart-section">
+      <button class="btn-restart" onclick="restart()">↩ Start over</button>
+    </div>
+  </section>
+
+  <!-- ERROR -->
+  <section id="error">
+    <span class="error-emoji">😬</span>
+    <div class="error-title">Oops, the Genie hit a snag</div>
+    <div class="error-msg" id="errorMsg">Something went wrong. Give it another crack!</div>
+    <button class="btn-restart" onclick="restart()">Try Again</button>
+  </section>
+
+</main>
+
+<footer>
+  Made in Aotearoa 🇳🇿 · Powered by AI · ShopGenieAI © 2025
+</footer>
+
+<script>
+// ---- State ----
+const answers = { q1:'', q2:'', q3:'', q4:[], q5budget:100, q5occ:'', q6:'' };
+let currentStep = 1;
+const TOTAL_STEPS = 6;
+
+// ---- Navigation ----
+function showQuiz() {
+  document.getElementById('hero').style.display = 'none';
+  document.getElementById('quiz').style.display = 'block';
+  updateProgress(1);
+}
+
+function goTo(step) {
+  document.getElementById('step'+currentStep).classList.remove('active');
+  document.getElementById('step'+step).classList.add('active');
+  currentStep = step;
+  updateProgress(step);
+}
+
+function updateProgress(step) {
+  const pct = Math.round(((step-1)/TOTAL_STEPS)*100);
+  document.getElementById('progressBar').style.width = pct+'%';
+  document.getElementById('progressLabel').textContent = `Question ${step} of ${TOTAL_STEPS}`;
+  document.getElementById('progressPct').textContent = pct+'%';
+}
+
+// ---- Input handlers ----
+function updateNext() {
+  const val = document.getElementById('q1').value.trim();
+  answers.q1 = val;
+  document.getElementById('next1').disabled = !/\S+@\S+\.\S+/.test(val);
+}
+
+function selectPill(el, key) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  answers[key] = el.textContent;
+  const stepNum = key === 'q2' ? 2 : key === 'q3' ? 3 : key === 'q5occ' ? 5 : 0;
+  if (stepNum) checkPillNext(stepNum);
+}
+
+function selectMulti(el, key, max) {
+  if (el.classList.contains('selected')) {
+    el.classList.remove('selected');
+  } else {
+    const selected = el.parentElement.querySelectorAll('.selected');
+    if (selected.length >= max) return;
+    el.classList.add('selected');
+  }
+  answers[key] = Array.from(el.parentElement.querySelectorAll('.selected')).map(p => p.textContent);
+  document.getElementById('next4').disabled = answers.q4.length === 0;
+}
+
+function checkPillNext(step) {
+  const keyMap = { 2:'q2', 3:'q3', 5:'q5occ' };
+  const key = keyMap[step];
+  if (answers[key]) document.getElementById('next'+step).disabled = false;
+  // Step 5 needs both budget and occasion
+  if (step === 5) {
+    document.getElementById('next5').disabled = !answers.q5occ;
+  }
+}
+
+function updateBudget(val) {
+  answers.q5budget = parseInt(val);
+  const display = val >= 500 ? 'NZ$500+' : `NZ$${val}`;
+  document.getElementById('budgetVal').textContent = display;
+  // Update range gradient
+  const pct = ((val-20)/(500-20))*100;
+  document.getElementById('q5budget').style.background =
+    `linear-gradient(90deg, #c8922a ${pct}%, #e8ddd0 ${pct}%)`;
+}
+
+function updateNext6() {
+  // Q6 is optional — always enabled
+}
+
+// Q6 next always enabled
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('next6').disabled = false;
+  updateBudget(100);
+});
+
+// ---- Submit ----
+async function submitQuiz() {
+  answers.q6 = document.getElementById('q6').value.trim();
+
+  // Show loading
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+
+  try {
+    const response = await fetch('/api/recommend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: answers.q1,
+        shoppingFor: answers.q2,
+        whoFor: answers.q3,
+        vibe: answers.q4.join(', '),
+        budget: answers.q5budget,
+        occasion: answers.q5occ,
+        interests: answers.q6
+      })
+    });
+
+    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    const data = await response.json();
+
+    document.getElementById('loading').style.display = 'none';
+    renderResults(data.products);
+
+  } catch (err) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('errorMsg').textContent = err.message || 'Something went wrong. Try again!';
+    document.getElementById('error').style.display = 'block';
+  }
+}
+
+// ---- Render results ----
+function renderResults(products) {
+  const grid = document.getElementById('productsGrid');
+  grid.innerHTML = '';
+
+  products.forEach((p, i) => {
+    const storeLinks = (p.stores || []).map(s =>
+      `<a class="store-chip" href="${s.link || '#'}" target="_blank" rel="noopener">${s.name}</a>`
+    ).join('');
+
+    const priceDisplay = p.price
+      ? `<div class="product-price">NZ$${p.price}<small>approx.</small></div>`
+      : `<div class="product-price" style="font-size:1rem;color:#a89480">Price varies</div>`;
+
+    const buyBtn = p.buyLink
+      ? `<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener">Buy now →</a>`
+      : '';
+
+    grid.innerHTML += `
+      <div class="product-card">
+        <div class="product-image-wrap">
+          <img src="${p.imageUrl || 'https://placehold.co/400x300/faf6f0/c8922a?text=Gift'}"
+               alt="${p.name}"
+               onerror="this.src='https://placehold.co/400x300/faf6f0/c8922a?text=Gift'" />
+          <div class="product-rank">${i+1}</div>
+        </div>
+        <div class="product-info">
+          <div class="product-type-tag">${p.type || 'Gift Idea'}</div>
+          <div class="product-name">${p.name}</div>
+          <div class="product-reason">${p.reason}</div>
+          <div class="product-footer">
+            ${priceDisplay}
+            ${buyBtn}
+          </div>
+          ${storeLinks ? `<div class="stores-list">${storeLinks}</div>` : ''}
+        </div>
+      </div>`;
+  });
+
+  document.getElementById('results').style.display = 'block';
+}
+
+// ---- Restart ----
+function restart() {
+  ['error','results','loading'].forEach(id => document.getElementById(id).style.display = 'none');
+  // Reset answers
+  Object.keys(answers).forEach(k => {
+    if (Array.isArray(answers[k])) answers[k] = [];
+    else if (k === 'q5budget') answers[k] = 100;
+    else answers[k] = '';
+  });
+  // Reset UI
+  document.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
+  document.getElementById('q1').value = '';
+  document.getElementById('q6').value = '';
+  document.getElementById('next1').disabled = true;
+  document.getElementById('next2').disabled = true;
+  document.getElementById('next3').disabled = true;
+  document.getElementById('next4').disabled = true;
+  document.getElementById('next5').disabled = true;
+  updateBudget(100);
+  document.getElementById('q5budget').value = 100;
+  currentStep = 1;
+
+  document.getElementById('quiz').style.display = 'none';
+  document.getElementById('hero').style.display = 'block';
+  document.getElementById('hero').style.animation = 'fadeUp 0.5s ease both';
+}
+</script>
+</body>
+</html>
