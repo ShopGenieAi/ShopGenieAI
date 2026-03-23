@@ -248,7 +248,7 @@
         </div>
         <div class="step-nav">
           <span></span>
-          <button class="btn-next" id="next1" onclick="nextFromStep1()" disabled>Next →</button>
+          <button class="btn-next" id="next1" onclick="nextFromStep1()" disabled style="display:none;">Next →</button>
         </div>
       </div>
 
@@ -270,7 +270,7 @@
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(1)">← Back</button>
-          <button class="btn-next" id="next2" onclick="goTo(3)" disabled>Next →</button>
+          <button class="btn-next" id="next2" onclick="goTo(3)" disabled style="display:none;">Next →</button>
         </div>
       </div>
 
@@ -320,7 +320,7 @@
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(3)">← Back</button>
-          <button class="btn-next" id="next4" onclick="goTo(5)" disabled>Next →</button>
+          <button class="btn-next" id="next4" onclick="goTo(5)" disabled style="display:none;">Next →</button>
         </div>
       </div>
 
@@ -415,9 +415,13 @@ function selectPill(el, key) {
   el.parentElement.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
   el.classList.add('selected');
   answers[key] = el.textContent.trim();
-  if (key === 'q1gift') document.getElementById('next1').disabled = false;
-  if (key === 'q2') document.getElementById('next2').disabled = false;
-  if (key === 'q4occ') document.getElementById('next4').disabled = false;
+
+  // Auto advance after short delay so user sees selection
+  setTimeout(() => {
+    if (key === 'q1gift') nextFromStep1();
+    if (key === 'q2') goTo(3);
+    if (key === 'q4occ') goTo(5);
+  }, 300);
 }
 
 function nextFromStep1() {
