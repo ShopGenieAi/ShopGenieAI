@@ -211,6 +211,26 @@
     <p class="hero-subtitle">Answer a few quick questions and our Genie finds 3 hand-picked gift ideas available right here in New Zealand.</p>
     <button class="btn-start" onclick="showQuiz()">Start the Quiz →</button>
     <p class="hero-trust">Takes <span>under 2 minutes</span> · Free · No account needed</p>
+
+    <div style="margin-top:32px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;">
+      <button onclick="comingSoon()" style="display:inline-flex;align-items:center;gap:10px;background:#1a1208;color:white;font-family:'DM Sans',sans-serif;padding:12px 20px;border-radius:12px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+        <span style="font-size:1.6rem;line-height:1;">🍎</span>
+        <div style="text-align:left;line-height:1.2;">
+          <div style="font-size:0.65rem;opacity:0.7;text-transform:uppercase;letter-spacing:0.05em;">Download on the</div>
+          <div style="font-size:1rem;font-weight:700;">App Store</div>
+        </div>
+      </button>
+      <button onclick="comingSoon()" style="display:inline-flex;align-items:center;gap:10px;background:#1a1208;color:white;font-family:'DM Sans',sans-serif;padding:12px 20px;border-radius:12px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+        <span style="font-size:1.6rem;line-height:1;">▶️</span>
+        <div style="text-align:left;line-height:1.2;">
+          <div style="font-size:0.65rem;opacity:0.7;text-transform:uppercase;letter-spacing:0.05em;">Get it on</div>
+          <div style="font-size:1rem;font-weight:700;">Google Play</div>
+        </div>
+      </button>
+    </div>
+    <div id="comingSoonMsg" style="display:none;margin-top:14px;font-size:0.85rem;color:#c8922a;font-weight:600;">
+      🧞 App coming soon — use the web version for now!
+    </div>
   </section>
 
   <!-- QUIZ -->
@@ -514,6 +534,12 @@ function restart() {
   document.getElementById('step1').classList.add('active');
   currentStep = 1;
   show('hero');
+}
+
+function comingSoon() {
+  const msg = document.getElementById('comingSoonMsg');
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 3000);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
