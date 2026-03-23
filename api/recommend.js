@@ -1,3 +1,30 @@
+// Simple in-memory rate limiter
+const rateLimitMap = new Map();
+const RATE_LIMIT = 10; // max requests
+const RATE_WINDOW = 60 * 60 * 1000; // per hour (ms)
+
+// Whitelisted IPs — never rate limited
+const WHITELISTED_IPS = ['116.251.136.71'];
+
+function isRateLimited(ip) {
+  // Skip rate limiting for whitelisted IPs
+  if (WHITELISTED_IPS.includes(ip)) return false;
+  
+  const now = Date.now();
+  const record = rateLimitMap.get(ip) || { count: 0, start: now };
+  
+  // Reset window if expired
+  if (now - record.start > RATE_WINDOW) {
+    record.count = 0;
+    record.start = now;
+  }
+  
+  record.count++;
+  rateLimitMap.set(ip, record);
+  
+  return record.count > RATE_LIMIT;
+}
+
 export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -5,6 +32,12 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Rate limiting — max 5 requests per IP per hour
+  const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+  if (isRateLimited(ip)) {
+    return res.status(429).json({ error: 'Too many requests — please try again in an hour!' });
+  }
 
   const { email, shoppingFor, whoFor, vibe, budget, occasion, interests } = req.body;
 
@@ -202,7 +235,7 @@ Remember: stay within NZ$${budget} budget, match the vibe closely, be specific w
 
     <!-- CTA -->
     <div style="text-align:center;margin-bottom:32px;">
-      <a href="https://shop-genie-ai-azure.vercel.app" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;box-shadow:0 6px 24px rgba(200,146,42,0.35);">
+      <a href="https://shopgenieai.com" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;box-shadow:0 6px 24px rgba(200,146,42,0.35);">
         Find More Gifts 🧞
       </a>
     </div>
