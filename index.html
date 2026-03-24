@@ -245,7 +245,7 @@
         </div>
         <div class="step-nav">
           <span></span>
-          <button class="btn-next" id="next1" onclick="nextFromStep1()" disabled class="btn-next hidden">Next →</button>
+          <button id="next1" onclick="nextFromStep1()" disabled class="btn-next hidden">Next →</button>
         </div>
       </div>
 
@@ -267,7 +267,7 @@
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(1)">← Back</button>
-          <button class="btn-next" id="next2" onclick="goTo(3)" disabled class="btn-next hidden">Next →</button>
+          <button id="next2" onclick="goTo(3)" disabled class="btn-next hidden">Next →</button>
         </div>
       </div>
 
@@ -289,7 +289,7 @@
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(2)">← Back</button>
-          <button class="btn-next" id="next3" onclick="goTo(4)" disabled class="btn-next hidden">Next →</button>
+          <button id="next3" onclick="goTo(4)" disabled class="btn-next hidden">Next →</button>
         </div>
       </div>
 
@@ -321,7 +321,7 @@
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(3)">← Back</button>
-          <button class="btn-next" id="next4" onclick="goTo(5)" disabled class="btn-next hidden">Next →</button>
+          <button id="next4" onclick="goTo(5)" disabled class="btn-next hidden">Next →</button>
         </div>
       </div>
 
@@ -557,7 +557,7 @@ function renderResults(products) {
 
 function restart() {
   ['error','results','loading','emailGate','quiz'].forEach(id => hide(id));
-  answers.q1gift=''; answers.q2=''; answers.q3=[]; answers.q4budget=100; answers.q4occ=''; answers.q5interests=''; answers.email='';
+  answers.q1gift=''; answers.q2=''; answers.q3=''; answers.q4budget=0; answers.q4occ=''; answers.q5interests=''; answers.email='';
   document.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
   document.getElementById('q5interests').value = '';
   document.getElementById('emailInput').value = '';
