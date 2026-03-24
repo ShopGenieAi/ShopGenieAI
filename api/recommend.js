@@ -29,27 +29,27 @@ const INAPPROPRIATE_MESSAGES = [
 const CATEGORY_RETAILERS = {
   fragrance: [
     { name: 'Chemist Warehouse NZ', searchUrl: 'https://www.chemistwarehouse.co.nz/search?q=' },
-    { name: 'My Perfume Shop', searchUrl: 'https://www.myperfumeshop.co.nz/search?q=' },
+    { name: 'My Perfume Shop', searchUrl: 'https://www.myperfumeshop.co.nz/catalogsearch/result/?q=' },
     { name: 'Perfume NZ', searchUrl: 'https://www.perfumenz.co.nz/search?q=' },
-    { name: 'Farmers', searchUrl: 'https://www.farmers.co.nz/search?q=' },
+    { name: 'Life Pharmacy', searchUrl: 'https://www.lifepharmacy.co.nz/search?q=' },
   ],
   tech: [
     { name: 'PB Tech', searchUrl: 'https://www.pbtech.co.nz/search?q=' },
-    { name: 'JB HiFi', searchUrl: 'https://www.jbhifi.co.nz/search?q=' },
+    { name: 'JB HiFi', searchUrl: 'https://www.jbhifi.co.nz/search/?q=' },
     { name: 'Harvey Norman', searchUrl: 'https://www.harveynorman.co.nz/search?q=' },
     { name: 'Noel Leeming', searchUrl: 'https://www.noelleeming.co.nz/search?q=' },
     { name: 'Mighty Ape', searchUrl: 'https://www.mightyape.co.nz/search?q=' },
   ],
   sports: [
     { name: 'Rebel Sport', searchUrl: 'https://www.rebelsport.co.nz/search?q=' },
-    { name: 'Stirling Sports', searchUrl: 'https://www.stirlingsports.co.nz/search?q=' },
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search?q=' },
+    { name: 'Stirling Sports', searchUrl: 'https://stirlingsports.co.nz/search?q=' },
+    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
     { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
-    { name: 'Sportsworld', searchUrl: 'https://www.sportsworld.co.nz/search?q=' },
+    { name: 'Torpedo7', searchUrl: 'https://www.torpedo7.co.nz/search?q=' },
   ],
   toys: [
     { name: 'Toyworld', searchUrl: 'https://www.toyworld.co.nz/search?q=' },
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search?q=' },
+    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
     { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
     { name: 'Mighty Ape', searchUrl: 'https://www.mightyape.co.nz/search?q=' },
     { name: 'Paper Plus', searchUrl: 'https://www.paperplus.co.nz/search?q=' },
@@ -62,45 +62,45 @@ const CATEGORY_RETAILERS = {
   ],
   grooming: [
     { name: 'Chemist Warehouse NZ', searchUrl: 'https://www.chemistwarehouse.co.nz/search?q=' },
-    { name: 'Shaver Shop', searchUrl: 'https://www.shavershop.co.nz/search?q=' },
     { name: 'Farmers', searchUrl: 'https://www.farmers.co.nz/search?q=' },
     { name: 'Life Pharmacy', searchUrl: 'https://www.lifepharmacy.co.nz/search?q=' },
+    { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
   ],
   fashion: [
     { name: 'Farmers', searchUrl: 'https://www.farmers.co.nz/search?q=' },
     { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
     { name: 'Glassons', searchUrl: 'https://www.glassons.com/search?q=' },
     { name: 'Hallensteins', searchUrl: 'https://www.hallensteins.com/search?q=' },
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search?q=' },
+    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
   ],
   home: [
     { name: 'Briscoes', searchUrl: 'https://www.briscoes.co.nz/search?q=' },
     { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search?q=' },
+    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
     { name: 'Farmers', searchUrl: 'https://www.farmers.co.nz/search?q=' },
     { name: 'Stevens', searchUrl: 'https://www.stevens.co.nz/search?q=' },
   ],
   food: [
     { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search?q=' },
     { name: 'Moore Wilsons', searchUrl: 'https://www.moorewilsons.co.nz/search?q=' },
     { name: 'Farro Fresh', searchUrl: 'https://www.farro.co.nz/search?q=' },
+    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
   ],
   gaming: [
     { name: 'Mighty Ape', searchUrl: 'https://www.mightyape.co.nz/search?q=' },
-    { name: 'JB HiFi', searchUrl: 'https://www.jbhifi.co.nz/search?q=' },
-    { name: 'EB Games', searchUrl: 'https://www.ebgames.co.nz/search?q=' },
+    { name: 'JB HiFi', searchUrl: 'https://www.jbhifi.co.nz/search/?q=' },
+    { name: 'EB Games', searchUrl: 'https://www.ebgames.co.nz/search/?q=' },
     { name: 'Harvey Norman', searchUrl: 'https://www.harveynorman.co.nz/search?q=' },
   ],
   outdoor: [
     { name: 'Kathmandu', searchUrl: 'https://www.kathmandu.co.nz/search?q=' },
     { name: 'Macpac', searchUrl: 'https://www.macpac.co.nz/search?q=' },
+    { name: 'Torpedo7', searchUrl: 'https://www.torpedo7.co.nz/search?q=' },
     { name: 'Hunting & Fishing NZ', searchUrl: 'https://www.huntingandfishing.co.nz/search?q=' },
     { name: 'Rebel Sport', searchUrl: 'https://www.rebelsport.co.nz/search?q=' },
-    { name: 'Torpedo7', searchUrl: 'https://www.torpedo7.co.nz/search?q=' },
   ],
   default: [
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search?q=' },
+    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
     { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
     { name: 'Farmers', searchUrl: 'https://www.farmers.co.nz/search?q=' },
     { name: 'Mighty Ape', searchUrl: 'https://www.mightyape.co.nz/search?q=' },
@@ -167,30 +167,32 @@ export default async function handler(req, res) {
 
   const systemPrompt = `You are ShopGenieAI, a gift recommendation engine for the New Zealand retail market.
 
-Recommend exactly 3 specific products available in NZ mainstream stores.
+Recommend exactly 3 products available in NZ mainstream stores in 2025/2026.
 
 STRICT RULES:
-- Exactly 3 products, single items only — NO bundles
-- Specific product names — no generic categories
+- Exactly 3 products, single items only — NO bundles or combo packs
+- Use GENERIC product names — NO brand names (e.g. "Portable Bluetooth Speaker" NOT "JBL Go 3", "Electric Shaver" NOT "Braun Series 7", "Basketball" NOT "Spalding NBA")
+- Products MUST be current 2025/2026 items — no discontinued or outdated products
 - Do NOT include retailer names in product Name field
 - Products MUST fit within the budget range
 - Vibe "Sporty": sport/fitness products only
-- Vibe "Luxe": premium but available in NZ mainstream stores
+- Vibe "Luxe": premium products available in NZ mainstream stores
 - Vibe "Quirky/Fun": fun unique products at mainstream NZ retailers
 - Wallets: ALWAYS recommend RFID-blocking wallets
-- AVOID products only sold at brand-owned stores
+- AVOID products only found at brand-owned stores
 - PREFER products sold at: Kmart, The Warehouse, Farmers, Harvey Norman, JB HiFi, Rebel Sport, Stirling Sports, Toyworld, Whitcoulls, Noel Leeming, PB Tech, Briscoes, Mighty Ape, Chemist Warehouse, Kathmandu, Macpac, Torpedo7
-- For fragrance: recommend products available at Chemist Warehouse, pharmacies or online perfume stores — NOT Farmers
+- For fragrance: Chemist Warehouse, pharmacies or online perfume stores — NOT Farmers
+- The searchQuery must be a SHORT GENERIC term (2-4 words max) with NO brand names
 - Return ONLY valid JSON, no preamble, no markdown
 
 OUTPUT FORMAT:
 {
   "products": [
     {
-      "name": "Specific Product Name",
+      "name": "Generic Product Name (no brands)",
       "type": "Product Category",
       "reason": "1-2 sentences why perfect for them",
-      "searchQuery": "short search term for this product"
+      "searchQuery": "short generic search term"
     }
   ]
 }`;
@@ -247,23 +249,22 @@ Recommend products found at mainstream NZ retailers. Avoid brand-only stores.`;
 
       // Get retailers for this category
       const retailers = getRetailersForCategory(product.type);
-      // Pick top 3 retailers and build search URLs
-      const stores = retailers.slice(0, 3).map(r => ({
+      // Pick top 4 retailers — first is buy button, next 3 are chips
+      const topRetailers = retailers.slice(0, 4).map(r => ({
         name: r.name,
         link: buildSearchUrl(r.searchUrl, product.searchQuery || product.name)
       }));
 
-      // Best buy link = first retailer's search page
-      const buyLink = stores[0]?.link || null;
+      const buyLink = topRetailers[0]?.link || null;
 
       return {
         name: product.name,
         type: product.type,
         reason: product.reason,
-        price: null, // No price — we're showing search pages not exact products
+        price: null,
         buyLink,
         imageUrl,
-        stores: stores.slice(1) // remaining stores as chips (first one is the buy button)
+        stores: topRetailers.slice(1) // 3 store chips
       };
 
     } catch (err) {
@@ -274,9 +275,9 @@ Recommend products found at mainstream NZ retailers. Avoid brand-only stores.`;
         type: product.type,
         reason: product.reason,
         price: null,
-        buyLink: buildSearchUrl(retailers[0]?.searchUrl || 'https://www.thewarehouse.co.nz/search?q=', product.name),
+        buyLink: buildSearchUrl(retailers[0]?.searchUrl || 'https://www.thewarehouse.co.nz/search?q=', product.searchQuery || product.name),
         imageUrl: null,
-        stores: retailers.slice(1, 3).map(r => ({ name: r.name, link: buildSearchUrl(r.searchUrl, product.name) }))
+        stores: retailers.slice(1, 4).map(r => ({ name: r.name, link: buildSearchUrl(r.searchUrl, product.searchQuery || product.name) }))
       };
     }
   }));
