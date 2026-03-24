@@ -59,7 +59,10 @@ export default async function handler(req, res) {
     'gun', 'guns', 'ammo', 'ammunition', 'firearm', 'weapon',
     'porn', 'pornography', 'sex toy', 'dildo', 'vibrator', 'xxx',
     'drugs', 'cocaine', 'meth', 'cannabis', 'marijuana',
-    'explosive', 'bomb', 'grenade'
+    'explosive', 'bomb', 'grenade',
+    'alcohol', 'wine', 'beer', 'whisky', 'whiskey', 'vodka', 'gin',
+    'rum', 'spirits', 'bourbon', 'champagne', 'prosecco', 'liquor',
+    'booze', 'craft beer', 'brewery', 'winery', 'cider'
   ];
   const allInputs = `${shoppingFor} ${whoFor} ${vibe} ${occasion} ${interests}`.toLowerCase();
   if (inappropriateTerms.some(term => allInputs.includes(term))) {
@@ -94,6 +97,7 @@ STRICT RULES:
 - Wallets: ALWAYS recommend RFID-blocking wallets
 - For hardware/tools: recommend products from Mitre 10, Bunnings, The Tool Shed
 - For fragrance: products at Chemist Warehouse or online perfume stores — NOT Farmers
+- NEVER recommend alcohol, wine, beer, spirits or any alcoholic products under any circumstances
 - searchQuery must be SHORT GENERIC 2-4 words, NO brand names
 - Return ONLY valid JSON, no preamble, no markdown
 
