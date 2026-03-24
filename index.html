@@ -405,6 +405,10 @@ function goTo(step) {
   document.getElementById('step'+step).classList.add('active');
   currentStep = step;
   updateProgress(step);
+  // Hide next3 whenever we navigate away from step 3 and back
+  if (step !== 3) return;
+  const next3 = document.getElementById('next3');
+  next3.style.display = answers.q3.length > 0 ? 'flex' : 'none';
 }
 
 function updateProgress(step) {
@@ -423,7 +427,7 @@ function selectPill(el, key) {
   setTimeout(() => {
     if (key === 'q1gift') nextFromStep1();
     if (key === 'q2') goTo(3);
-    if (key === 'q4occ') goTo(5);
+    if (key === 'q4occ') { answers.q4occ = el.textContent.trim(); checkBudgetOccasion(); if (answers.q4budget > 0) setTimeout(() => goTo(5), 300); }
   }, 300);
 }
 
@@ -555,7 +559,7 @@ function renderResults(products) {
 
 function restart() {
   ['error','results','loading','emailGate','quiz'].forEach(id => hide(id));
-  answers.q1gift=''; answers.q2=''; answers.q3=[]; answers.q4budget=100; answers.q4occ=''; answers.q5interests=''; answers.email='';
+  answers.q1gift=''; answers.q2=''; answers.q3=[]; answers.q4budget=0; answers.q4occ=''; answers.q5interests=''; answers.email='';
   document.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
   document.getElementById('q5interests').value = '';
   document.getElementById('emailInput').value = '';
