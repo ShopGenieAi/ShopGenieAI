@@ -424,7 +424,8 @@ function selectPill(el, key) {
   setTimeout(() => {
     if (key === 'q1gift') nextFromStep1();
     if (key === 'q2') goTo(3);
-    if (key === 'q4occ') goTo(5);
+    if (key === 'q3') goTo(4);
+    if (key === 'q4occ') { answers.q4occ = el.textContent.trim(); checkBudgetOccasion(); if (answers.q4budget > 0) goTo(5); }
   }, 300);
 }
 
