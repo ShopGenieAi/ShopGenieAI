@@ -108,6 +108,7 @@
   .btn-next { display: flex; align-items: center; gap: 8px; background: var(--brown); color: var(--cream); font-family: var(--font-body); font-size: 0.95rem; font-weight: 600; padding: 13px 28px; border-radius: 50px; border: none; cursor: pointer; transition: all 0.2s; }
   .btn-next:hover { background: var(--gold); transform: translateY(-1px); }
   .btn-next:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-next.hidden { display: none !important; }
   .btn-submit { background: linear-gradient(135deg, var(--gold), var(--terracotta)); box-shadow: 0 4px 18px rgba(200,146,42,0.35); }
   .btn-submit:hover { background: linear-gradient(135deg, var(--gold-light), var(--terracotta)); }
 
@@ -244,7 +245,7 @@
         </div>
         <div class="step-nav">
           <span></span>
-          <button class="btn-next" id="next1" onclick="nextFromStep1()" disabled style="display:none;">Next →</button>
+          <button class="btn-next" id="next1" onclick="nextFromStep1()" disabled class="btn-next hidden">Next →</button>
         </div>
       </div>
 
@@ -266,7 +267,7 @@
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(1)">← Back</button>
-          <button class="btn-next" id="next2" onclick="goTo(3)" disabled style="display:none;">Next →</button>
+          <button class="btn-next" id="next2" onclick="goTo(3)" disabled class="btn-next hidden">Next →</button>
         </div>
       </div>
 
@@ -275,20 +276,20 @@
         <div class="step-label">Step 3 — The Vibe</div>
         <div class="step-question">What's the vibe?</div>
         <div class="options-grid">
-          <div class="option-pill" onclick="selectMulti(this,'q3',3)">Trendy</div>
-          <div class="option-pill" onclick="selectMulti(this,'q3',3)">Practical</div>
-          <div class="option-pill" onclick="selectMulti(this,'q3',3)">Fun</div>
-          <div class="option-pill" onclick="selectMulti(this,'q3',3)">Quirky</div>
-          <div class="option-pill" onclick="selectMulti(this,'q3',3)">Eco-friendly</div>
-          <div class="option-pill" onclick="selectMulti(this,'q3',3)">Luxe</div>
-          <div class="option-pill" onclick="selectMulti(this,'q3',3)">Sporty</div>
-          <div class="option-pill" onclick="selectMulti(this,'q3',3)">Techy</div>
-          <div class="option-pill" onclick="selectMulti(this,'q3',3)">Sentimental</div>
-          <div class="option-pill" onclick="selectMulti(this,'q3',3)">Surprise me</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Trendy</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Practical</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Fun</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Quirky</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Eco-friendly</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Luxe</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Sporty</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Techy</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Sentimental</div>
+          <div class="option-pill" onclick="selectPill(this,'q3')">Surprise me</div>
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(2)">← Back</button>
-          <button class="btn-next" id="next3" onclick="goTo(4)" disabled style="display:none;">Next →</button>
+          <button class="btn-next" id="next3" onclick="goTo(4)" disabled class="btn-next hidden">Next →</button>
         </div>
       </div>
 
@@ -320,7 +321,7 @@
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(3)">← Back</button>
-          <button class="btn-next" id="next4" onclick="goTo(5)" disabled style="display:none;">Next →</button>
+          <button class="btn-next" id="next4" onclick="goTo(5)" disabled class="btn-next hidden">Next →</button>
         </div>
       </div>
 
@@ -392,7 +393,7 @@
 
 <script>
 const TOTAL_STEPS = 5;
-const answers = { q1gift:'', q2:'', q3:[], q4budget:0, q4budgetLabel:'', q4occ:'', q5interests:'', email:'' };
+const answers = { q1gift:'', q2:'', q3:'', q4budget:0, q4budgetLabel:'', q4occ:'', q5interests:'', email:'' };
 let currentStep = 1;
 
 function show(id) { document.getElementById(id).style.display = 'block'; }
@@ -405,10 +406,6 @@ function goTo(step) {
   document.getElementById('step'+step).classList.add('active');
   currentStep = step;
   updateProgress(step);
-  // Hide next3 whenever we navigate away from step 3 and back
-  if (step !== 3) return;
-  const next3 = document.getElementById('next3');
-  next3.style.display = answers.q3.length > 0 ? 'flex' : 'none';
 }
 
 function updateProgress(step) {
@@ -427,7 +424,7 @@ function selectPill(el, key) {
   setTimeout(() => {
     if (key === 'q1gift') nextFromStep1();
     if (key === 'q2') goTo(3);
-    if (key === 'q4occ') { answers.q4occ = el.textContent.trim(); checkBudgetOccasion(); if (answers.q4budget > 0) setTimeout(() => goTo(5), 300); }
+    if (key === 'q4occ') goTo(5);
   }, 300);
 }
 
@@ -451,10 +448,10 @@ function selectMulti(el, key, max) {
   const next3 = document.getElementById('next3');
   if (answers[key].length === 0) {
     next3.disabled = true;
-    next3.style.display = 'none';
+    next3.classList.add('hidden');
   } else {
     next3.disabled = false;
-    next3.style.display = 'flex';
+    next3.classList.remove('hidden');
   }
 }
 
@@ -506,7 +503,7 @@ async function submitQuiz() {
         email: answers.email,
         shoppingFor: answers.q1gift,
         whoFor: answers.q2,
-        vibe: answers.q3.join(', '),
+        vibe: answers.q3,
         budget: answers.q4budget,
         occasion: answers.q4occ,
         interests: answers.q5interests
@@ -559,12 +556,12 @@ function renderResults(products) {
 
 function restart() {
   ['error','results','loading','emailGate','quiz'].forEach(id => hide(id));
-  answers.q1gift=''; answers.q2=''; answers.q3=[]; answers.q4budget=0; answers.q4occ=''; answers.q5interests=''; answers.email='';
+  answers.q1gift=''; answers.q2=''; answers.q3=[]; answers.q4budget=100; answers.q4occ=''; answers.q5interests=''; answers.email='';
   document.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
   document.getElementById('q5interests').value = '';
   document.getElementById('emailInput').value = '';
   ['next1','next2','next3','next4','btnReveal'].forEach(id => document.getElementById(id).disabled = true);
-  document.getElementById('next3').style.display = 'none';
+  document.getElementById('next3').classList.add('hidden');
   document.getElementById('next5').disabled = false;
   answers.q4budget = 0;
   answers.q4budgetLabel = '';
