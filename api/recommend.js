@@ -26,8 +26,6 @@ const INAPPROPRIATE_MESSAGES = [
 ];
 
 // Blacklisted domains — never show these
-// Includes: junk global marketplaces, AU retailers, media/news sites,
-// B2B/trade suppliers, brand direct pages, cheap import sites
 const BLACKLISTED_DOMAINS = [
   // Junk marketplaces & cheap import sites
   'temu', 'aliexpress', 'wish.com', 'dhgate', 'banggood', 'shein',
@@ -95,7 +93,26 @@ function getBudgetRange(budget) {
   if (budget <= 200) return [100, 200];
   if (budget <= 300) return [200, 300];
   if (budget <= 500) return [300, 500];
-  return [500, 99999]; // 500+
+  return [500, 99999];
+}
+
+// Extract matchable domain key e.g. "www.thewarehouse.co.nz" → "thewarehouse"
+function getMatchableDomain(url) {
+  try {
+    return new URL(url).hostname
+      .replace('www.', '')
+      .replace('.co.nz', '')
+      .replace('.com', '')
+      .replace('.co', '')
+      .toLowerCase();
+  } catch (e) { return ''; }
+}
+
+// Check if a URL is The Warehouse
+function isWarehouse(url) {
+  if (!url) return false;
+  const lower = url.toLowerCase();
+  return lower.includes('thewarehouse') || lower.includes('warehouse.co.nz');
 }
 
 export default async function handler(req, res) {
@@ -154,7 +171,7 @@ STRICT RULES:
   GOOD: "Wireless Bluetooth Speaker", "Electric Shaver", "Basketball", "RFID Leather Wallet"
   BAD: "JBL Go 3", "Braun Series 7", "Spalding NBA Basketball", "Tommy Hilfiger Wallet"
 - Current 2025/2026 products only — nothing discontinued or outdated
-- BUDGET HARD RULE: ${budgetInstruction} This is non-negotiable. If you cannot find 3 products in this range, choose the closest available products — do NOT go outside the range.
+- BUDGET HARD RULE: ${budgetInstruction} This is non-negotiable.
 - Vibe "Sporty": sport/fitness products only
 - Vibe "Luxe": premium products available in NZ mainstream stores
 - Vibe "Quirky/Fun": fun unique items at NZ mainstream retailers
@@ -214,17 +231,21 @@ Use GENERIC product names only. No brand names. Every product MUST be within the
     return res.status(500).json({ error: `AI failed: ${err.message}` });
   }
 
-  // ── STEP 2: Serper → find real NZ product pages with prices ───────────────
-  // Strategy:
-  //   /search organic  → direct retailer URLs for buy buttons (reliable NZ links)
-  //   /shopping        → price + store display name only (links are Google redirects — never use for buy buttons)
-  //   /images          → product photo
+  // ── STEP 2: Serper → NZ retail search with retailer-matched pricing ────────
+  //
+  // KEY PRINCIPLE: price shown on card = price from the SAME retailer as buy button.
+  //   1. Organic /search  → direct NZ retailer URLs (buy button)
+  //   2. Shopping /shopping → prices keyed by retailer domain
+  //   3. Match buy button domain → shopping price map
+  //   4. Matched price = "NZ$X" | Unmatched fallback = "from NZ$X"
+  //
+  // WAREHOUSE RULE: The Warehouse has a 2-week delivery/pickup time via Market Online.
+  // Only use as buy button if absolutely no other NZ retailer is found.
+  // Must have best price to appear as a store chip.
 
   const enriched = await Promise.all(products.map(async (product) => {
     try {
       const searchTerm = product.searchQuery || product.name;
-
-      // Build budget-aware search query to surface correctly priced results
       const budgetHint = budget >= 500 ? 'over $500' : `under $${budgetMax}`;
       const organicQuery = `${searchTerm} buy NZ ${budgetHint} -site:nzherald.co.nz -site:stuff.co.nz -site:rnz.co.nz -site:newshub.co.nz -site:temu.com -site:aliexpress.com`;
 
@@ -232,32 +253,17 @@ Use GENERIC product names only. No brand names. Every product MUST be within the
         fetch('https://google.serper.dev/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
-          body: JSON.stringify({
-            q: organicQuery,
-            gl: 'nz',
-            hl: 'en',
-            num: 10
-          })
+          body: JSON.stringify({ q: organicQuery, gl: 'nz', hl: 'en', num: 10 })
         }),
         fetch('https://google.serper.dev/shopping', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
-          body: JSON.stringify({
-            q: `${searchTerm} NZ`,
-            gl: 'nz',
-            hl: 'en',
-            num: 10
-          })
+          body: JSON.stringify({ q: `${searchTerm} NZ`, gl: 'nz', hl: 'en', num: 10 })
         }),
         fetch('https://google.serper.dev/images', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
-          body: JSON.stringify({
-            q: `${product.name} product`,
-            gl: 'nz',
-            hl: 'en',
-            num: 3
-          })
+          body: JSON.stringify({ q: `${product.name} product`, gl: 'nz', hl: 'en', num: 3 })
         })
       ]);
 
@@ -265,119 +271,163 @@ Use GENERIC product names only. No brand names. Every product MUST be within the
       const shoppingData = shoppingRes.ok ? await shoppingRes.json() : {};
       const imageData = imageRes.ok ? await imageRes.json() : {};
 
-      // ── Organic results → buy links (direct retailer URLs) ──────────────────
+      // ── 1. Filter organic results ────────────────────────────────────────────
+      // Strict .co.nz rule — .nz only domains are NOT NZ-based retailers
       const organicItems = (organicData.organic || []).filter(item => {
         if (!item.link) return false;
         if (isBlacklisted(item.link)) return false;
         const url = item.link.toLowerCase();
-        return url.includes('.co.nz') ||
-               url.includes('mightyape') ||
-               url.includes('pbtech') ||
-               url.includes('stirlingsports') ||
-               url.includes('torpedo7') ||
-               url.includes('macpac') ||
-               url.includes('hallensteins') ||
-               url.includes('glassons') ||
-               url.includes('luggage.co') ||
-               url.includes('thewarehouse') ||
-               url.includes('warehouse.co');
+
+        // Must be .co.nz OR a known NZ retailer with non-.co.nz domain
+        const isNZRetailer =
+          url.includes('.co.nz') ||
+          url.includes('mightyape') ||
+          url.includes('pbtech') ||
+          url.includes('stirlingsports') ||
+          url.includes('torpedo7') ||
+          url.includes('hallensteins') ||
+          url.includes('glassons') ||
+          url.includes('luggage.co');
+
+        // Reject .nz-only domains — these are NOT genuine NZ retailers
+        const isNZOnly = /\.nz(\/|$)/.test(url) && !url.includes('.co.nz');
+
+        return isNZRetailer && !isNZOnly;
       });
 
-      // Deduplicate by domain
+      // ── 2. Deduplicate by domain, hold Warehouse back ────────────────────────
       const seenDomains = new Set();
       const uniqueOrganic = [];
+      const warehouseItems = []; // held back — last resort only
+
       for (const item of organicItems) {
-        try {
-          const domain = new URL(item.link).hostname.replace('www.', '');
-          if (!seenDomains.has(domain)) {
-            seenDomains.add(domain);
-            uniqueOrganic.push(item);
-          }
-        } catch (e) { /* skip malformed URLs */ }
+        const domain = getMatchableDomain(item.link);
+        if (!domain || seenDomains.has(domain)) continue;
+        seenDomains.add(domain);
+
+        if (isWarehouse(item.link)) {
+          warehouseItems.push({ ...item, _domain: domain });
+        } else {
+          uniqueOrganic.push({ ...item, _domain: domain });
+        }
       }
 
-      // ── Shopping results → price extraction only (NOT for buy links) ─────────
-      // Filter: must have a price, must not be blacklisted, must look like NZ pricing
-      const shoppingItems = (shoppingData.shopping || []).filter(item => {
-        if (!item.price) return false;
-        if (isBlacklisted(item.source || '')) return false;
-        if (isBlacklisted(item.link || '')) return false;
-        // Exclude suspiciously cheap results (likely Temu/AliExpress bleed-through)
-        const priceNum = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
-        if (priceNum < 3) return false; // nothing legit in NZ is under $3
-        return true;
-      });
+      // Only use Warehouse as buy button if fewer than 2 other NZ retailers found
+      if (uniqueOrganic.length < 2) {
+        uniqueOrganic.push(...warehouseItems);
+      }
 
-      // Sort shopping by price ascending
-      shoppingItems.sort((a, b) => {
-        const priceA = parseFloat((a.price || '9999').replace(/[^0-9.]/g, '')) || 9999;
-        const priceB = parseFloat((b.price || '9999').replace(/[^0-9.]/g, '')) || 9999;
-        return priceA - priceB;
-      });
+      // ── 3. Build price map from shopping results, keyed by domain ────────────
+      const shoppingPriceMap = {};
+      for (const item of (shoppingData.shopping || [])) {
+        if (!item.price) continue;
+        if (isBlacklisted(item.source || '')) continue;
+        if (isBlacklisted(item.link || '')) continue;
+        const rawPrice = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
+        if (rawPrice < 3) continue; // kill Temu/AliExpress bleed-through
 
-      // Find the best shopping price that's within budget range
-      // Prefer items within budget; fall back to cheapest if nothing fits
-      const inBudgetItems = shoppingItems.filter(item => {
-        const priceNum = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
-        if (budget >= 500) return priceNum >= 500;
-        return priceNum >= budgetMin && priceNum <= budgetMax * 1.2; // 20% grace on upper end
-      });
-      const bestShoppingItem = inBudgetItems[0] || shoppingItems[0] || null;
+        // Key by source name (stripped)
+        if (item.source) {
+          const sourceKey = item.source.toLowerCase()
+            .replace(/\s+/g, '').replace('.co.nz', '').replace('.com', '');
+          if (!shoppingPriceMap[sourceKey]) {
+            shoppingPriceMap[sourceKey] = { price: item.price, rawPrice, source: item.source };
+          }
+        }
+        // Key by link domain
+        if (item.link && !isBlacklisted(item.link)) {
+          const domainKey = getMatchableDomain(item.link);
+          if (domainKey && !shoppingPriceMap[domainKey]) {
+            shoppingPriceMap[domainKey] = { price: item.price, rawPrice, source: item.source || domainKey };
+          }
+        }
+      }
 
-      // ── Assemble best result ─────────────────────────────────────────────────
-
-      // Buy link = first clean organic result
+      // ── 4. Buy button = first clean organic result ───────────────────────────
       const bestOrganic = uniqueOrganic[0] || null;
       const buyLink = bestOrganic?.link || null;
+      const buyDomain = bestOrganic?._domain || null;
+      const bestStoreName = buyDomain
+        ? buyDomain.charAt(0).toUpperCase() + buyDomain.slice(1)
+        : null;
 
-      // Store name = derived from organic result domain
-      let bestStoreName = null;
-      if (buyLink) {
-        try {
-          bestStoreName = new URL(buyLink).hostname
-            .replace('www.', '')
-            .replace('.co.nz', '')
-            .replace('.com', '');
-          bestStoreName = bestStoreName.charAt(0).toUpperCase() + bestStoreName.slice(1);
-        } catch (e) {}
-      }
-
-      // Price = from best in-budget shopping result
+      // ── 5. Price: match buy button domain to shopping price map ─────────────
       let price = null;
-      if (bestShoppingItem?.price) {
-        const match = bestShoppingItem.price.replace(/[^0-9.]/g, '');
-        price = match ? Math.round(parseFloat(match)).toString() : null;
+      let priceIsMatched = false;
+
+      if (buyDomain) {
+        // Exact domain match
+        const exact = shoppingPriceMap[buyDomain];
+        if (exact) {
+          price = Math.round(exact.rawPrice).toString();
+          priceIsMatched = true;
+        } else {
+          // Partial match (e.g. "noelleeming" matches "noelleeminggroup")
+          const partialKey = Object.keys(shoppingPriceMap).find(k =>
+            k.includes(buyDomain) || buyDomain.includes(k)
+          );
+          if (partialKey) {
+            price = Math.round(shoppingPriceMap[partialKey].rawPrice).toString();
+            priceIsMatched = true;
+          }
+        }
       }
 
-      // Other stores = next 3 unique organic results
-      const stores = uniqueOrganic.slice(1, 4).map(item => {
-        let storeName = '';
-        if (item.link) {
-          try {
-            storeName = new URL(item.link).hostname
-              .replace('www.', '')
-              .replace('.co.nz', '')
-              .replace('.com', '');
-            storeName = storeName.charAt(0).toUpperCase() + storeName.slice(1);
-          } catch (e) {}
-        }
-        return {
-          name: storeName,
-          link: item.link,
-          price: null
-        };
-      }).filter(s => s.name && s.link);
+      // ── 6. Fallback: best in-budget price from shopping if no match ──────────
+      if (!price) {
+        const fallbackPrices = Object.values(shoppingPriceMap)
+          .filter(p => {
+            if (budget >= 500) return p.rawPrice >= 500;
+            return p.rawPrice >= budgetMin && p.rawPrice <= budgetMax * 1.2;
+          })
+          .sort((a, b) => a.rawPrice - b.rawPrice);
 
-      // Overlay prices on store chips from shopping results where source name matches
-      stores.forEach(store => {
-        const match = shoppingItems.find(s =>
-          s.source && store.name &&
-          s.source.toLowerCase().includes(store.name.toLowerCase())
-        );
-        if (match?.price) store.price = match.price;
+        if (fallbackPrices.length > 0) {
+          price = Math.round(fallbackPrices[0].rawPrice).toString();
+          priceIsMatched = false; // label as "from NZ$X" on the card
+        }
+      }
+
+      // ── 7. Other store chips ─────────────────────────────────────────────────
+      // For Warehouse: only show as a chip if it has the best price
+      const otherOrganicForChips = uniqueOrganic.slice(1, 5); // grab extra in case Warehouse gets filtered
+
+      // Also consider Warehouse items for chips if they have a good price
+      const warehouseForChips = warehouseItems.filter(item => {
+        const wDomain = item._domain;
+        const wPriceEntry = shoppingPriceMap[wDomain] ||
+          Object.values(shoppingPriceMap).find((_, k) =>
+            typeof k === 'string' && (k.includes('warehouse') || wDomain.includes(k))
+          );
+        if (!wPriceEntry) return false;
+        // Only include Warehouse chip if it's the cheapest option
+        const cheapest = Object.values(shoppingPriceMap)
+          .filter(p => p.rawPrice >= budgetMin)
+          .sort((a, b) => a.rawPrice - b.rawPrice)[0];
+        return cheapest && wPriceEntry.rawPrice <= cheapest.rawPrice * 1.05; // within 5% of cheapest
       });
 
-      // Image
+      const chipsPool = [...otherOrganicForChips, ...warehouseForChips].slice(0, 3);
+
+      const stores = chipsPool.map(item => {
+        const storeName = item._domain
+          ? item._domain.charAt(0).toUpperCase() + item._domain.slice(1)
+          : null;
+
+        let storePrice = null;
+        const exact = shoppingPriceMap[item._domain];
+        if (exact) {
+          storePrice = exact.price;
+        } else {
+          const partialKey = Object.keys(shoppingPriceMap).find(k =>
+            k.includes(item._domain) || item._domain.includes(k)
+          );
+          if (partialKey) storePrice = shoppingPriceMap[partialKey].price;
+        }
+
+        return { name: storeName, link: item.link, price: storePrice };
+      }).filter(s => s.name && s.link);
+
       const imageUrl = imageData.images?.[0]?.imageUrl || null;
 
       return {
@@ -385,6 +435,7 @@ Use GENERIC product names only. No brand names. Every product MUST be within the
         type: product.type,
         reason: product.reason,
         price,
+        priceIsMatched,
         bestStoreName,
         buyLink,
         imageUrl,
@@ -398,6 +449,7 @@ Use GENERIC product names only. No brand names. Every product MUST be within the
         type: product.type,
         reason: product.reason,
         price: null,
+        priceIsMatched: false,
         bestStoreName: null,
         buyLink: null,
         imageUrl: null,
@@ -417,8 +469,10 @@ Use GENERIC product names only. No brand names. Every product MUST be within the
           <div style="font-size:14px;color:#7a6855;line-height:1.6;margin-bottom:12px;">${p.reason}</div>
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
             <div>
-              ${p.price ? `<div style="font-size:18px;font-weight:700;color:#3d2b1a;">NZ$${p.price} <span style="font-size:12px;color:#a89480;font-weight:400;">approx.</span></div>` : ''}
-              ${p.bestStoreName ? `<div style="font-size:12px;color:#9a8878;">Best price at ${p.bestStoreName}</div>` : ''}
+              ${p.price
+                ? `<div style="font-size:18px;font-weight:700;color:#3d2b1a;">${p.priceIsMatched ? '' : 'from '}NZ$${p.price}<span style="font-size:12px;color:#a89480;font-weight:400;margin-left:4px;">approx.</span></div>`
+                : ''}
+              ${p.bestStoreName ? `<div style="font-size:12px;color:#9a8878;">at ${p.bestStoreName}</div>` : ''}
             </div>
             ${p.buyLink ? `<a href="${p.buyLink}" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Best Products Found →</a>` : ''}
           </div>
@@ -440,7 +494,7 @@ Use GENERIC product names only. No brand names. Every product MUST be within the
     </div>
     <div style="background:white;border-radius:18px;padding:32px;border:1px solid #e8ddd0;margin-bottom:24px;">${productRows}</div>
     <div style="background:#fff9f0;border-radius:12px;padding:16px 20px;border:1px solid #e8ddd0;margin-bottom:24px;font-size:12px;color:#9a8878;line-height:1.6;">
-      <strong style="color:#3d2b1a;">📋 A note from ShopGenieAI:</strong> We search NZ retailers in real-time to find where you can buy each product. The 'Best Products Found' button links to the best matched NZ result we found — always confirm pricing on the retailer's site before buying.
+      <strong style="color:#3d2b1a;">📋 A note from ShopGenieAI:</strong> We search NZ retailers in real-time. Prices shown are approximate — always confirm on the retailer's site before buying.
     </div>
     <div style="text-align:center;margin-bottom:32px;">
       <a href="https://shopgenieai.com" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;">Find More Gifts 🧞</a>
