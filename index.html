@@ -100,8 +100,6 @@
   .option-pill:hover { border-color: var(--gold-light); background: rgba(200,146,42,0.06); color: var(--brown); }
   .option-pill.selected { border-color: var(--gold); background: linear-gradient(135deg, rgba(200,146,42,0.12), rgba(196,98,58,0.08)); color: var(--brown); font-weight: 600; }
 
-
-
   .step-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 36px; }
   .btn-back { background: none; border: none; font-family: var(--font-body); font-size: 0.9rem; font-weight: 500; color: #a89480; cursor: pointer; padding: 10px 0; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
   .btn-back:hover { color: var(--brown); }
@@ -167,9 +165,20 @@
   .store-chip { font-size: 0.75rem; background: rgba(122,158,126,0.12); color: var(--sage); padding: 3px 10px; border-radius: 20px; font-weight: 500; text-decoration: none; transition: background 0.15s; }
   .store-chip:hover { background: rgba(122,158,126,0.25); }
 
-  .restart-section { text-align: center; padding-top: 8px; }
+  /* RESTART SECTION */
+  .restart-section { text-align: center; padding-top: 8px; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
   .btn-restart { background: none; border: 2px solid var(--border); font-family: var(--font-body); font-size: 0.9rem; font-weight: 500; color: #9a8878; padding: 12px 28px; border-radius: 50px; cursor: pointer; transition: all 0.2s; }
   .btn-restart:hover { border-color: var(--brown); color: var(--brown); }
+
+  /* REFRESH BUTTON */
+  .btn-refresh { background: none; border: 2px solid var(--gold); font-family: var(--font-body); font-size: 0.9rem; font-weight: 600; color: var(--gold); padding: 12px 28px; border-radius: 50px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+  .btn-refresh:hover { background: rgba(200,146,42,0.08); transform: translateY(-1px); }
+  .btn-refresh:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .refresh-count { font-size: 0.72rem; font-weight: 400; color: #a89480; display: block; margin-top: 4px; text-align: center; }
+
+  /* REFRESH LOCKOUT MESSAGE */
+  .refresh-lockout { display: none; background: linear-gradient(135deg, rgba(200,146,42,0.08), rgba(196,98,58,0.06)); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-top: 16px; text-align: center; font-size: 0.88rem; color: var(--brown); line-height: 1.6; }
+  .refresh-lockout strong { color: var(--terracotta); }
 
   /* ERROR */
   #error { display: none; text-align: center; padding: 60px 20px; animation: fadeUp 0.5s ease both; }
@@ -332,7 +341,10 @@
         <textarea class="quiz-input" id="q5interests" rows="4"
           placeholder="e.g. loves hiking and cooking, big fan of Kathmandu and Kmart, into sustainable brands..."
           style="resize:vertical; line-height:1.5"></textarea>
-        <div style="font-size:0.8rem;color:#b5a190;margin-top:8px">Optional but helps a lot — feel free to skip</div>
+        <div style="font-size:0.8rem;color:#b5a190;margin-top:8px;margin-bottom:12px">Optional but helps a lot — feel free to skip</div>
+        <div style="background:#fff9f0;border-radius:10px;padding:12px 16px;border:1px solid #e8ddd0;font-size:0.78rem;color:#9a8878;line-height:1.6;">
+          <strong style="color:#3d2b1a;">📋 A quick note:</strong> ShopGenieAI searches NZ retailers in real-time. Prices shown are approximate — always confirm on the retailer's site before buying. Results are AI-generated and may not always perfectly match your budget range.
+        </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(4)">← Back</button>
           <button class="btn-next btn-submit" id="next5" onclick="showEmailGate()">Find My Gifts 🧞</button>
@@ -376,6 +388,15 @@
     <div class="products-grid" id="productsGrid"></div>
     <div class="restart-section">
       <button class="btn-restart" onclick="restart()">↩ Start over</button>
+      <div>
+        <button class="btn-refresh" id="btnRefresh" onclick="refreshProducts()">🔀 Refresh 3 Products</button>
+        <span class="refresh-count" id="refreshCount">5 refreshes remaining</span>
+      </div>
+    </div>
+    <div class="refresh-lockout" id="refreshLockout">
+      <strong>🧞 Oi, the Genie's knackered!</strong><br>
+      You've had 5 goes at this — even a magic lamp needs a breather! 😅<br>
+      The Genie reckons you need more info. <strong>Start over and tell us more about their interests</strong> — the more detail in Step 5, the better your picks will be!
     </div>
   </section>
 
@@ -393,8 +414,10 @@
 
 <script>
 const TOTAL_STEPS = 5;
+const MAX_REFRESHES = 5;
 const answers = { q1gift:'', q2:'', q3:'', q4budget:0, q4budgetLabel:'', q4occ:'', q5interests:'', email:'' };
 let currentStep = 1;
+let refreshCount = 0;
 
 function show(id) { document.getElementById(id).style.display = 'block'; }
 function hide(id) { document.getElementById(id).style.display = 'none'; }
@@ -420,7 +443,6 @@ function selectPill(el, key) {
   el.classList.add('selected');
   answers[key] = el.textContent.trim();
 
-  // Auto advance after short delay so user sees selection
   setTimeout(() => {
     if (key === 'q1gift') nextFromStep1();
     if (key === 'q2') goTo(3);
@@ -438,31 +460,12 @@ function nextFromStep1() {
   }
 }
 
-function selectMulti(el, key, max) {
-  if (el.classList.contains('selected')) {
-    el.classList.remove('selected');
-  } else {
-    if (el.parentElement.querySelectorAll('.selected').length >= max) return;
-    el.classList.add('selected');
-  }
-  answers[key] = Array.from(el.parentElement.querySelectorAll('.selected')).map(p => p.textContent.trim());
-  const next3 = document.getElementById('next3');
-  if (answers[key].length === 0) {
-    next3.disabled = true;
-    next3.classList.add('hidden');
-  } else {
-    next3.disabled = false;
-    next3.classList.remove('hidden');
-  }
-}
-
 function selectBudget(el, val) {
   el.parentElement.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
   el.classList.add('selected');
   answers.q4budget = val;
   answers.q4budgetLabel = el.textContent.trim();
   checkBudgetOccasion();
-  // Auto advance if occasion already selected
   if (answers.q4occ !== '') {
     setTimeout(() => goTo(5), 300);
   }
@@ -492,6 +495,39 @@ function updateRevealBtn() {
 async function submitQuiz() {
   answers.email = document.getElementById('emailInput').value.trim();
   hide('emailGate');
+  // Reset refresh state for new submission
+  refreshCount = 0;
+  updateRefreshUI();
+  hide('refreshLockout');
+  await fetchRecommendations();
+}
+
+async function refreshProducts() {
+  if (refreshCount >= MAX_REFRESHES) return;
+  refreshCount++;
+  updateRefreshUI();
+  await fetchRecommendations();
+}
+
+function updateRefreshUI() {
+  const remaining = MAX_REFRESHES - refreshCount;
+  const btn = document.getElementById('btnRefresh');
+  const countEl = document.getElementById('refreshCount');
+  const lockout = document.getElementById('refreshLockout');
+
+  if (remaining <= 0) {
+    btn.disabled = true;
+    countEl.textContent = 'No refreshes left';
+    lockout.style.display = 'block';
+  } else {
+    btn.disabled = false;
+    countEl.textContent = `${remaining} refresh${remaining === 1 ? '' : 'es'} remaining`;
+    lockout.style.display = 'none';
+  }
+}
+
+async function fetchRecommendations() {
+  hide('results');
   show('loading');
   try {
     const controller = new AbortController();
@@ -553,6 +589,8 @@ function renderResults(products) {
       </div>`;
   });
   show('results');
+  // Scroll to top of results smoothly
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function restart() {
@@ -569,6 +607,10 @@ function restart() {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   document.getElementById('step1').classList.add('active');
   currentStep = 1;
+  // Reset refresh state
+  refreshCount = 0;
+  updateRefreshUI();
+  hide('refreshLockout');
   show('hero');
 }
 
@@ -581,6 +623,7 @@ function comingSoon() {
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('next5').disabled = false;
   updateBudget(100);
+  updateRefreshUI();
 });
 </script>
 </body>
