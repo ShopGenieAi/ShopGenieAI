@@ -525,7 +525,7 @@ function renderResults(products) {
   const grid = document.getElementById('productsGrid');
   grid.innerHTML = '';
   products.forEach((p, i) => {
-    const storeLinks = (p.stores||[]).map(s => `<a class="store-chip" href="${s.link||'#'}" target="_blank" rel="noopener">${s.name}</a>`).join('');
+    const storeLinks = (p.stores||[]).map(s => `<a class="store-chip" href="${s.link||'#'}" target="_blank" rel="noopener">${s.name}${s.price ? ' · ' + s.price : ''}</a>`).join('');
     const priceDisplay = p.price ? `<div class="product-price">NZ$${p.price}<small>approx.</small></div>` : `<div class="product-price" style="font-size:1rem;color:#a89480">Price varies</div>`;
     const buyBtn = p.buyLink ? `<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener">Best Products Found →</a>` : '';
     grid.innerHTML += `
