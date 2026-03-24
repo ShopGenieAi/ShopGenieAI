@@ -288,7 +288,7 @@
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(2)">← Back</button>
-          <button class="btn-next" id="next3" onclick="goTo(4)" disabled style="visibility:hidden;">Next →</button>
+          <button class="btn-next" id="next3" onclick="goTo(4)" disabled style="display:none;">Next →</button>
         </div>
       </div>
 
@@ -447,10 +447,10 @@ function selectMulti(el, key, max) {
   const next3 = document.getElementById('next3');
   if (answers[key].length === 0) {
     next3.disabled = true;
-    next3.style.visibility = 'hidden';
+    next3.style.display = 'none';
   } else {
     next3.disabled = false;
-    next3.style.visibility = 'visible';
+    next3.style.display = 'flex';
   }
 }
 
@@ -560,7 +560,7 @@ function restart() {
   document.getElementById('q5interests').value = '';
   document.getElementById('emailInput').value = '';
   ['next1','next2','next3','next4','btnReveal'].forEach(id => document.getElementById(id).disabled = true);
-  document.getElementById('next3').style.visibility = 'hidden';
+  document.getElementById('next3').style.display = 'none';
   document.getElementById('next5').disabled = false;
   answers.q4budget = 0;
   answers.q4budgetLabel = '';
