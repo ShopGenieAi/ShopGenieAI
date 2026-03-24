@@ -370,7 +370,7 @@
       <h2 class="results-title">Here are your <em>3 gifts</em></h2>
     </div>
     <div style="background:#fff9f0;border-radius:12px;padding:14px 18px;border:1px solid #e8ddd0;margin-bottom:24px;font-size:0.78rem;color:#9a8878;line-height:1.6;">
-      <strong style="color:#3d2b1a;">📋 A note from ShopGenieAI:</strong> We search NZ retailers in real-time to find where you can buy each product. The 'Buy now' button links to the top-ranked NZ result — always confirm pricing on the retailer's site before buying.
+      <strong style="color:#3d2b1a;">📋 A note from ShopGenieAI:</strong> The 'Best Products Found' button takes you to search results at the best matched NZ retailer for that product — browse, compare prices and buy at your convenience!
     </div>
     <div class="products-grid" id="productsGrid"></div>
     <div class="restart-section">
@@ -452,8 +452,11 @@ function selectBudget(el, val) {
   el.classList.add('selected');
   answers.q4budget = val;
   answers.q4budgetLabel = el.textContent.trim();
-  // Check if occasion also selected to enable next
   checkBudgetOccasion();
+  // Auto advance if occasion already selected
+  if (answers.q4occ !== '') {
+    setTimeout(() => goTo(5), 300);
+  }
 }
 
 function checkBudgetOccasion() {
@@ -484,7 +487,7 @@ async function submitQuiz() {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000);
-    const response = await fetch('/api/recommend', {
+    const response = await fetch(`${window.location.origin}/api/recommend`, {
       signal: controller.signal,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -510,7 +513,7 @@ async function submitQuiz() {
   } catch (err) {
     hide('loading');
     if (err.message && err.message.includes('INAPPROPRIATE')) {
-      document.getElementById('errorMsg').textContent = "Kia ora! 😅 The Genie only grants gift wishes — not THAT kind of wish! Try something a little more gift-friendly. 🧞🇳🇿";
+      document.getElementById('errorMsg').textContent = err.message.replace('INAPPROPRIATE: ', '');
     } else {
       document.getElementById('errorMsg').textContent = err.message || 'Something went wrong. Try again!';
     }
@@ -524,7 +527,7 @@ function renderResults(products) {
   products.forEach((p, i) => {
     const storeLinks = (p.stores||[]).map(s => `<a class="store-chip" href="${s.link||'#'}" target="_blank" rel="noopener">${s.name}</a>`).join('');
     const priceDisplay = p.price ? `<div class="product-price">NZ$${p.price}<small>approx.</small></div>` : `<div class="product-price" style="font-size:1rem;color:#a89480">Price varies</div>`;
-    const buyBtn = p.buyLink ? `<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener">Buy now →</a>` : '';
+    const buyBtn = p.buyLink ? `<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener">Best Products Found →</a>` : '';
     grid.innerHTML += `
       <div class="product-card">
         <div class="product-image-wrap">
