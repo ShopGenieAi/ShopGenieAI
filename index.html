@@ -139,46 +139,137 @@
   .results-title { font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 900; color: var(--brown); line-height: 1.15; }
   .results-title em { font-style: italic; color: var(--gold); }
 
-  .products-grid { display: flex; flex-direction: column; gap: 24px; margin-bottom: 40px; }
-  .product-card { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; display: grid; grid-template-columns: 200px 1fr; transition: box-shadow 0.25s, transform 0.25s; animation: fadeUp 0.5s ease both; }
-  .product-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-3px); }
-  .product-card:nth-child(2) { animation-delay: 0.1s; }
-  .product-card:nth-child(3) { animation-delay: 0.2s; }
-  @media (max-width: 580px) { .product-card { grid-template-columns: 1fr; } }
+  /* SWIPE CARD CAROUSEL */
+  .swipe-container { position: relative; margin-bottom: 32px; }
+  .swipe-track-wrap { overflow: hidden; border-radius: var(--radius); }
+  .swipe-track { display: flex; transition: transform 0.4s cubic-bezier(0.4,0,0.2,1); will-change: transform; }
 
-  .product-image-wrap { position: relative; overflow: hidden; background: var(--cream); min-height: 180px; }
+  .product-card {
+    min-width: 100%;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .product-image-wrap {
+    position: relative;
+    width: 100%;
+    height: 260px;
+    overflow: hidden;
+    background: var(--cream);
+  }
   .product-image-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
-  .product-card:hover .product-image-wrap img { transform: scale(1.04); }
-  .product-rank { position: absolute; top: 12px; left: 12px; width: 28px; height: 28px; background: linear-gradient(135deg, var(--gold), var(--terracotta)); color: white; font-weight: 700; font-size: 0.82rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .product-card:hover .product-image-wrap img { transform: scale(1.03); }
+  .product-rank {
+    position: absolute; top: 14px; left: 14px;
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--gold), var(--terracotta));
+    color: white; font-weight: 700; font-size: 0.9rem;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
 
-  .product-info { padding: 24px 24px 20px; display: flex; flex-direction: column; }
+  .product-info { padding: 24px 24px 20px; display: flex; flex-direction: column; flex: 1; }
   .product-type-tag { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sage); margin-bottom: 6px; }
-  .product-name { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: var(--brown); line-height: 1.25; margin-bottom: 8px; }
-  .product-reason { font-size: 0.88rem; color: #7a6855; line-height: 1.55; flex: 1; margin-bottom: 16px; }
-  .product-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .product-price { font-size: 1.3rem; font-weight: 700; color: var(--brown); font-family: var(--font-display); }
+  .product-name { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--brown); line-height: 1.25; margin-bottom: 10px; }
+  .product-reason { font-size: 0.88rem; color: #7a6855; line-height: 1.55; flex: 1; margin-bottom: 18px; }
+
+  .product-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .product-price { font-size: 1.4rem; font-weight: 700; color: var(--brown); font-family: var(--font-display); }
   .product-price small { font-family: var(--font-body); font-size: 0.75rem; font-weight: 400; color: #a89480; display: block; line-height: 1; }
-  .btn-buy { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, var(--gold), var(--terracotta)); color: white; font-family: var(--font-body); font-size: 0.85rem; font-weight: 600; padding: 10px 18px; border-radius: 50px; text-decoration: none; transition: all 0.2s; box-shadow: 0 3px 12px rgba(200,146,42,0.3); white-space: nowrap; }
+  .btn-buy {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, var(--gold), var(--terracotta));
+    color: white; font-family: var(--font-body); font-size: 0.88rem; font-weight: 600;
+    padding: 11px 20px; border-radius: 50px; text-decoration: none;
+    transition: all 0.2s; box-shadow: 0 3px 12px rgba(200,146,42,0.3);
+    white-space: nowrap;
+  }
   .btn-buy:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(200,146,42,0.4); }
 
-  .stores-list { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
-  .store-chip { font-size: 0.75rem; background: rgba(122,158,126,0.12); color: var(--sage); padding: 3px 10px; border-radius: 20px; font-weight: 500; text-decoration: none; transition: background 0.15s; }
+  .stores-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .store-chip { font-size: 0.75rem; background: rgba(122,158,126,0.12); color: var(--sage); padding: 4px 11px; border-radius: 20px; font-weight: 500; text-decoration: none; transition: background 0.15s; }
   .store-chip:hover { background: rgba(122,158,126,0.25); }
 
-  /* RESTART SECTION */
-  .restart-section { text-align: center; padding-top: 8px; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
-  .btn-restart { background: none; border: 2px solid var(--border); font-family: var(--font-body); font-size: 0.9rem; font-weight: 500; color: #9a8878; padding: 12px 28px; border-radius: 50px; cursor: pointer; transition: all 0.2s; }
-  .btn-restart:hover { border-color: var(--brown); color: var(--brown); }
+  /* SWIPE NAVIGATION */
+  .swipe-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 20px; }
+  .swipe-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--card-bg); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s; font-size: 1rem;
+    box-shadow: var(--shadow);
+  }
+  .swipe-btn:hover { border-color: var(--gold); background: rgba(200,146,42,0.06); }
+  .swipe-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .swipe-dots { display: flex; gap: 8px; }
+  .swipe-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border); cursor: pointer;
+    transition: all 0.2s;
+  }
+  .swipe-dot.active { background: var(--gold); transform: scale(1.3); }
 
-  /* REFRESH BUTTON */
-  .btn-refresh { background: none; border: 2px solid var(--gold); font-family: var(--font-body); font-size: 0.9rem; font-weight: 600; color: var(--gold); padding: 12px 28px; border-radius: 50px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+  /* RESTART SECTION — inline row */
+  .restart-section {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; flex-wrap: wrap; padding-top: 8px;
+  }
+  .btn-restart {
+    background: none; border: 2px solid var(--border);
+    font-family: var(--font-body); font-size: 0.9rem; font-weight: 500;
+    color: #9a8878; padding: 12px 24px; border-radius: 50px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-restart:hover { border-color: var(--brown); color: var(--brown); }
+  .btn-refresh {
+    background: none; border: 2px solid var(--gold);
+    font-family: var(--font-body); font-size: 0.9rem; font-weight: 600;
+    color: var(--gold); padding: 12px 24px; border-radius: 50px;
+    cursor: pointer; transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
   .btn-refresh:hover { background: rgba(200,146,42,0.08); transform: translateY(-1px); }
   .btn-refresh:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-  .refresh-count { font-size: 0.72rem; font-weight: 400; color: #a89480; display: block; margin-top: 4px; text-align: center; }
+  .refresh-count { font-size: 0.72rem; color: #a89480; text-align: center; margin-top: 6px; }
 
-  /* REFRESH LOCKOUT MESSAGE */
-  .refresh-lockout { display: none; background: linear-gradient(135deg, rgba(200,146,42,0.08), rgba(196,98,58,0.06)); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin-top: 16px; text-align: center; font-size: 0.88rem; color: var(--brown); line-height: 1.6; }
-  .refresh-lockout strong { color: var(--terracotta); }
+  /* LOCKOUT MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(26,18,8,0.65);
+    backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .modal-overlay.active { display: flex; animation: fadeUp 0.3s ease both; }
+  .modal-box {
+    background: var(--card-bg);
+    border-radius: 24px;
+    padding: 40px 36px;
+    max-width: 440px; width: 100%;
+    text-align: center;
+    box-shadow: 0 24px 80px rgba(61,43,26,0.28);
+    border: 1px solid var(--border);
+    animation: fadeUp 0.35s ease both;
+  }
+  .modal-emoji { font-size: 3.5rem; display: block; margin-bottom: 16px; }
+  .modal-title { font-family: var(--font-display); font-size: 1.6rem; font-weight: 900; color: var(--brown); margin-bottom: 12px; line-height: 1.2; }
+  .modal-body { font-size: 0.95rem; color: #7a6855; line-height: 1.65; margin-bottom: 28px; }
+  .modal-body strong { color: var(--terracotta); }
+  .btn-modal-restart {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, var(--gold), var(--terracotta));
+    color: white; font-family: var(--font-body); font-size: 1rem; font-weight: 600;
+    padding: 14px 32px; border-radius: 50px; border: none; cursor: pointer;
+    box-shadow: 0 6px 24px rgba(200,146,42,0.35); transition: all 0.2s;
+  }
+  .btn-modal-restart:hover { transform: translateY(-2px); }
 
   /* ERROR */
   #error { display: none; text-align: center; padding: 60px 20px; animation: fadeUp 0.5s ease both; }
@@ -217,7 +308,6 @@
     <p class="hero-subtitle">Answer a few quick questions and our Genie finds 3 hand-picked gift ideas available right here in New Zealand.</p>
     <button class="btn-start" onclick="showQuiz()">Start the Quiz →</button>
     <p class="hero-trust">Takes <span>under 2 minutes</span> · Free · No account needed</p>
-
     <div style="margin-top:32px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap;align-items:center;">
       <button onclick="comingSoon()" style="background:none;border:none;cursor:pointer;padding:0;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
         <img src="https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-app-store.svg" alt="Download on the App Store" style="height:48px;" />
@@ -244,7 +334,6 @@
         </div>
       </div>
 
-      <!-- Step 1: What are you shopping for -->
       <div class="step active" id="step1">
         <div class="step-label">Step 1 — The Gift</div>
         <div class="step-question">What are you shopping for?</div>
@@ -252,13 +341,9 @@
           <div class="option-pill" onclick="selectPill(this,'q1gift')">A gift for someone</div>
           <div class="option-pill" onclick="selectPill(this,'q1gift')">Something for myself</div>
         </div>
-        <div class="step-nav">
-          <span></span>
-          <button id="next1" onclick="nextFromStep1()" disabled class="btn-next hidden">Next →</button>
-        </div>
+        <div class="step-nav"><span></span><button id="next1" onclick="nextFromStep1()" disabled class="btn-next hidden">Next →</button></div>
       </div>
 
-      <!-- Step 2: Who is this for -->
       <div class="step" id="step2">
         <div class="step-label">Step 2 — The Person</div>
         <div class="step-question">Who is this for?</div>
@@ -280,7 +365,6 @@
         </div>
       </div>
 
-      <!-- Step 3: Vibe -->
       <div class="step" id="step3">
         <div class="step-label">Step 3 — The Vibe</div>
         <div class="step-question">What's the vibe?</div>
@@ -302,7 +386,6 @@
         </div>
       </div>
 
-      <!-- Step 4: Budget + Occasion -->
       <div class="step" id="step4">
         <div class="step-label">Step 4 — Budget & Occasion</div>
         <div class="step-question">What's your budget?</div>
@@ -334,14 +417,13 @@
         </div>
       </div>
 
-      <!-- Step 5: Interests -->
       <div class="step" id="step5">
         <div class="step-label">Step 5 — Personal Touch</div>
         <div class="step-question">Any interests, hobbies, or favourite brands?</div>
         <textarea class="quiz-input" id="q5interests" rows="4"
           placeholder="e.g. loves hiking and cooking, big fan of Kathmandu and Kmart, into sustainable brands..."
           style="resize:vertical; line-height:1.5"></textarea>
-        <div style="font-size:0.8rem;color:#b5a190;margin-top:8px;margin-bottom:12px">Optional but helps a lot — feel free to skip</div>
+        <div style="font-size:0.8rem;color:#b5a190;margin-top:8px;margin-bottom:14px">Optional but helps a lot — feel free to skip</div>
         <div style="background:#fff9f0;border-radius:10px;padding:12px 16px;border:1px solid #e8ddd0;font-size:0.78rem;color:#9a8878;line-height:1.6;">
           <strong style="color:#3d2b1a;">📋 A quick note:</strong> ShopGenieAI searches NZ retailers in real-time. Prices shown are approximate — always confirm on the retailer's site before buying. Results are AI-generated and may not always perfectly match your budget range.
         </div>
@@ -350,7 +432,6 @@
           <button class="btn-next btn-submit" id="next5" onclick="showEmailGate()">Find My Gifts 🧞</button>
         </div>
       </div>
-
     </div>
   </section>
 
@@ -360,8 +441,7 @@
       <span class="email-gate-icon">🎁</span>
       <div class="email-gate-title">Almost there!</div>
       <div class="email-gate-sub">Pop in your email and we'll reveal your 3 personalised gift picks — and send them to you so you don't lose them!</div>
-      <input type="email" class="email-gate-input" id="emailInput"
-        placeholder="you@example.co.nz" oninput="updateRevealBtn()" />
+      <input type="email" class="email-gate-input" id="emailInput" placeholder="you@example.co.nz" oninput="updateRevealBtn()" />
       <button class="btn-reveal" id="btnReveal" onclick="submitQuiz()" disabled>Reveal My Gifts 🧞</button>
       <div class="email-gate-privacy">🔒 No spam, ever. Unsubscribe anytime.</div>
     </div>
@@ -382,22 +462,28 @@
       <div class="results-eyebrow">✨ Your personalised picks</div>
       <h2 class="results-title">Here are your <em>3 gifts</em></h2>
     </div>
-    <div style="background:#fff9f0;border-radius:12px;padding:14px 18px;border:1px solid #e8ddd0;margin-bottom:24px;font-size:0.78rem;color:#9a8878;line-height:1.6;">
-      <strong style="color:#3d2b1a;">📋 A note from ShopGenieAI:</strong> The 'Best Products Found' button takes you to search results at the best matched NZ retailer for that product — browse, compare prices and buy at your convenience!
+    <div style="background:#fff9f0;border-radius:12px;padding:14px 18px;border:1px solid #e8ddd0;margin-bottom:28px;font-size:0.78rem;color:#9a8878;line-height:1.6;">
+      <strong style="color:#3d2b1a;">📋 A note from ShopGenieAI:</strong> The 'Best Products Found' button takes you to the best matched NZ retailer — browse, compare prices and buy at your convenience!
     </div>
-    <div class="products-grid" id="productsGrid"></div>
-    <div class="restart-section">
-      <button class="btn-restart" onclick="restart()">↩ Start over</button>
-      <div>
-        <button class="btn-refresh" id="btnRefresh" onclick="refreshProducts()">🔀 Refresh 3 Products</button>
-        <span class="refresh-count" id="refreshCount">5 refreshes remaining</span>
+
+    <!-- SWIPE CAROUSEL -->
+    <div class="swipe-container">
+      <div class="swipe-track-wrap">
+        <div class="swipe-track" id="swipeTrack"></div>
+      </div>
+      <div class="swipe-nav">
+        <button class="swipe-btn" id="swipePrev" onclick="swipeTo(currentCard - 1)" disabled>←</button>
+        <div class="swipe-dots" id="swipeDots"></div>
+        <button class="swipe-btn" id="swipeNext" onclick="swipeTo(currentCard + 1)">→</button>
       </div>
     </div>
-    <div class="refresh-lockout" id="refreshLockout">
-      <strong>🧞 Oi, the Genie's knackered!</strong><br>
-      You've had 5 goes at this — even a magic lamp needs a breather! 😅<br>
-      The Genie reckons you need more info. <strong>Start over and tell us more about their interests</strong> — the more detail in Step 5, the better your picks will be!
+
+    <!-- BUTTONS ROW -->
+    <div class="restart-section">
+      <button class="btn-restart" onclick="restart()">↩ Start over</button>
+      <button class="btn-refresh" id="btnRefresh" onclick="refreshProducts()">🔀 Refresh 3 Products</button>
     </div>
+    <div class="refresh-count" id="refreshCount">5 refreshes remaining</div>
   </section>
 
   <!-- ERROR -->
@@ -410,6 +496,19 @@
 
 </main>
 
+<!-- LOCKOUT MODAL -->
+<div class="modal-overlay" id="lockoutModal">
+  <div class="modal-box">
+    <span class="modal-emoji">🧞</span>
+    <div class="modal-title">Oi, the Genie's knackered!</div>
+    <div class="modal-body">
+      You've had <strong>5 goes</strong> at this — even a magic lamp needs a breather! 😅<br><br>
+      The Genie reckons your wish needs more detail. <strong>Start over and tell us more in Step 5</strong> — the more you share about their interests, the better your picks will be. Go on, give the Genie something to work with! 🎯
+    </div>
+    <button class="btn-modal-restart" onclick="closeModalAndRestart()">↩ Start Over & Add More Detail</button>
+  </div>
+</div>
+
 <footer>Made in Aotearoa 🇳🇿 · Powered by AI · ShopGenieAI © 2025</footer>
 
 <script>
@@ -418,10 +517,11 @@ const MAX_REFRESHES = 5;
 const answers = { q1gift:'', q2:'', q3:'', q4budget:0, q4budgetLabel:'', q4occ:'', q5interests:'', email:'' };
 let currentStep = 1;
 let refreshCount = 0;
+let currentCard = 0;
+let totalCards = 0;
 
 function show(id) { document.getElementById(id).style.display = 'block'; }
 function hide(id) { document.getElementById(id).style.display = 'none'; }
-
 function showQuiz() { hide('hero'); show('quiz'); updateProgress(1); }
 
 function goTo(step) {
@@ -442,7 +542,6 @@ function selectPill(el, key) {
   el.parentElement.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
   el.classList.add('selected');
   answers[key] = el.textContent.trim();
-
   setTimeout(() => {
     if (key === 'q1gift') nextFromStep1();
     if (key === 'q2') goTo(3);
@@ -452,12 +551,8 @@ function selectPill(el, key) {
 }
 
 function nextFromStep1() {
-  if (answers.q1gift === 'Something for myself') {
-    answers.q2 = 'Myself';
-    goTo(3);
-  } else {
-    goTo(2);
-  }
+  if (answers.q1gift === 'Something for myself') { answers.q2 = 'Myself'; goTo(3); }
+  else goTo(2);
 }
 
 function selectBudget(el, val) {
@@ -466,25 +561,18 @@ function selectBudget(el, val) {
   answers.q4budget = val;
   answers.q4budgetLabel = el.textContent.trim();
   checkBudgetOccasion();
-  if (answers.q4occ !== '') {
-    setTimeout(() => goTo(5), 300);
-  }
+  if (answers.q4occ !== '') setTimeout(() => goTo(5), 300);
 }
 
 function checkBudgetOccasion() {
-  const hasBudget = answers.q4budget > 0;
-  const hasOccasion = answers.q4occ !== '';
-  document.getElementById('next4').disabled = !(hasBudget && hasOccasion);
+  document.getElementById('next4').disabled = !(answers.q4budget > 0 && answers.q4occ !== '');
 }
 
-function updateBudget(val) {
-  answers.q4budget = parseInt(val);
-}
+function updateBudget(val) { answers.q4budget = parseInt(val); }
 
 function showEmailGate() {
   answers.q5interests = document.getElementById('q5interests').value.trim();
-  hide('quiz');
-  show('emailGate');
+  hide('quiz'); show('emailGate');
 }
 
 function updateRevealBtn() {
@@ -495,43 +583,46 @@ function updateRevealBtn() {
 async function submitQuiz() {
   answers.email = document.getElementById('emailInput').value.trim();
   hide('emailGate');
-  // Reset refresh state for new submission
   refreshCount = 0;
   updateRefreshUI();
-  hide('refreshLockout');
-  await fetchRecommendations();
+  await fetchRecommendations(0);
 }
 
 async function refreshProducts() {
-  if (refreshCount >= MAX_REFRESHES) return;
+  if (refreshCount >= MAX_REFRESHES) { showLockoutModal(); return; }
   refreshCount++;
   updateRefreshUI();
-  await fetchRecommendations();
+  await fetchRecommendations(refreshCount);
 }
 
 function updateRefreshUI() {
   const remaining = MAX_REFRESHES - refreshCount;
   const btn = document.getElementById('btnRefresh');
   const countEl = document.getElementById('refreshCount');
-  const lockout = document.getElementById('refreshLockout');
-
   if (remaining <= 0) {
     btn.disabled = true;
     countEl.textContent = 'No refreshes left';
-    lockout.style.display = 'block';
   } else {
     btn.disabled = false;
     countEl.textContent = `${remaining} refresh${remaining === 1 ? '' : 'es'} remaining`;
-    lockout.style.display = 'none';
   }
 }
 
-async function fetchRecommendations() {
+function showLockoutModal() {
+  document.getElementById('lockoutModal').classList.add('active');
+}
+
+function closeModalAndRestart() {
+  document.getElementById('lockoutModal').classList.remove('active');
+  restart();
+}
+
+async function fetchRecommendations(seed) {
   hide('results');
   show('loading');
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
+    const timeoutId = setTimeout(() => controller.abort(), 65000);
     const response = await fetch(`${window.location.origin}/api/recommend`, {
       signal: controller.signal,
       method: 'POST',
@@ -543,7 +634,8 @@ async function fetchRecommendations() {
         vibe: answers.q3,
         budget: answers.q4budget,
         occasion: answers.q4occ,
-        interests: answers.q5interests
+        interests: answers.q5interests,
+        refreshSeed: seed
       })
     });
     clearTimeout(timeoutId);
@@ -566,51 +658,106 @@ async function fetchRecommendations() {
   }
 }
 
+// ── SWIPE CAROUSEL ────────────────────────────────────────────────────────────
+
 function renderResults(products) {
-  const grid = document.getElementById('productsGrid');
-  grid.innerHTML = '';
+  const track = document.getElementById('swipeTrack');
+  const dotsContainer = document.getElementById('swipeDots');
+  track.innerHTML = '';
+  dotsContainer.innerHTML = '';
+  totalCards = products.length;
+  currentCard = 0;
+
   products.forEach((p, i) => {
-    const storeLinks = (p.stores||[]).map(s => `<a class="store-chip" href="${s.link||'#'}" target="_blank" rel="noopener">${s.name}${s.price ? ' · ' + s.price : ''}</a>`).join('');
-    const priceDisplay = p.price ? `<div class="product-price">NZ$${p.price}<small>approx.</small></div>` : `<div class="product-price" style="font-size:1rem;color:#a89480">Price varies</div>`;
-    const buyBtn = p.buyLink ? `<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener">Best Products Found →</a>` : '';
-    grid.innerHTML += `
-      <div class="product-card">
-        <div class="product-image-wrap">
-          <img src="${p.imageUrl||'https://placehold.co/400x300/faf6f0/c8922a?text=Gift'}" alt="${p.name}" onerror="this.src='https://placehold.co/400x300/faf6f0/c8922a?text=Gift'" />
-          <div class="product-rank">${i+1}</div>
-        </div>
-        <div class="product-info">
-          <div class="product-type-tag">${p.type||'Gift Idea'}</div>
-          <div class="product-name">${p.name}</div>
-          <div class="product-reason">${p.reason}</div>
-          <div class="product-footer">${priceDisplay}${buyBtn}</div>
-          ${storeLinks ? `<div class="stores-list">${storeLinks}</div>` : ''}
-        </div>
+    const pricePrefix = p.priceIsMatched ? '' : 'from ';
+    const priceDisplay = p.price
+      ? `<div class="product-price">${pricePrefix}NZ$${p.price}<small>approx.</small></div>`
+      : `<div class="product-price" style="font-size:1rem;color:#a89480">Price varies</div>`;
+    const buyBtn = p.buyLink
+      ? `<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener">Best Products Found →</a>`
+      : '';
+    const storeLinks = (p.stores || [])
+      .map(s => `<a class="store-chip" href="${s.link||'#'}" target="_blank" rel="noopener">${s.name}${s.price ? ' · ' + s.price : ''}</a>`)
+      .join('');
+
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.innerHTML = `
+      <div class="product-image-wrap">
+        <img src="${p.imageUrl || 'https://placehold.co/700x300/faf6f0/c8922a?text=Gift'}"
+             alt="${p.name}"
+             onerror="this.src='https://placehold.co/700x300/faf6f0/c8922a?text=Gift'" />
+        <div class="product-rank">${i+1}</div>
+      </div>
+      <div class="product-info">
+        <div class="product-type-tag">${p.type || 'Gift Idea'}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-reason">${p.reason}</div>
+        <div class="product-footer">${priceDisplay}${buyBtn}</div>
+        ${storeLinks ? `<div class="stores-list">${storeLinks}</div>` : ''}
       </div>`;
+    track.appendChild(card);
+
+    // Dot
+    const dot = document.createElement('div');
+    dot.className = 'swipe-dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => swipeTo(i);
+    dotsContainer.appendChild(dot);
   });
+
+  // Touch/swipe support
+  let touchStartX = 0;
+  let touchEndX = 0;
+  const trackWrap = document.querySelector('.swipe-track-wrap');
+  trackWrap.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+  trackWrap.addEventListener('touchend', e => {
+    touchEndX = e.changedTouches[0].screenX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 50) swipeTo(diff > 0 ? currentCard + 1 : currentCard - 1);
+  });
+
+  updateSwipeNav();
   show('results');
-  // Scroll to top of results smoothly
   document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function swipeTo(index) {
+  if (index < 0 || index >= totalCards) return;
+  currentCard = index;
+  document.getElementById('swipeTrack').style.transform = `translateX(-${currentCard * 100}%)`;
+  document.querySelectorAll('.swipe-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === currentCard);
+  });
+  updateSwipeNav();
+}
+
+function updateSwipeNav() {
+  document.getElementById('swipePrev').disabled = currentCard === 0;
+  document.getElementById('swipeNext').disabled = currentCard === totalCards - 1;
+}
+
+// ── RESTART ───────────────────────────────────────────────────────────────────
+
 function restart() {
   ['error','results','loading','emailGate','quiz'].forEach(id => hide(id));
-  answers.q1gift=''; answers.q2=''; answers.q3=''; answers.q4budget=0; answers.q4occ=''; answers.q5interests=''; answers.email='';
+  answers.q1gift=''; answers.q2=''; answers.q3='';
+  answers.q4budget=0; answers.q4occ=''; answers.q5interests=''; answers.email='';
   document.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
   document.getElementById('q5interests').value = '';
   document.getElementById('emailInput').value = '';
-  ['next1','next2','next3','next4','btnReveal'].forEach(id => document.getElementById(id).disabled = true);
+  ['next1','next2','next3','next4','btnReveal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = true;
+  });
   document.getElementById('next3').classList.add('hidden');
   document.getElementById('next5').disabled = false;
-  answers.q4budget = 0;
   answers.q4budgetLabel = '';
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   document.getElementById('step1').classList.add('active');
   currentStep = 1;
-  // Reset refresh state
   refreshCount = 0;
+  currentCard = 0;
   updateRefreshUI();
-  hide('refreshLockout');
   show('hero');
 }
 
