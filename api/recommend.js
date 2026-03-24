@@ -26,18 +26,76 @@ const INAPPROPRIATE_MESSAGES = [
 ];
 
 // Blacklisted domains — never show these
+// Includes: junk global marketplaces, AU retailers, media/news sites,
+// B2B/trade suppliers, brand direct pages, cheap import sites
 const BLACKLISTED_DOMAINS = [
+  // Junk marketplaces & cheap import sites
+  'temu', 'aliexpress', 'wish.com', 'dhgate', 'banggood', 'shein',
+  'ebay', 'amazon.com', 'alibaba', 'lightinthebox', 'joom',
+  // AU retailers
+  '.com.au',
+  // Blacklisted NZ retailers
   'dicksmith', 'kogan', 'theiconic', 'trademe', 'lego.com',
-  'tommy.com', 'adidas.co.nz', 'nike.com', 'adidas.com', 'nike.co.nz',
-  'amazon.com', 'ebay', 'aliexpress', 'wish.com',
-  'nzherald', 'stuff.co.nz', 'newshub', 'rnz.co.nz',
-  'farfetch', 'net-a-porter', '.com.au'
+  'tommy.com', 'farfetch', 'net-a-porter',
+  // Media & news sites
+  'nzherald', 'stuff.co.nz', 'newshub', 'rnz.co.nz', 'tvnz', 'stuff.co',
+  // B2B / trade / commercial suppliers
+  'southernhospitality', 'temperature.co.nz', 'catering.co.nz',
+  'nzrestaurants', 'hirepool', 'tradetools', 'industrialtools',
+  // Brand direct — HOME ENTERTAINMENT & AUDIO
+  'samsung.com', 'sony.co.nz', 'lg.com', 'panasonic.com',
+  'philips.co.nz', 'tcl.com', 'hisense.co.nz', 'bose.co.nz', 'bose.com',
+  'sennheiser', 'jbl.co.nz', 'ultimateears.com', 'sonos.com',
+  'nz.yamaha.com', 'bang-olufsen.com', 'denon.com', 'marantz.com',
+  'klipsch.com', 'audio-technica.com',
+  // Brand direct — COMPUTING & MOBILE
+  'apple.com', 'store.google.com', 'microsoft.com', 'hp.com',
+  'dell.com', 'lenovo.com', 'asus.com', 'acer.com', 'logitech.com',
+  'razer.com', 'nintendo.co.nz', 'playstation.com', 'xbox.com',
+  'garmin.com', 'fitbit.com', 'gopro.com', 'nikon.co.nz', 'canon.co.nz',
+  // Brand direct — KITCHEN & APPLIANCES
+  'fisherpaykel.com', 'breville.com', 'delonghi.com', 'nespresso.com',
+  'kenwoodworld.com', 'kitchenaid.co.nz', 'sunbeam.co.nz',
+  'nutribullet.co.nz', 'ninjakitchen.co.nz', 'tefal.co.nz',
+  'cuisinart.co.nz', 'smeg.com', 'miele.co.nz', 'bosch-home.co.nz',
+  'haier.co.nz', 'westinghouse.co.nz', 'beko.com', 'asko.com',
+  'morphyrichards.co.nz', 'russellhobbs.co.nz', 'sodastream.co.nz',
+  'instantpot.co.nz',
+  // Brand direct — CLEANING & HOME COMFORT
+  'dyson.co.nz', 'dyson.com', 'sharkclean.co.nz', 'roborock.co.nz',
+  'ecovacs.com', 'irobot.co.nz', 'vax.co.nz', 'bissell.co.nz',
+  'blackanddecker.co.nz', 'mitsubishi-electric.co.nz', 'daikin.co.nz',
+  'fujitsugeneral.co.nz',
+  // Brand direct — BEAUTY & HEALTH
+  'ghdhair.com', 'cloudninehair.co.nz', 'vssassoon.co.nz',
+  'remington.co.nz', 'braun.com', 'oralb.co.nz',
+  // Brand direct — SPORTS & OUTDOOR
+  'nike.com', 'adidas.co.nz', 'adidas.com', 'nike.co.nz',
+  'nz.puma.com', 'newbalance.co.nz', 'underarmour.co.nz',
+  'asics.com', 'lululemon.co.nz', 'kathmandu.co.nz', 'macpac.co.nz',
+  'icebreaker.com', 'allbirds.co.nz', 'converse.co.nz', 'vans.co.nz',
+  'timberland.co.nz', 'thenorthface.co.nz', 'salomon.co.nz',
+  'brooksrunning.co.nz', 'oakley.com', 'ray-ban.com',
+  // Brand direct — TOOLS & AUTO
+  'tesla.com', 'ryobi.co.nz', 'makita.co.nz', 'dewalt.co.nz',
+  'milwaukeetool.co.nz',
 ];
 
 function isBlacklisted(url) {
   if (!url) return true;
   const lower = url.toLowerCase();
   return BLACKLISTED_DOMAINS.some(d => lower.includes(d));
+}
+
+// Budget range helper — returns [min, max] for a given budget sentinel value
+function getBudgetRange(budget) {
+  if (budget <= 30)  return [0,   30];
+  if (budget <= 50)  return [30,  50];
+  if (budget <= 100) return [50,  100];
+  if (budget <= 200) return [100, 200];
+  if (budget <= 300) return [200, 300];
+  if (budget <= 500) return [300, 500];
+  return [500, 99999]; // 500+
 }
 
 export default async function handler(req, res) {
@@ -78,6 +136,12 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Missing API keys' });
   }
 
+  const [budgetMin, budgetMax] = getBudgetRange(budget);
+  const budgetLabel = budget >= 500 ? 'NZ$500+' : `NZ$${budgetMin}–$${budgetMax}`;
+  const budgetInstruction = budget >= 500
+    ? 'Products MUST be priced NZ$500 or above. Do not recommend anything under NZ$500.'
+    : `Products MUST be priced between NZ$${budgetMin} and NZ$${budgetMax}. Do not recommend anything outside this range.`;
+
   // ── STEP 1: Claude Haiku → product recommendations ────────────────────────
 
   const systemPrompt = `You are ShopGenieAI, a gift recommendation engine for the New Zealand retail market.
@@ -90,7 +154,7 @@ STRICT RULES:
   GOOD: "Wireless Bluetooth Speaker", "Electric Shaver", "Basketball", "RFID Leather Wallet"
   BAD: "JBL Go 3", "Braun Series 7", "Spalding NBA Basketball", "Tommy Hilfiger Wallet"
 - Current 2025/2026 products only — nothing discontinued or outdated
-- Products MUST fit within the budget range stated
+- BUDGET HARD RULE: ${budgetInstruction} This is non-negotiable. If you cannot find 3 products in this range, choose the closest available products — do NOT go outside the range.
 - Vibe "Sporty": sport/fitness products only
 - Vibe "Luxe": premium products available in NZ mainstream stores
 - Vibe "Quirky/Fun": fun unique items at NZ mainstream retailers
@@ -98,7 +162,7 @@ STRICT RULES:
 - For hardware/tools: recommend products from Mitre 10, Bunnings, The Tool Shed
 - For fragrance: products at Chemist Warehouse or online perfume stores — NOT Farmers
 - NEVER recommend alcohol, wine, beer, spirits or any alcoholic products under any circumstances
-- searchQuery must be SHORT GENERIC 2-4 words, NO brand names
+- searchQuery must be SHORT GENERIC 2-4 words, NO brand names, relevant to the budget range
 - Return ONLY valid JSON, no preamble, no markdown
 
 OUTPUT FORMAT:
@@ -117,11 +181,11 @@ OUTPUT FORMAT:
 - Shopping for: ${shoppingFor}
 - Who: ${whoFor}
 - Vibe: ${vibe}
-- Budget: NZ$${budget}${budget >= 500 ? '+' : ''} (products MUST be within this budget)
+- Budget: ${budgetLabel} — HARD RULE: ${budgetInstruction}
 - Occasion: ${occasion}
 - Interests: ${interests || 'Not specified'}
 
-Use GENERIC product names only. No brand names.`;
+Use GENERIC product names only. No brand names. Every product MUST be within the stated budget range.`;
 
   let products;
   try {
@@ -151,21 +215,25 @@ Use GENERIC product names only. No brand names.`;
   }
 
   // ── STEP 2: Serper → find real NZ product pages with prices ───────────────
+  // Strategy:
+  //   /search organic  → direct retailer URLs for buy buttons (reliable NZ links)
+  //   /shopping        → price + store display name only (links are Google redirects — never use for buy buttons)
+  //   /images          → product photo
 
   const enriched = await Promise.all(products.map(async (product) => {
     try {
       const searchTerm = product.searchQuery || product.name;
 
-      // Run organic search + shopping + image search in parallel
-      // /search organic = direct retailer URLs (reliable NZ links)
-      // /shopping = price + store display name only (links are Google redirects — don't use for buy buttons)
-      // /images = product photo
+      // Build budget-aware search query to surface correctly priced results
+      const budgetHint = budget >= 500 ? 'over $500' : `under $${budgetMax}`;
+      const organicQuery = `${searchTerm} buy NZ ${budgetHint} -site:nzherald.co.nz -site:stuff.co.nz -site:rnz.co.nz -site:newshub.co.nz -site:temu.com -site:aliexpress.com`;
+
       const [organicRes, shoppingRes, imageRes] = await Promise.all([
         fetch('https://google.serper.dev/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
           body: JSON.stringify({
-            q: `${searchTerm} buy NZ -site:nzherald.co.nz -site:stuff.co.nz -site:rnz.co.nz -site:newshub.co.nz`,
+            q: organicQuery,
             gl: 'nz',
             hl: 'en',
             num: 10
@@ -178,7 +246,7 @@ Use GENERIC product names only. No brand names.`;
             q: `${searchTerm} NZ`,
             gl: 'nz',
             hl: 'en',
-            num: 5
+            num: 10
           })
         }),
         fetch('https://google.serper.dev/images', {
@@ -207,10 +275,12 @@ Use GENERIC product names only. No brand names.`;
                url.includes('pbtech') ||
                url.includes('stirlingsports') ||
                url.includes('torpedo7') ||
-               url.includes('kathmandu') ||
                url.includes('macpac') ||
                url.includes('hallensteins') ||
-               url.includes('glassons');
+               url.includes('glassons') ||
+               url.includes('luggage.co') ||
+               url.includes('thewarehouse') ||
+               url.includes('warehouse.co');
       });
 
       // Deduplicate by domain
@@ -226,19 +296,33 @@ Use GENERIC product names only. No brand names.`;
         } catch (e) { /* skip malformed URLs */ }
       }
 
-      // ── Shopping results → price + store name only (NOT for buy links) ──────
+      // ── Shopping results → price extraction only (NOT for buy links) ─────────
+      // Filter: must have a price, must not be blacklisted, must look like NZ pricing
       const shoppingItems = (shoppingData.shopping || []).filter(item => {
         if (!item.price) return false;
         if (isBlacklisted(item.source || '')) return false;
+        if (isBlacklisted(item.link || '')) return false;
+        // Exclude suspiciously cheap results (likely Temu/AliExpress bleed-through)
+        const priceNum = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
+        if (priceNum < 3) return false; // nothing legit in NZ is under $3
         return true;
       });
 
-      // Sort shopping by price ascending to find best price
+      // Sort shopping by price ascending
       shoppingItems.sort((a, b) => {
         const priceA = parseFloat((a.price || '9999').replace(/[^0-9.]/g, '')) || 9999;
         const priceB = parseFloat((b.price || '9999').replace(/[^0-9.]/g, '')) || 9999;
         return priceA - priceB;
       });
+
+      // Find the best shopping price that's within budget range
+      // Prefer items within budget; fall back to cheapest if nothing fits
+      const inBudgetItems = shoppingItems.filter(item => {
+        const priceNum = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
+        if (budget >= 500) return priceNum >= 500;
+        return priceNum >= budgetMin && priceNum <= budgetMax * 1.2; // 20% grace on upper end
+      });
+      const bestShoppingItem = inBudgetItems[0] || shoppingItems[0] || null;
 
       // ── Assemble best result ─────────────────────────────────────────────────
 
@@ -246,7 +330,7 @@ Use GENERIC product names only. No brand names.`;
       const bestOrganic = uniqueOrganic[0] || null;
       const buyLink = bestOrganic?.link || null;
 
-      // Store name = from organic result domain
+      // Store name = derived from organic result domain
       let bestStoreName = null;
       if (buyLink) {
         try {
@@ -258,15 +342,14 @@ Use GENERIC product names only. No brand names.`;
         } catch (e) {}
       }
 
-      // Price = from shopping results (more reliable price data)
+      // Price = from best in-budget shopping result
       let price = null;
-      const bestShoppingItem = shoppingItems[0] || null;
       if (bestShoppingItem?.price) {
         const match = bestShoppingItem.price.replace(/[^0-9.]/g, '');
         price = match ? Math.round(parseFloat(match)).toString() : null;
       }
 
-      // Other stores = next 3 organic results with links
+      // Other stores = next 3 unique organic results
       const stores = uniqueOrganic.slice(1, 4).map(item => {
         let storeName = '';
         if (item.link) {
@@ -281,7 +364,7 @@ Use GENERIC product names only. No brand names.`;
         return {
           name: storeName,
           link: item.link,
-          price: null // organic results don't carry price — use shopping for that
+          price: null
         };
       }).filter(s => s.name && s.link);
 
@@ -353,16 +436,16 @@ Use GENERIC product names only. No brand names.`;
     </div>
     <div style="background:white;border-radius:18px;padding:32px;border:1px solid #e8ddd0;margin-bottom:24px;">
       <div style="font-size:22px;font-weight:700;color:#3d2b1a;margin-bottom:10px;">Here are your 3 gift picks! 🎁</div>
-      <div style="font-size:14px;color:#7a6855;">For <strong>${whoFor}</strong> · <strong>${occasion}</strong> · Budget <strong>NZ$${budget}${budget >= 500 ? '+' : ''}</strong></div>
+      <div style="font-size:14px;color:#7a6855;">For <strong>${whoFor}</strong> · <strong>${occasion}</strong> · Budget <strong>${budgetLabel}</strong></div>
     </div>
     <div style="background:white;border-radius:18px;padding:32px;border:1px solid #e8ddd0;margin-bottom:24px;">${productRows}</div>
     <div style="background:#fff9f0;border-radius:12px;padding:16px 20px;border:1px solid #e8ddd0;margin-bottom:24px;font-size:12px;color:#9a8878;line-height:1.6;">
-      <strong style="color:#3d2b1a;">📋 A note from ShopGenieAI:</strong> We search NZ retailers in real-time to find where you can buy each product. The 'Best Products Found' button links to the lowest priced NZ result we found — always confirm pricing on the retailer's site before buying.
+      <strong style="color:#3d2b1a;">📋 A note from ShopGenieAI:</strong> We search NZ retailers in real-time to find where you can buy each product. The 'Best Products Found' button links to the best matched NZ result we found — always confirm pricing on the retailer's site before buying.
     </div>
     <div style="text-align:center;margin-bottom:32px;">
       <a href="https://shopgenieai.com" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;">Find More Gifts 🧞</a>
     </div>
-    <div style="text-align:center;font-size:12px;color:#b5a190;border-top:1px solid #e8ddd0;padding-top:20px;">Made in Aotearoa 🇳🇿 · ShopGenieAI</div>
+    <div style="text-align:center;font-size:12px;color:#b5a190;border-top:1px solid #e8ddd0;padding-top:20px;">Kiwi Made 🇳🇿 · ShopGenieAI</div>
   </div>
 </body></html>`;
 
