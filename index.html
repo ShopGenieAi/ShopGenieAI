@@ -100,11 +100,7 @@
   .option-pill:hover { border-color: var(--gold-light); background: rgba(200,146,42,0.06); color: var(--brown); }
   .option-pill.selected { border-color: var(--gold); background: linear-gradient(135deg, rgba(200,146,42,0.12), rgba(196,98,58,0.08)); color: var(--brown); font-weight: 600; }
 
-  .budget-display { font-family: var(--font-display); font-size: 2rem; font-weight: 700; color: var(--brown); margin-bottom: 16px; text-align: center; }
-  .budget-display span { color: var(--gold); }
-  input[type=range] { width: 100%; -webkit-appearance: none; height: 6px; border-radius: 10px; outline: none; cursor: pointer; }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--terracotta)); box-shadow: 0 2px 8px rgba(200,146,42,0.4); cursor: pointer; }
-  .budget-labels { display: flex; justify-content: space-between; font-size: 0.78rem; color: #a89480; margin-top: 10px; }
+
 
   .step-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 36px; }
   .btn-back { background: none; border: none; font-family: var(--font-body); font-size: 0.9rem; font-weight: 500; color: #a89480; cursor: pointer; padding: 10px 0; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
@@ -300,27 +296,31 @@
       <div class="step" id="step4">
         <div class="step-label">Step 4 — Budget & Occasion</div>
         <div class="step-question">What's your budget?</div>
-        <div class="budget-display"><span id="budgetVal">NZ$100</span></div>
-        <input type="range" id="q4budget" min="20" max="500" step="10" value="100" oninput="updateBudget(this.value)" />
-        <div class="budget-labels"><span>NZ$20</span><span>NZ$500+</span></div>
-        <div style="margin-top:32px">
-          <div class="step-question" style="font-size:1.2rem;margin-bottom:16px">What's the occasion?</div>
-          <div class="options-grid">
-            <div class="option-pill" onclick="selectPill(this,'q4occ')">Birthday</div>
-            <div class="option-pill" onclick="selectPill(this,'q4occ')">Christmas</div>
-            <div class="option-pill" onclick="selectPill(this,'q4occ')">Anniversary</div>
-            <div class="option-pill" onclick="selectPill(this,'q4occ')">Valentine's Day</div>
-            <div class="option-pill" onclick="selectPill(this,'q4occ')">Mother's Day</div>
-            <div class="option-pill" onclick="selectPill(this,'q4occ')">Father's Day</div>
-            <div class="option-pill" onclick="selectPill(this,'q4occ')">Wedding / Engagement</div>
-            <div class="option-pill" onclick="selectPill(this,'q4occ')">New Baby</div>
-            <div class="option-pill" onclick="selectPill(this,'q4occ')">Graduation</div>
-            <div class="option-pill" onclick="selectPill(this,'q4occ')">Just Because</div>
-          </div>
+        <div class="options-grid" style="margin-bottom:32px;">
+          <div class="option-pill" onclick="selectBudget(this,30)">Under NZ$30</div>
+          <div class="option-pill" onclick="selectBudget(this,50)">NZ$30–$50</div>
+          <div class="option-pill" onclick="selectBudget(this,100)">NZ$50–$100</div>
+          <div class="option-pill" onclick="selectBudget(this,200)">NZ$100–$200</div>
+          <div class="option-pill" onclick="selectBudget(this,300)">NZ$200–$300</div>
+          <div class="option-pill" onclick="selectBudget(this,500)">NZ$300–$500</div>
+          <div class="option-pill" onclick="selectBudget(this,501)">NZ$500+</div>
+        </div>
+        <div class="step-question" style="font-size:1.2rem;margin-bottom:16px">What's the occasion?</div>
+        <div class="options-grid">
+          <div class="option-pill" onclick="selectPill(this,'q4occ')">Birthday</div>
+          <div class="option-pill" onclick="selectPill(this,'q4occ')">Christmas</div>
+          <div class="option-pill" onclick="selectPill(this,'q4occ')">Anniversary</div>
+          <div class="option-pill" onclick="selectPill(this,'q4occ')">Valentine's Day</div>
+          <div class="option-pill" onclick="selectPill(this,'q4occ')">Mother's Day</div>
+          <div class="option-pill" onclick="selectPill(this,'q4occ')">Father's Day</div>
+          <div class="option-pill" onclick="selectPill(this,'q4occ')">Wedding / Engagement</div>
+          <div class="option-pill" onclick="selectPill(this,'q4occ')">New Baby</div>
+          <div class="option-pill" onclick="selectPill(this,'q4occ')">Graduation</div>
+          <div class="option-pill" onclick="selectPill(this,'q4occ')">Just Because</div>
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(3)">← Back</button>
-          <button class="btn-next" id="next4" onclick="goTo(5)" disabled style="display:none;">Next →</button>
+          <button class="btn-next" id="next4" onclick="goTo(5)" disabled>Next →</button>
         </div>
       </div>
 
@@ -369,6 +369,9 @@
       <div class="results-eyebrow">✨ Your personalised picks</div>
       <h2 class="results-title">Here are your <em>3 gifts</em></h2>
     </div>
+    <div style="background:#fff9f0;border-radius:12px;padding:14px 18px;border:1px solid #e8ddd0;margin-bottom:24px;font-size:0.78rem;color:#9a8878;line-height:1.6;">
+      <strong style="color:#3d2b1a;">📋 A note from ShopGenieAI:</strong> We search NZ retailers in real-time to find where you can buy each product. The 'Buy now' button links to the top-ranked NZ result — always confirm pricing on the retailer's site before buying.
+    </div>
     <div class="products-grid" id="productsGrid"></div>
     <div class="restart-section">
       <button class="btn-restart" onclick="restart()">↩ Start over</button>
@@ -389,7 +392,7 @@
 
 <script>
 const TOTAL_STEPS = 5;
-const answers = { q1gift:'', q2:'', q3:[], q4budget:100, q4occ:'', q5interests:'', email:'' };
+const answers = { q1gift:'', q2:'', q3:[], q4budget:0, q4budgetLabel:'', q4occ:'', q5interests:'', email:'' };
 let currentStep = 1;
 
 function show(id) { document.getElementById(id).style.display = 'block'; }
@@ -444,11 +447,23 @@ function selectMulti(el, key, max) {
   document.getElementById('next3').disabled = answers[key].length === 0;
 }
 
+function selectBudget(el, val) {
+  el.parentElement.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  answers.q4budget = val;
+  answers.q4budgetLabel = el.textContent.trim();
+  // Check if occasion also selected to enable next
+  checkBudgetOccasion();
+}
+
+function checkBudgetOccasion() {
+  const hasBudget = answers.q4budget > 0;
+  const hasOccasion = answers.q4occ !== '';
+  document.getElementById('next4').disabled = !(hasBudget && hasOccasion);
+}
+
 function updateBudget(val) {
   answers.q4budget = parseInt(val);
-  document.getElementById('budgetVal').textContent = val >= 500 ? 'NZ$500+' : `NZ$${val}`;
-  const pct = ((val-20)/(500-20))*100;
-  document.getElementById('q4budget').style.background = `linear-gradient(90deg, #c8922a ${pct}%, #e8ddd0 ${pct}%)`;
 }
 
 function showEmailGate() {
@@ -467,7 +482,10 @@ async function submitQuiz() {
   hide('emailGate');
   show('loading');
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
     const response = await fetch('/api/recommend', {
+      signal: controller.signal,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -480,13 +498,22 @@ async function submitQuiz() {
         interests: answers.q5interests
       })
     });
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      if (errData.message) throw new Error('INAPPROPRIATE: ' + errData.message);
+      throw new Error(`API error: ${response.status}`);
+    }
     const data = await response.json();
     hide('loading');
     renderResults(data.products);
   } catch (err) {
     hide('loading');
-    document.getElementById('errorMsg').textContent = err.message || 'Something went wrong. Try again!';
+    if (err.message && err.message.includes('INAPPROPRIATE')) {
+      document.getElementById('errorMsg').textContent = "Kia ora! 😅 The Genie only grants gift wishes — not THAT kind of wish! Try something a little more gift-friendly. 🧞🇳🇿";
+    } else {
+      document.getElementById('errorMsg').textContent = err.message || 'Something went wrong. Try again!';
+    }
     show('error');
   }
 }
@@ -524,8 +551,8 @@ function restart() {
   document.getElementById('emailInput').value = '';
   ['next1','next2','next3','next4','btnReveal'].forEach(id => document.getElementById(id).disabled = true);
   document.getElementById('next5').disabled = false;
-  updateBudget(100);
-  document.getElementById('q4budget').value = 100;
+  answers.q4budget = 0;
+  answers.q4budgetLabel = '';
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   document.getElementById('step1').classList.add('active');
   currentStep = 1;
