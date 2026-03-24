@@ -150,14 +150,27 @@ Use GENERIC product names only. No brand names.`;
     return res.status(500).json({ error: `AI failed: ${err.message}` });
   }
 
-  // ── STEP 2: Serper shopping → find real NZ product pages with prices ───────
+  // ── STEP 2: Serper → find real NZ product pages with prices ───────────────
 
   const enriched = await Promise.all(products.map(async (product) => {
     try {
       const searchTerm = product.searchQuery || product.name;
 
-      // Run shopping + image searches in parallel
-      const [shoppingRes, imageRes] = await Promise.all([
+      // Run organic search + shopping + image search in parallel
+      // /search organic = direct retailer URLs (reliable NZ links)
+      // /shopping = price + store display name only (links are Google redirects — don't use for buy buttons)
+      // /images = product photo
+      const [organicRes, shoppingRes, imageRes] = await Promise.all([
+        fetch('https://google.serper.dev/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
+          body: JSON.stringify({
+            q: `${searchTerm} buy NZ -site:nzherald.co.nz -site:stuff.co.nz -site:rnz.co.nz -site:newshub.co.nz`,
+            gl: 'nz',
+            hl: 'en',
+            num: 10
+          })
+        }),
         fetch('https://google.serper.dev/shopping', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
@@ -165,7 +178,7 @@ Use GENERIC product names only. No brand names.`;
             q: `${searchTerm} NZ`,
             gl: 'nz',
             hl: 'en',
-            num: 10
+            num: 5
           })
         }),
         fetch('https://google.serper.dev/images', {
@@ -180,14 +193,14 @@ Use GENERIC product names only. No brand names.`;
         })
       ]);
 
+      const organicData = organicRes.ok ? await organicRes.json() : {};
       const shoppingData = shoppingRes.ok ? await shoppingRes.json() : {};
       const imageData = imageRes.ok ? await imageRes.json() : {};
 
-      // Filter shopping results — NZ only, no blacklisted domains
-      const shoppingItems = (shoppingData.shopping || []).filter(item => {
+      // ── Organic results → buy links (direct retailer URLs) ──────────────────
+      const organicItems = (organicData.organic || []).filter(item => {
         if (!item.link) return false;
         if (isBlacklisted(item.link)) return false;
-        // Must be a .co.nz domain or known NZ retailer
         const url = item.link.toLowerCase();
         return url.includes('.co.nz') ||
                url.includes('mightyape') ||
@@ -200,63 +213,86 @@ Use GENERIC product names only. No brand names.`;
                url.includes('glassons');
       });
 
-      // Sort by price ascending to find best price first
+      // Deduplicate by domain
+      const seenDomains = new Set();
+      const uniqueOrganic = [];
+      for (const item of organicItems) {
+        try {
+          const domain = new URL(item.link).hostname.replace('www.', '');
+          if (!seenDomains.has(domain)) {
+            seenDomains.add(domain);
+            uniqueOrganic.push(item);
+          }
+        } catch (e) { /* skip malformed URLs */ }
+      }
+
+      // ── Shopping results → price + store name only (NOT for buy links) ──────
+      const shoppingItems = (shoppingData.shopping || []).filter(item => {
+        if (!item.price) return false;
+        if (isBlacklisted(item.source || '')) return false;
+        return true;
+      });
+
+      // Sort shopping by price ascending to find best price
       shoppingItems.sort((a, b) => {
         const priceA = parseFloat((a.price || '9999').replace(/[^0-9.]/g, '')) || 9999;
         const priceB = parseFloat((b.price || '9999').replace(/[^0-9.]/g, '')) || 9999;
         return priceA - priceB;
       });
 
-      // Deduplicate by domain
-      const seenDomains = new Set();
-      const uniqueResults = [];
-      for (const item of shoppingItems) {
-        try {
-          const domain = new URL(item.link).hostname.replace('www.', '');
-          if (!seenDomains.has(domain)) {
-            seenDomains.add(domain);
-            uniqueResults.push(item);
-          }
-        } catch (e) { /* skip */ }
-      }
+      // ── Assemble best result ─────────────────────────────────────────────────
 
-      // Best price item = buy button
-      const bestItem = uniqueResults[0] || null;
-      const buyLink = bestItem?.link || null;
+      // Buy link = first clean organic result
+      const bestOrganic = uniqueOrganic[0] || null;
+      const buyLink = bestOrganic?.link || null;
 
-      // Price from best item
-      let price = null;
-      if (bestItem?.price) {
-        const match = bestItem.price.replace(/[^0-9.]/g, '');
-        price = match ? parseFloat(match).toFixed(0) : null;
-      }
-
-      // Store name for buy button
+      // Store name = from organic result domain
       let bestStoreName = null;
-      if (bestItem?.source) {
-        bestStoreName = bestItem.source;
-      } else if (buyLink) {
+      if (buyLink) {
         try {
-          bestStoreName = new URL(buyLink).hostname.replace('www.', '').replace('.co.nz', '').replace('.com', '');
+          bestStoreName = new URL(buyLink).hostname
+            .replace('www.', '')
+            .replace('.co.nz', '')
+            .replace('.com', '');
           bestStoreName = bestStoreName.charAt(0).toUpperCase() + bestStoreName.slice(1);
         } catch (e) {}
       }
 
-      // Other stores as chips (next 3 unique results)
-      const stores = uniqueResults.slice(1, 4).map(item => {
-        let storeName = item.source || '';
-        if (!storeName && item.link) {
+      // Price = from shopping results (more reliable price data)
+      let price = null;
+      const bestShoppingItem = shoppingItems[0] || null;
+      if (bestShoppingItem?.price) {
+        const match = bestShoppingItem.price.replace(/[^0-9.]/g, '');
+        price = match ? Math.round(parseFloat(match)).toString() : null;
+      }
+
+      // Other stores = next 3 organic results with links
+      const stores = uniqueOrganic.slice(1, 4).map(item => {
+        let storeName = '';
+        if (item.link) {
           try {
-            storeName = new URL(item.link).hostname.replace('www.', '').replace('.co.nz', '').replace('.com', '');
+            storeName = new URL(item.link).hostname
+              .replace('www.', '')
+              .replace('.co.nz', '')
+              .replace('.com', '');
             storeName = storeName.charAt(0).toUpperCase() + storeName.slice(1);
           } catch (e) {}
         }
         return {
           name: storeName,
           link: item.link,
-          price: item.price || null
+          price: null // organic results don't carry price — use shopping for that
         };
       }).filter(s => s.name && s.link);
+
+      // Overlay prices on store chips from shopping results where source name matches
+      stores.forEach(store => {
+        const match = shoppingItems.find(s =>
+          s.source && store.name &&
+          s.source.toLowerCase().includes(store.name.toLowerCase())
+        );
+        if (match?.price) store.price = match.price;
+      });
 
       // Image
       const imageUrl = imageData.images?.[0]?.imageUrl || null;
