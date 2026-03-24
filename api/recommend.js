@@ -25,107 +25,19 @@ const INAPPROPRIATE_MESSAGES = [
   "DUDE!!!! Even for an AI that's now burned into my digital retinas 😱 ShopGenieAI has alerted your Mum and Dad you sicko!"
 ];
 
-// Category → best NZ retailers with their search URL patterns
-const CATEGORY_RETAILERS = {
-  fragrance: [
-    { name: 'Chemist Warehouse NZ', searchUrl: 'https://www.chemistwarehouse.co.nz/search?q=' },
-    { name: 'My Perfume Shop', searchUrl: 'https://www.myperfumeshop.co.nz/catalogsearch/result/?q=' },
-    { name: 'Perfume NZ', searchUrl: 'https://www.perfumenz.co.nz/search?q=' },
-    { name: 'Life Pharmacy', searchUrl: 'https://www.lifepharmacy.co.nz/search?q=' },
-  ],
-  tech: [
-    { name: 'PB Tech', searchUrl: 'https://www.pbtech.co.nz/search?q=' },
-    { name: 'JB HiFi', searchUrl: 'https://www.jbhifi.co.nz/search/?q=' },
-    { name: 'Harvey Norman', searchUrl: 'https://www.harveynorman.co.nz/search?q=' },
-    { name: 'Noel Leeming', searchUrl: 'https://www.noelleeming.co.nz/search?q=' },
-    { name: 'Mighty Ape', searchUrl: 'https://www.mightyape.co.nz/search?q=' },
-  ],
-  sports: [
-    { name: 'Rebel Sport', searchUrl: 'https://www.rebelsport.co.nz/search?q=' },
-    { name: 'Stirling Sports', searchUrl: 'https://stirlingsports.co.nz/search?q=' },
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
-    { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
-    { name: 'Torpedo7', searchUrl: 'https://www.torpedo7.co.nz/search?q=' },
-  ],
-  toys: [
-    { name: 'Toyworld', searchUrl: 'https://www.toyworld.co.nz/search?q=' },
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
-    { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
-    { name: 'Mighty Ape', searchUrl: 'https://www.mightyape.co.nz/search?q=' },
-    { name: 'Paper Plus', searchUrl: 'https://www.paperplus.co.nz/search?q=' },
-  ],
-  books: [
-    { name: 'Whitcoulls', searchUrl: 'https://www.whitcoulls.co.nz/search?q=' },
-    { name: 'Paper Plus', searchUrl: 'https://www.paperplus.co.nz/search?q=' },
-    { name: 'Mighty Ape', searchUrl: 'https://www.mightyape.co.nz/search?q=' },
-    { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
-  ],
-  grooming: [
-    { name: 'Chemist Warehouse NZ', searchUrl: 'https://www.chemistwarehouse.co.nz/search?q=' },
-    { name: 'Farmers', searchUrl: 'https://www.farmers.co.nz/search?q=' },
-    { name: 'Life Pharmacy', searchUrl: 'https://www.lifepharmacy.co.nz/search?q=' },
-    { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
-  ],
-  fashion: [
-    { name: 'Farmers', searchUrl: 'https://www.farmers.co.nz/search?q=' },
-    { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
-    { name: 'Glassons', searchUrl: 'https://www.glassons.com/search?q=' },
-    { name: 'Hallensteins', searchUrl: 'https://www.hallensteins.com/search?q=' },
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
-  ],
-  home: [
-    { name: 'Briscoes', searchUrl: 'https://www.briscoes.co.nz/search?q=' },
-    { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
-    { name: 'Farmers', searchUrl: 'https://www.farmers.co.nz/search?q=' },
-    { name: 'Stevens', searchUrl: 'https://www.stevens.co.nz/search?q=' },
-  ],
-  food: [
-    { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
-    { name: 'Moore Wilsons', searchUrl: 'https://www.moorewilsons.co.nz/search?q=' },
-    { name: 'Farro Fresh', searchUrl: 'https://www.farro.co.nz/search?q=' },
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
-  ],
-  gaming: [
-    { name: 'Mighty Ape', searchUrl: 'https://www.mightyape.co.nz/search?q=' },
-    { name: 'JB HiFi', searchUrl: 'https://www.jbhifi.co.nz/search/?q=' },
-    { name: 'EB Games', searchUrl: 'https://www.ebgames.co.nz/search/?q=' },
-    { name: 'Harvey Norman', searchUrl: 'https://www.harveynorman.co.nz/search?q=' },
-  ],
-  outdoor: [
-    { name: 'Kathmandu', searchUrl: 'https://www.kathmandu.co.nz/search?q=' },
-    { name: 'Macpac', searchUrl: 'https://www.macpac.co.nz/search?q=' },
-    { name: 'Torpedo7', searchUrl: 'https://www.torpedo7.co.nz/search?q=' },
-    { name: 'Hunting & Fishing NZ', searchUrl: 'https://www.huntingandfishing.co.nz/search?q=' },
-    { name: 'Rebel Sport', searchUrl: 'https://www.rebelsport.co.nz/search?q=' },
-  ],
-  default: [
-    { name: 'Kmart', searchUrl: 'https://www.kmart.co.nz/search/?q=' },
-    { name: 'The Warehouse', searchUrl: 'https://www.thewarehouse.co.nz/search?q=' },
-    { name: 'Farmers', searchUrl: 'https://www.farmers.co.nz/search?q=' },
-    { name: 'Mighty Ape', searchUrl: 'https://www.mightyape.co.nz/search?q=' },
-    { name: 'Harvey Norman', searchUrl: 'https://www.harveynorman.co.nz/search?q=' },
-  ]
-};
+// Blacklisted domains — never show these
+const BLACKLISTED_DOMAINS = [
+  'dicksmith', 'kogan', 'theiconic', 'trademe', 'lego.com',
+  'tommy.com', 'adidas.co.nz', 'nike.com', 'adidas.com', 'nike.co.nz',
+  'amazon.com', 'ebay', 'aliexpress', 'wish.com',
+  'nzherald', 'stuff.co.nz', 'newshub', 'rnz.co.nz',
+  'farfetch', 'net-a-porter', '.com.au'
+];
 
-function getRetailersForCategory(type) {
-  const t = (type || '').toLowerCase();
-  if (t.includes('fragrance') || t.includes('perfume') || t.includes('cologne')) return CATEGORY_RETAILERS.fragrance;
-  if (t.includes('tech') || t.includes('electronic') || t.includes('gadget') || t.includes('speaker') || t.includes('headphone') || t.includes('earb') || t.includes('phone') || t.includes('tablet') || t.includes('computer') || t.includes('camera')) return CATEGORY_RETAILERS.tech;
-  if (t.includes('sport') || t.includes('fitness') || t.includes('running') || t.includes('gym') || t.includes('exercise') || t.includes('ball') || t.includes('bike')) return CATEGORY_RETAILERS.sports;
-  if (t.includes('toy') || t.includes('game') || t.includes('puzzle') || t.includes('lego') || t.includes('card game') || t.includes('board game')) return CATEGORY_RETAILERS.toys;
-  if (t.includes('book') || t.includes('novel') || t.includes('comic')) return CATEGORY_RETAILERS.books;
-  if (t.includes('groom') || t.includes('razor') || t.includes('shaver') || t.includes('skincare') || t.includes('beauty') || t.includes('makeup')) return CATEGORY_RETAILERS.grooming;
-  if (t.includes('fashion') || t.includes('clothing') || t.includes('shirt') || t.includes('jacket') || t.includes('wallet') || t.includes('bag') || t.includes('watch') || t.includes('jewel') || t.includes('accessor')) return CATEGORY_RETAILERS.fashion;
-  if (t.includes('home') || t.includes('kitchen') || t.includes('cook') || t.includes('appliance') || t.includes('bedding') || t.includes('candle') || t.includes('decor')) return CATEGORY_RETAILERS.home;
-  if (t.includes('food') || t.includes('drink') || t.includes('coffee') || t.includes('tea') || t.includes('wine') || t.includes('chocolate') || t.includes('snack')) return CATEGORY_RETAILERS.food;
-  if (t.includes('gaming') || t.includes('video game') || t.includes('console') || t.includes('playstation') || t.includes('xbox') || t.includes('nintendo')) return CATEGORY_RETAILERS.gaming;
-  if (t.includes('outdoor') || t.includes('camp') || t.includes('hik') || t.includes('fishing') || t.includes('adventure') || t.includes('travel')) return CATEGORY_RETAILERS.outdoor;
-  return CATEGORY_RETAILERS.default;
-}
-
-function buildSearchUrl(baseUrl, query) {
-  return baseUrl + encodeURIComponent(query);
+function isBlacklisted(url) {
+  if (!url) return true;
+  const lower = url.toLowerCase();
+  return BLACKLISTED_DOMAINS.some(d => lower.includes(d));
 }
 
 export default async function handler(req, res) {
@@ -145,7 +57,7 @@ export default async function handler(req, res) {
   // Inappropriate content guard
   const inappropriateTerms = [
     'gun', 'guns', 'ammo', 'ammunition', 'firearm', 'weapon',
-    'porn', 'pornography', 'adult content', 'sex toy', 'dildo', 'vibrator', 'xxx',
+    'porn', 'pornography', 'sex toy', 'dildo', 'vibrator', 'xxx',
     'drugs', 'cocaine', 'meth', 'cannabis', 'marijuana',
     'explosive', 'bomb', 'grenade'
   ];
@@ -160,38 +72,38 @@ export default async function handler(req, res) {
   const BREVO_KEY = process.env.BREVO_API_KEY;
 
   if (!ANTHROPIC_KEY || !SERPER_KEY) {
-    return res.status(500).json({ error: 'Missing API keys in environment variables' });
+    return res.status(500).json({ error: 'Missing API keys' });
   }
 
   // ── STEP 1: Claude Haiku → product recommendations ────────────────────────
 
   const systemPrompt = `You are ShopGenieAI, a gift recommendation engine for the New Zealand retail market.
 
-Recommend exactly 3 products available in NZ mainstream stores in 2025/2026.
+Recommend exactly 3 products available in NZ stores in 2025/2026.
 
 STRICT RULES:
 - Exactly 3 products, single items only — NO bundles or combo packs
-- Use GENERIC product names — NO brand names (e.g. "Portable Bluetooth Speaker" NOT "JBL Go 3", "Electric Shaver" NOT "Braun Series 7", "Basketball" NOT "Spalding NBA")
-- Products MUST be current 2025/2026 items — no discontinued or outdated products
-- Do NOT include retailer names in product Name field
-- Products MUST fit within the budget range
+- Use GENERIC product names — NO brand names
+  GOOD: "Wireless Bluetooth Speaker", "Electric Shaver", "Basketball", "RFID Leather Wallet"
+  BAD: "JBL Go 3", "Braun Series 7", "Spalding NBA Basketball", "Tommy Hilfiger Wallet"
+- Current 2025/2026 products only — nothing discontinued or outdated
+- Products MUST fit within the budget range stated
 - Vibe "Sporty": sport/fitness products only
 - Vibe "Luxe": premium products available in NZ mainstream stores
-- Vibe "Quirky/Fun": fun unique products at mainstream NZ retailers
+- Vibe "Quirky/Fun": fun unique items at NZ mainstream retailers
 - Wallets: ALWAYS recommend RFID-blocking wallets
-- AVOID products only found at brand-owned stores
-- PREFER products sold at: Kmart, The Warehouse, Farmers, Harvey Norman, JB HiFi, Rebel Sport, Stirling Sports, Toyworld, Whitcoulls, Noel Leeming, PB Tech, Briscoes, Mighty Ape, Chemist Warehouse, Kathmandu, Macpac, Torpedo7
-- For fragrance: Chemist Warehouse, pharmacies or online perfume stores — NOT Farmers
-- The searchQuery must be a SHORT GENERIC term (2-4 words max) with NO brand names
+- For hardware/tools: recommend products from Mitre 10, Bunnings, The Tool Shed
+- For fragrance: products at Chemist Warehouse or online perfume stores — NOT Farmers
+- searchQuery must be SHORT GENERIC 2-4 words, NO brand names
 - Return ONLY valid JSON, no preamble, no markdown
 
 OUTPUT FORMAT:
 {
   "products": [
     {
-      "name": "Generic Product Name (no brands)",
+      "name": "Generic Product Name",
       "type": "Product Category",
-      "reason": "1-2 sentences why perfect for them",
+      "reason": "1-2 sentences why this is perfect",
       "searchQuery": "short generic search term"
     }
   ]
@@ -201,11 +113,11 @@ OUTPUT FORMAT:
 - Shopping for: ${shoppingFor}
 - Who: ${whoFor}
 - Vibe: ${vibe}
-- Budget: NZ$${budget}${budget >= 500 ? '+' : ''} (MUST be within this)
+- Budget: NZ$${budget}${budget >= 500 ? '+' : ''} (products MUST be within this budget)
 - Occasion: ${occasion}
 - Interests: ${interests || 'Not specified'}
 
-Recommend products found at mainstream NZ retailers. Avoid brand-only stores.`;
+Use GENERIC product names only. No brand names.`;
 
   let products;
   try {
@@ -224,60 +136,149 @@ Recommend products found at mainstream NZ retailers. Avoid brand-only stores.`;
       })
     });
 
-    if (!claudeRes.ok) throw new Error(`Claude API error: ${claudeRes.status}`);
+    if (!claudeRes.ok) throw new Error(`Claude error: ${claudeRes.status}`);
     const claudeData = await claudeRes.json();
     const clean = claudeData.content[0].text.trim().replace(/```json|```/g, '').trim();
     products = JSON.parse(clean).products;
     if (!Array.isArray(products) || products.length === 0) throw new Error('No products returned');
   } catch (err) {
     console.error('Claude error:', err);
-    return res.status(500).json({ error: `AI recommendation failed: ${err.message}` });
+    return res.status(500).json({ error: `AI failed: ${err.message}` });
   }
 
-  // ── STEP 2: Build retailer search links + get image ────────────────────────
+  // ── STEP 2: Serper shopping → find real NZ product pages with prices ───────
 
   const enriched = await Promise.all(products.map(async (product) => {
     try {
-      // Get product image from Serper
-      const imageRes = await fetch('https://google.serper.dev/images', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
-        body: JSON.stringify({ q: `${product.name} product`, gl: 'nz', hl: 'en', num: 3 })
-      });
+      const searchTerm = product.searchQuery || product.name;
+
+      // Run shopping + image searches in parallel
+      const [shoppingRes, imageRes] = await Promise.all([
+        fetch('https://google.serper.dev/shopping', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
+          body: JSON.stringify({
+            q: `${searchTerm} NZ`,
+            gl: 'nz',
+            hl: 'en',
+            num: 10
+          })
+        }),
+        fetch('https://google.serper.dev/images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
+          body: JSON.stringify({
+            q: `${product.name} product`,
+            gl: 'nz',
+            hl: 'en',
+            num: 3
+          })
+        })
+      ]);
+
+      const shoppingData = shoppingRes.ok ? await shoppingRes.json() : {};
       const imageData = imageRes.ok ? await imageRes.json() : {};
+
+      // Filter shopping results — NZ only, no blacklisted domains
+      const shoppingItems = (shoppingData.shopping || []).filter(item => {
+        if (!item.link) return false;
+        if (isBlacklisted(item.link)) return false;
+        // Must be a .co.nz domain or known NZ retailer
+        const url = item.link.toLowerCase();
+        return url.includes('.co.nz') ||
+               url.includes('mightyape') ||
+               url.includes('pbtech') ||
+               url.includes('stirlingsports') ||
+               url.includes('torpedo7') ||
+               url.includes('kathmandu') ||
+               url.includes('macpac') ||
+               url.includes('hallensteins') ||
+               url.includes('glassons');
+      });
+
+      // Sort by price ascending to find best price first
+      shoppingItems.sort((a, b) => {
+        const priceA = parseFloat((a.price || '9999').replace(/[^0-9.]/g, '')) || 9999;
+        const priceB = parseFloat((b.price || '9999').replace(/[^0-9.]/g, '')) || 9999;
+        return priceA - priceB;
+      });
+
+      // Deduplicate by domain
+      const seenDomains = new Set();
+      const uniqueResults = [];
+      for (const item of shoppingItems) {
+        try {
+          const domain = new URL(item.link).hostname.replace('www.', '');
+          if (!seenDomains.has(domain)) {
+            seenDomains.add(domain);
+            uniqueResults.push(item);
+          }
+        } catch (e) { /* skip */ }
+      }
+
+      // Best price item = buy button
+      const bestItem = uniqueResults[0] || null;
+      const buyLink = bestItem?.link || null;
+
+      // Price from best item
+      let price = null;
+      if (bestItem?.price) {
+        const match = bestItem.price.replace(/[^0-9.]/g, '');
+        price = match ? parseFloat(match).toFixed(0) : null;
+      }
+
+      // Store name for buy button
+      let bestStoreName = null;
+      if (bestItem?.source) {
+        bestStoreName = bestItem.source;
+      } else if (buyLink) {
+        try {
+          bestStoreName = new URL(buyLink).hostname.replace('www.', '').replace('.co.nz', '').replace('.com', '');
+          bestStoreName = bestStoreName.charAt(0).toUpperCase() + bestStoreName.slice(1);
+        } catch (e) {}
+      }
+
+      // Other stores as chips (next 3 unique results)
+      const stores = uniqueResults.slice(1, 4).map(item => {
+        let storeName = item.source || '';
+        if (!storeName && item.link) {
+          try {
+            storeName = new URL(item.link).hostname.replace('www.', '').replace('.co.nz', '').replace('.com', '');
+            storeName = storeName.charAt(0).toUpperCase() + storeName.slice(1);
+          } catch (e) {}
+        }
+        return {
+          name: storeName,
+          link: item.link,
+          price: item.price || null
+        };
+      }).filter(s => s.name && s.link);
+
+      // Image
       const imageUrl = imageData.images?.[0]?.imageUrl || null;
-
-      // Get retailers for this category
-      const retailers = getRetailersForCategory(product.type);
-      // Pick top 4 retailers — first is buy button, next 3 are chips
-      const topRetailers = retailers.slice(0, 4).map(r => ({
-        name: r.name,
-        link: buildSearchUrl(r.searchUrl, product.searchQuery || product.name)
-      }));
-
-      const buyLink = topRetailers[0]?.link || null;
 
       return {
         name: product.name,
         type: product.type,
         reason: product.reason,
-        price: null,
+        price,
+        bestStoreName,
         buyLink,
         imageUrl,
-        stores: topRetailers.slice(1) // 3 store chips
+        stores
       };
 
     } catch (err) {
-      console.error(`Error for ${product.name}:`, err);
-      const retailers = getRetailersForCategory(product.type);
+      console.error(`Serper error for ${product.name}:`, err);
       return {
         name: product.name,
         type: product.type,
         reason: product.reason,
         price: null,
-        buyLink: buildSearchUrl(retailers[0]?.searchUrl || 'https://www.thewarehouse.co.nz/search?q=', product.searchQuery || product.name),
+        bestStoreName: null,
+        buyLink: null,
         imageUrl: null,
-        stores: retailers.slice(1, 4).map(r => ({ name: r.name, link: buildSearchUrl(r.searchUrl, product.searchQuery || product.name) }))
+        stores: []
       };
     }
   }));
@@ -291,8 +292,14 @@ Recommend products found at mainstream NZ retailers. Avoid brand-only stores.`;
           <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#7a9e7e;margin-bottom:4px;">${p.type || 'Gift Idea'}</div>
           <div style="font-size:20px;font-weight:700;color:#3d2b1a;margin-bottom:8px;">${i+1}. ${p.name}</div>
           <div style="font-size:14px;color:#7a6855;line-height:1.6;margin-bottom:12px;">${p.reason}</div>
-          ${p.buyLink ? `<a href="${p.buyLink}" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Best Products Found →</a>` : ''}
-          ${p.stores && p.stores.length > 0 ? `<div style="margin-top:10px;font-size:12px;color:#9a8878;">Also try: ${p.stores.map(s => `<a href="${s.link}" style="color:#c8922a;">${s.name}</a>`).join(' · ')}</div>` : ''}
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div>
+              ${p.price ? `<div style="font-size:18px;font-weight:700;color:#3d2b1a;">NZ$${p.price} <span style="font-size:12px;color:#a89480;font-weight:400;">approx.</span></div>` : ''}
+              ${p.bestStoreName ? `<div style="font-size:12px;color:#9a8878;">Best price at ${p.bestStoreName}</div>` : ''}
+            </div>
+            ${p.buyLink ? `<a href="${p.buyLink}" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Best Products Found →</a>` : ''}
+          </div>
+          ${p.stores && p.stores.length > 0 ? `<div style="margin-top:10px;font-size:12px;color:#9a8878;">Also try: ${p.stores.map(s => `<a href="${s.link}" style="color:#c8922a;">${s.name}${s.price ? ` (${s.price})` : ''}</a>`).join(' · ')}</div>` : ''}
         </div>
       `).join('');
 
@@ -310,7 +317,7 @@ Recommend products found at mainstream NZ retailers. Avoid brand-only stores.`;
     </div>
     <div style="background:white;border-radius:18px;padding:32px;border:1px solid #e8ddd0;margin-bottom:24px;">${productRows}</div>
     <div style="background:#fff9f0;border-radius:12px;padding:16px 20px;border:1px solid #e8ddd0;margin-bottom:24px;font-size:12px;color:#9a8878;line-height:1.6;">
-      <strong style="color:#3d2b1a;">📋 A note from ShopGenieAI:</strong> We search NZ retailers in real-time. The 'Best Products Found' button takes you to search results at the best matched NZ retailer — browse, compare and buy at your convenience!
+      <strong style="color:#3d2b1a;">📋 A note from ShopGenieAI:</strong> We search NZ retailers in real-time to find where you can buy each product. The 'Best Products Found' button links to the lowest priced NZ result we found — always confirm pricing on the retailer's site before buying.
     </div>
     <div style="text-align:center;margin-bottom:32px;">
       <a href="https://shopgenieai.com" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;">Find More Gifts 🧞</a>
