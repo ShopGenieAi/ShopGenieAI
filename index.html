@@ -288,7 +288,7 @@
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(2)">← Back</button>
-          <button class="btn-next" id="next3" onclick="goTo(4)" disabled>Next →</button>
+          <button class="btn-next" id="next3" onclick="goTo(4)" disabled style="visibility:hidden;">Next →</button>
         </div>
       </div>
 
@@ -320,7 +320,7 @@
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(3)">← Back</button>
-          <button class="btn-next" id="next4" onclick="goTo(5)" disabled>Next →</button>
+          <button class="btn-next" id="next4" onclick="goTo(5)" disabled style="display:none;">Next →</button>
         </div>
       </div>
 
@@ -444,7 +444,14 @@ function selectMulti(el, key, max) {
     el.classList.add('selected');
   }
   answers[key] = Array.from(el.parentElement.querySelectorAll('.selected')).map(p => p.textContent.trim());
-  document.getElementById('next3').disabled = answers[key].length === 0;
+  const next3 = document.getElementById('next3');
+  if (answers[key].length === 0) {
+    next3.disabled = true;
+    next3.style.visibility = 'hidden';
+  } else {
+    next3.disabled = false;
+    next3.style.visibility = 'visible';
+  }
 }
 
 function selectBudget(el, val) {
@@ -553,6 +560,7 @@ function restart() {
   document.getElementById('q5interests').value = '';
   document.getElementById('emailInput').value = '';
   ['next1','next2','next3','next4','btnReveal'].forEach(id => document.getElementById(id).disabled = true);
+  document.getElementById('next3').style.visibility = 'hidden';
   document.getElementById('next5').disabled = false;
   answers.q4budget = 0;
   answers.q4budgetLabel = '';
