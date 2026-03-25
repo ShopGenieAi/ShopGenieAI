@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ShopGenieAI — Project Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --cream:#faf6f0;--brown:#3d2b1a;--gold:#c8922a;--gold-l:#e8b84b;
+  --sage:#7a9e7e;--terra:#c4623a;--border:#e8ddd0;--white:#ffffff;
+  --v2:#2563eb;--v3:#7c3aed;--v4:#b45309;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--cream);font-family:'DM Sans',sans-serif;color:var(--brown);min-height:100vh}
+
+/* HEADER */
+.hdr{background:var(--brown);padding:20px 28px;display:flex;align-items:center;
+  justify-content:space-between;flex-wrap:wrap;gap:12px}
+.hdr-left{display:flex;align-items:center;gap:14px}
+.hdr-logo{width:48px;height:48px;border-radius:10px;object-fit:cover;
+  box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.hdr-title{font-family:'Playfair Display',Georgia,serif;font-size:1.35rem;
+  font-weight:900;color:#ffffff;line-height:1.1}
+.hdr-title span{color:var(--gold)}
+.hdr-sub{font-size:.72rem;color:rgba(255,255,255,.6);margin-top:2px}
+.hdr-stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat-pill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  border-radius:20px;padding:5px 14px;font-size:.75rem;font-weight:500;color:white;
+  display:flex;align-items:center;gap:6px}
+.stat-dot{width:8px;height:8px;border-radius:50%}
+
+/* MAIN */
+main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
+
+/* FILTER TABS */
+.tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.tab{padding:7px 18px;border-radius:50px;border:2px solid var(--border);
+  background:var(--white);font-family:'DM Sans',sans-serif;font-size:.82rem;
+  font-weight:500;color:#9a8878;cursor:pointer;transition:all .18s}
+.tab:hover{border-color:var(--gold);color:var(--brown)}
+.tab.on{color:white;border-color:transparent}
+.tab.on.t-all{background:var(--brown)}
+.tab.on.t-v2{background:var(--v2)}
+.tab.on.t-v3{background:var(--v3)}
+.tab.on.t-v4{background:var(--v4)}
+
+/* PHASE SECTIONS */
+.phase{margin-bottom:32px}
+.phase-hdr{display:flex;align-items:center;gap:12px;margin-bottom:14px;
+  padding-bottom:10px;border-bottom:2px solid var(--border)}
+.phase-badge{padding:4px 14px;border-radius:20px;font-size:.72rem;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;color:white}
+.badge-v2{background:var(--v2)}
+.badge-v3{background:var(--v3)}
+.badge-v4{background:var(--v4)}
+.phase-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;
+  color:var(--brown)}
+.phase-count{margin-left:auto;font-size:.8rem;color:#9a8878;font-weight:500}
+
+/* TASK CARDS */
+.tasks{display:flex;flex-direction:column;gap:8px}
+.task{background:var(--white);border-radius:12px;border:1px solid var(--border);
+  padding:14px 16px;display:flex;align-items:flex-start;gap:12px;
+  transition:box-shadow .2s,border-color .2s;cursor:pointer}
+.task:hover{box-shadow:0 4px 16px rgba(61,43,26,.08);border-color:var(--gold)}
+.task.done{background:#f9fdf9;border-color:#c3e6cb}
+.task.done .task-title{text-decoration:line-through;color:#9a8878}
+.task.blocked{background:#fff9f0;border-color:#f5c842}
+
+.check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  transition:all .18s;margin-top:1px}
+.task.done .check{background:var(--sage);border-color:var(--sage)}
+.task.blocked .check{background:#f5c842;border-color:#d4a017}
+.check-tick{display:none;color:white;font-size:13px;font-weight:700}
+.task.done .check-tick{display:block}
+.check-block{display:none;color:var(--brown);font-size:11px;font-weight:700}
+.task.blocked .check-block{display:block}
+
+.task-body{flex:1;min-width:0}
+.task-title{font-size:.9rem;font-weight:500;color:var(--brown);line-height:1.35;
+  margin-bottom:3px}
+.task-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:5px}
+.task-tag{font-size:.68rem;padding:2px 8px;border-radius:10px;font-weight:500}
+.tag-ui{background:rgba(122,158,126,.15);color:#3d7a50}
+.tag-api{background:rgba(200,146,42,.15);color:#7a4a0a}
+.tag-backend{background:rgba(196,98,58,.15);color:#7a3010}
+.tag-data{background:rgba(37,99,235,.15);color:#1d3a8a}
+.tag-infra{background:rgba(124,58,237,.15);color:#4a1a8a}
+.task-note{font-size:.78rem;color:#9a8878;margin-top:4px;line-height:1.4}
+.task-sig{font-size:.72rem;color:var(--sage);font-weight:600;margin-top:4px}
+
+.signed-off{display:none}
+.task.done .signed-off{display:block}
+
+/* SIGN OFF DIALOG */
+.sig-wrap{position:fixed;inset:0;background:rgba(26,18,8,.6);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.sig-wrap.open{display:flex}
+.sig-box{background:var(--white);border-radius:16px;padding:28px 24px;
+  max-width:380px;width:100%;box-shadow:0 20px 60px rgba(61,43,26,.25)}
+.sig-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;
+  color:var(--brown);margin-bottom:8px}
+.sig-task{font-size:.85rem;color:#7a6855;margin-bottom:16px;line-height:1.5;
+  background:var(--cream);padding:10px 12px;border-radius:8px;
+  border:1px solid var(--border)}
+.sig-label{font-size:.78rem;color:#9a8878;margin-bottom:6px}
+.sig-input{width:100%;padding:10px 12px;border:2px solid var(--border);
+  border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;
+  color:var(--brown);outline:none;transition:border-color .2s;margin-bottom:14px}
+.sig-input:focus{border-color:var(--gold)}
+.sig-btns{display:flex;gap:8px}
+.btn-approve{flex:1;padding:10px;border-radius:50px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--gold),var(--terra));color:white;
+  font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;transition:all .2s}
+.btn-approve:hover{transform:translateY(-1px)}
+.btn-cancel{padding:10px 18px;border-radius:50px;border:2px solid var(--border);
+  background:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.88rem;
+  font-weight:500;color:#9a8878;transition:all .2s}
+.btn-cancel:hover{border-color:var(--brown);color:var(--brown)}
+
+/* MARK BLOCKED */
+.btn-block{font-size:.72rem;color:#d4a017;background:none;border:none;
+  cursor:pointer;text-decoration:underline;padding:0;font-family:'DM Sans',sans-serif}
+
+/* PROGRESS BAR */
+.prog-section{background:var(--white);border-radius:14px;border:1px solid var(--border);
+  padding:16px 20px;margin-bottom:24px}
+.prog-row{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.prog-lbl{font-size:.78rem;font-weight:500;min-width:60px}
+.prog-bar{flex:1;height:8px;background:var(--border);border-radius:10px;overflow:hidden}
+.prog-fill{height:100%;border-radius:10px;transition:width .4s ease}
+.prog-pct{font-size:.75rem;color:#9a8878;min-width:36px;text-align:right}
+.fill-v2{background:var(--v2)}
+.fill-v3{background:var(--v3)}
+.fill-v4{background:var(--v4)}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:40px 20px;color:#b5a190;font-size:.9rem}
+
+/* LEGEND */
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:.75rem;color:#9a8878}
+.leg-dot{width:10px;height:10px;border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <img class="hdr-logo"
+      src="https://raw.githubusercontent.com/ShopGenieAi/ShopGenieAI/main/logo.png"
+      alt="ShopGenieAI" onerror="this.style.display='none'"/>
+    <div>
+      <div class="hdr-title">Shop<span>Genie</span>AI</div>
+      <div class="hdr-sub">Project Task Tracker · Mark & Z</div>
+    </div>
+  </div>
+  <div class="hdr-stats">
+    <div class="stat-pill"><div class="stat-dot" style="background:#7a9e7e"></div><span id="statDone">0 signed off</span></div>
+    <div class="stat-pill"><div class="stat-dot" style="background:#f5c842"></div><span id="statBlock">0 blocked</span></div>
+    <div class="stat-pill"><div class="stat-dot" style="background:#e8ddd0"></div><span id="statPend">0 pending</span></div>
+  </div>
+</div>
+
+<main>
+
+  <!-- PROGRESS -->
+  <div class="prog-section">
+    <div class="prog-row">
+      <span class="prog-lbl" style="color:var(--v2)">Current</span>
+      <div class="prog-bar"><div class="prog-fill fill-v2" id="pv2" style="width:0%"></div></div>
+      <span class="prog-pct" id="pv2t">0%</span>
+    </div>
+    <div class="prog-row">
+      <span class="prog-lbl" style="color:var(--v3)">v3</span>
+      <div class="prog-bar"><div class="prog-fill fill-v3" id="pv3" style="width:0%"></div></div>
+      <span class="prog-pct" id="pv3t">0%</span>
+    </div>
+    <div class="prog-row" style="margin-bottom:0">
+      <span class="prog-lbl" style="color:var(--v4)">v4</span>
+      <div class="prog-bar"><div class="prog-fill fill-v4" id="pv4" style="width:0%"></div></div>
+      <span class="prog-pct" id="pv4t">0%</span>
+    </div>
+  </div>
+
+  <!-- FILTER TABS -->
+  <div class="tabs">
+    <button class="tab t-all on" onclick="filter('all')">All tasks</button>
+    <button class="tab t-v2" onclick="filter('v2')">Current session</button>
+    <button class="tab t-v3" onclick="filter('v3')">v3 — Next sprint</button>
+    <button class="tab t-v4" onclick="filter('v4')">v4 — Future</button>
+    <button class="tab t-all" onclick="filter('done')" style="border-color:var(--sage);color:var(--sage)" id="tabDone">Signed off</button>
+    <button class="tab t-all" onclick="filter('blocked')" style="border-color:#d4a017;color:#d4a017" id="tabBlock">Blocked</button>
+  </div>
+
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--sage)"></div>Signed off</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#f5c842"></div>Blocked</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--border)"></div>Pending</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--v2)"></div>Current</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--v3)"></div>v3</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--v4)"></div>v4</div>
+  </div>
+
+  <!-- TASK LIST RENDERED BY JS -->
+  <div id="taskList"></div>
+
+</main>
+
+<!-- SIGN OFF DIALOG -->
+<div class="sig-wrap" id="sigDlg">
+  <div class="sig-box">
+    <div class="sig-title">Sign off task ✅</div>
+    <div class="sig-task" id="sigTaskName"></div>
+    <div class="sig-label">Your name (for the record)</div>
+    <input class="sig-input" id="sigName" placeholder="e.g. Mark" value="Mark"/>
+    <div class="sig-label">Any notes? (optional)</div>
+    <input class="sig-input" id="sigNote" placeholder="e.g. tested on mobile, works great"/>
+    <div class="sig-btns">
+      <button class="btn-cancel" onclick="closeSig()">Cancel</button>
+      <button class="btn-approve" onclick="confirmSig()">Sign Off →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TASKS = [
+  {id:'v2-1',phase:'v2',title:'Bolder disclaimer text on Step 5 and results page',tag:'ui',note:'Make background stronger, text darker — currently hard to read'},
+  {id:'v2-2',phase:'v2',title:'Useless Facts of the Day loading screen',tag:'ui',note:'Rotating NZ-themed useless facts every 3 seconds while Genie thinks'},
+  {id:'v2-3',phase:'v2',title:'MightyApe chip URL format fixed',tag:'ui',note:'mightyape.co.nz/search?q= format was generating incorrect URLs'},
+  {id:'v2-4',phase:'v2',title:'Price filter tightened — enforce both min AND max budget',tag:'api',note:'Was allowing $94 for $200-$300 budget. Now strict on both bounds'},
+  {id:'v2-5',phase:'v2',title:'Store chips increased to 4-5 links',tag:'api',note:'Increase organic search num to 15, grab up to slot 6 for chips'},
+  {id:'v2-6',phase:'v2',title:'JB Hi-Fi added to organic allow-list',tag:'api',note:'jbhifi.co.nz missing from retailer filter'},
+  {id:'v2-7',phase:'v2',title:'Product name validation — no invented compound names',tag:'api',note:'Catches "Compression Muscle Recovery Roller" style made-up names'},
+  {id:'v2-8',phase:'v2',title:'3-tier organic search fallback per product',tag:'api',note:'Tier 1: specific+budget, Tier 2: buy NZ, Tier 3: site:*.co.nz'},
+  {id:'v2-9',phase:'v2',title:'Image 2-tier fallback — no blank Gift placeholders',tag:'api',note:'Second image search with generic product type if first returns nothing'},
+  {id:'v2-10',phase:'v2',title:'Sports apparel routing — Stirling Sports not Wool Company',tag:'api',note:'Socks/activewear → sports retailers only. Wool Company blacklisted'},
+  {id:'v2-11',phase:'v2',title:'Lockout card — standalone section, not modal',tag:'ui',note:'window.location.reload() on Start Over. No z-index fights'},
+  {id:'v2-12',phase:'v2',title:'Carousel swipe fixed — no skipping cards',tag:'ui',note:'Stack element replaced on every render, pure maths positioning'},
+  {id:'v2-13',phase:'v2',title:'Mobile swipe — page scroll prevented during horizontal swipe',tag:'ui',note:'touchmove passive:false + preventDefault on horizontal swipes only'},
+  {id:'v2-14',phase:'v2',title:'Store chips link to retailer search pages',tag:'ui',note:'25-retailer search URL map built into recommend.js'},
+  {id:'v2-15',phase:'v2',title:'All links open in new tab',tag:'ui',note:'target="_blank" rel="noopener noreferrer" on all anchor tags'},
+  {id:'v2-16',phase:'v2',title:'Logo size increased in header',tag:'ui',note:'56px logo, more visible on mobile'},
+  {id:'v2-17',phase:'v2',title:'Archipro added to blacklist',tag:'api',note:'Architecture/design platform, not a retailer'},
+  {id:'v2-18',phase:'v2',title:'Refresh counter set to 2 for friend testing phase',tag:'ui',note:'Change MAX_REFRESHES back to 5 for public launch'},
+  {id:'v2-19',phase:'v2',title:'www.shopgenieai.com redirect set up in Affordable Domains',tag:'infra',note:'DNS redirect still pending — needs manual setup in domain registrar'},
+
+  {id:'v3-1',phase:'v3',title:'Supabase search logging — capture every quiz submission',tag:'data',note:'Log: timestamp, quiz answers, products returned, retailers found, prices, click events'},
+  {id:'v3-2',phase:'v3',title:'NZBN API verification for unknown domains',tag:'backend',note:'Verify .co.nz domains not in whitelist via portal.api.business.govt.nz before showing'},
+  {id:'v3-3',phase:'v3',title:'Vercel cron job — background price refresh every 30 mins',tag:'infra',note:'Replaces live-check webhook idea. Show "last checked X mins ago" on prices'},
+  {id:'v3-4',phase:'v3',title:'Top 50 NZ retailer whitelist with search URL patterns',tag:'data',note:'Expanded RETAILER_SEARCH_PATTERNS with breadcrumb CSS selectors per domain'},
+  {id:'v3-5',phase:'v3',title:'Supabase repeat control timing fix',tag:'backend',note:'GET runs before new product names are written — race condition on duplicate check'},
+  {id:'v3-6',phase:'v3',title:'MAX_REFRESHES set to 5 for public launch',tag:'ui',note:'Currently set to 2 for friend testing'},
+  {id:'v3-7',phase:'v3',title:'Friend testing round — collect feedback from 5+ testers',tag:'data',note:'Gather feedback on: product relevance, price accuracy, link quality, UX flow'},
+  {id:'v3-8',phase:'v3',title:'Disclaimer note added to quiz Step 5 (results page already done)',tag:'ui',note:'Step 5 disclaimer needs same bold treatment as results page note'},
+  {id:'v3-9',phase:'v3',title:'In-app product cards post-quiz (eliminate Make.com pipeline)',tag:'infra',note:'v3 architecture: Vercel serverless → Claude → Serper → Brevo directly'},
+  {id:'v3-10',phase:'v3',title:'Post-April 8 Supabase anon key change test',tag:'infra',note:'Run test submission to confirm key change has no impact (assessed low risk)'},
+  {id:'v3-11',phase:'v3',title:'Make.com Module 4 & 84 Anthropic connection re-link',tag:'infra',note:'Re-link connection 7673376, retype max_tokens as integer in Make UI'},
+  {id:'v3-12',phase:'v3',title:'Brevo email — store chips as clickable links in email',tag:'backend',note:'Currently stores show as plain text in email. Add hyperlinks using retailer search URLs'},
+
+  {id:'v4-1',phase:'v4',title:'Breadcrumb extraction + semantic similarity verification',tag:'backend',note:'Puppeteer/Playwright scraper extracts breadcrumb nav, vector embedding comparison for category match'},
+  {id:'v4-2',phase:'v4',title:'Product comparison engine — Price + Shipping + Category accuracy score',tag:'backend',note:'Score each result: price fit, retailer trust, category accuracy, shipping speed'},
+  {id:'v4-3',phase:'v4',title:'Retailer CSS selector sitemap for top 50 NZ domains',tag:'data',note:'Map each retailer domain to breadcrumb CSS selectors, product price selectors'},
+  {id:'v4-4',phase:'v4',title:'Direct retailer API partnerships (Noel Leeming, PB Tech etc)',tag:'infra',note:'Real-time stock + exact pricing direct from retailer systems. Eliminates Serper approximation'},
+  {id:'v4-5',phase:'v4',title:'Shopify UCP / Universal Commerce Protocol integration',tag:'infra',note:'NZ retailer adoption near-zero currently. Revisit 2026'},
+  {id:'v4-6',phase:'v4',title:'iOS App — App Store submission',tag:'infra',note:'Native app build. App Store badges currently show "coming soon"'},
+  {id:'v4-7',phase:'v4',title:'Android App — Google Play submission',tag:'infra',note:'Native app build. Google Play badge currently shows "coming soon"'},
+  {id:'v4-8',phase:'v4',title:'Q6 autocomplete — two-speed AI system (local + Haiku)',tag:'ui',note:'Instant local matches from 55-category list + 350ms debounce Haiku API for dynamic suggestions'},
+  {id:'v4-9',phase:'v4',title:'Affiliate / commission integration with NZ retailers',tag:'backend',note:'Revenue model: commission on referred purchases. Requires retailer partnership agreements'},
+  {id:'v4-10',phase:'v4',title:'User accounts — save past gift recommendations',tag:'backend',note:'Allow users to log in and retrieve past searches without re-entering email'},
+];
+
+const TAG_CLASS = {ui:'tag-ui',api:'tag-api',backend:'tag-backend',data:'tag-data',infra:'tag-infra'};
+const TAG_LABEL = {ui:'UI',api:'API/Prompt',backend:'Backend',data:'Data',infra:'Infra'};
+const PHASE_LABEL = {v2:'Current Session',v3:'v3 — Next Sprint',v4:'v4 — Future Vision'};
+
+let state = {};
+let sigTarget = null;
+let activeFilter = 'all';
+
+function loadState(){
+  try { state = JSON.parse(localStorage.getItem('sgai_tasks')||'{}'); } catch(e){ state={}; }
+}
+function saveState(){
+  try { localStorage.setItem('sgai_tasks', JSON.stringify(state)); } catch(e){}
+}
+
+function getTaskState(id){ return state[id] || {status:'pending',signer:'',note:'',ts:''}; }
+
+function filter(f){
+  activeFilter = f;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  const map = {all:0,v2:1,v3:2,v4:3,done:4,blocked:5};
+  document.querySelectorAll('.tab')[map[f]]?.classList.add('on');
+  render();
+}
+
+function render(){
+  const list = document.getElementById('taskList');
+  const phases = ['v2','v3','v4'];
+  let html = '';
+
+  phases.forEach(phase => {
+    let tasks = TASKS.filter(t => t.phase===phase);
+    if(activeFilter==='v2'||activeFilter==='v3'||activeFilter==='v4')
+      tasks = tasks.filter(t=>t.phase===activeFilter);
+    if(activeFilter==='done') tasks = tasks.filter(t=>getTaskState(t.id).status==='done');
+    if(activeFilter==='blocked') tasks = tasks.filter(t=>getTaskState(t.id).status==='blocked');
+    if((activeFilter==='v2'&&phase!=='v2')||(activeFilter==='v3'&&phase!=='v3')||(activeFilter==='v4'&&phase!=='v4')) return;
+    if(tasks.length===0 && (activeFilter==='done'||activeFilter==='blocked')) return;
+    if(tasks.length===0) return;
+
+    const allPhase = TASKS.filter(t=>t.phase===phase);
+    const doneCount = allPhase.filter(t=>getTaskState(t.id).status==='done').length;
+    const badgeCls = {v2:'badge-v2',v3:'badge-v3',v4:'badge-v4'}[phase];
+    html += `<div class="phase" data-phase="${phase}">
+      <div class="phase-hdr">
+        <span class="phase-badge ${badgeCls}">${phase.toUpperCase()}</span>
+        <span class="phase-title">${PHASE_LABEL[phase]}</span>
+        <span class="phase-count">${doneCount}/${allPhase.length} signed off</span>
+      </div>
+      <div class="tasks">`;
+
+    tasks.forEach(t => {
+      const ts = getTaskState(t.id);
+      const isDone = ts.status==='done';
+      const isBlocked = ts.status==='blocked';
+      const cls = isDone?'done':isBlocked?'blocked':'';
+      const sigHtml = isDone
+        ? `<div class="task-sig signed-off">✅ Signed off by ${ts.signer}${ts.ts?' · '+ts.ts:''}</div>`
+        : '';
+      const noteHtml = ts.note && isDone
+        ? `<div class="task-note">💬 "${ts.note}"</div>` : '';
+      const blockBtn = !isDone && !isBlocked
+        ? `<button class="btn-block" onclick="event.stopPropagation();markBlocked('${t.id}')">Mark blocked</button>` : '';
+      const unblockBtn = isBlocked
+        ? `<button class="btn-block" onclick="event.stopPropagation();unblock('${t.id}')">Unblock</button>` : '';
+
+      html += `<div class="task ${cls}" onclick="clickTask('${t.id}','${t.title.replace(/'/g,"\\'")}')">
+        <div class="check">
+          <span class="check-tick">✓</span>
+          <span class="check-block">!</span>
+        </div>
+        <div class="task-body">
+          <div class="task-title">${t.title}</div>
+          <div class="task-meta">
+            <span class="task-tag ${TAG_CLASS[t.tag]||'tag-ui'}">${TAG_LABEL[t.tag]||t.tag}</span>
+            ${blockBtn}${unblockBtn}
+          </div>
+          ${t.note?`<div class="task-note">${t.note}</div>`:''}
+          ${sigHtml}${noteHtml}
+        </div>
+      </div>`;
+    });
+    html += '</div></div>';
+  });
+
+  if(!html) html = '<div class="empty">No tasks match this filter</div>';
+  list.innerHTML = html;
+  updateStats();
+  updateProgress();
+}
+
+function clickTask(id, title){
+  const ts = getTaskState(id);
+  if(ts.status==='done'){
+    // Undo sign-off
+    if(confirm('Undo sign-off for this task?')){
+      state[id] = {status:'pending',signer:'',note:'',ts:''};
+      saveState(); render();
+    }
+    return;
+  }
+  sigTarget = id;
+  document.getElementById('sigTaskName').textContent = title;
+  document.getElementById('sigNote').value = '';
+  document.getElementById('sigDlg').classList.add('open');
+}
+
+function closeSig(){
+  document.getElementById('sigDlg').classList.remove('open');
+  sigTarget = null;
+}
+
+function confirmSig(){
+  if(!sigTarget) return;
+  const signer = document.getElementById('sigName').value.trim()||'Mark';
+  const note   = document.getElementById('sigNote').value.trim();
+  const now    = new Date().toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'});
+  state[sigTarget] = {status:'done',signer,note,ts:now};
+  saveState();
+  closeSig();
+  render();
+}
+
+function markBlocked(id){
+  state[id] = {...(state[id]||{}),status:'blocked'};
+  saveState(); render();
+}
+
+function unblock(id){
+  state[id] = {...(state[id]||{}),status:'pending'};
+  saveState(); render();
+}
+
+function updateStats(){
+  const done    = TASKS.filter(t=>getTaskState(t.id).status==='done').length;
+  const blocked = TASKS.filter(t=>getTaskState(t.id).status==='blocked').length;
+  const pend    = TASKS.length - done - blocked;
+  document.getElementById('statDone').textContent = done+' signed off';
+  document.getElementById('statBlock').textContent = blocked+' blocked';
+  document.getElementById('statPend').textContent = pend+' pending';
+}
+
+function updateProgress(){
+  ['v2','v3','v4'].forEach(ph => {
+    const all  = TASKS.filter(t=>t.phase===ph);
+    const done = all.filter(t=>getTaskState(t.id).status==='done').length;
+    const pct  = all.length ? Math.round((done/all.length)*100) : 0;
+    document.getElementById('p'+ph).style.width = pct+'%';
+    document.getElementById('p'+ph+'t').textContent = pct+'%';
+  });
+}
+
+// Init
+loadState();
+render();
+</script>
+</body>
+</html>
