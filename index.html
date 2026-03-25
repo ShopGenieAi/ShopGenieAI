@@ -9,206 +9,189 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --cream: #faf6f0;
-    --warm-white: #fffdf9;
-    --ink: #1a1208;
-    --brown: #3d2b1a;
-    --gold: #c8922a;
-    --gold-light: #e8b84b;
-    --sage: #7a9e7e;
-    --terracotta: #c4623a;
-    --card-bg: #ffffff;
-    --border: #e8ddd0;
-    --shadow: 0 4px 24px rgba(61,43,26,0.10);
-    --radius: 16px;
-    --font-display: 'Playfair Display', Georgia, serif;
-    --font-body: 'DM Sans', sans-serif;
+    --cream:#faf6f0; --warm-white:#fffdf9; --ink:#1a1208; --brown:#3d2b1a;
+    --gold:#c8922a; --gold-light:#e8b84b; --sage:#7a9e7e; --terracotta:#c4623a;
+    --card-bg:#ffffff; --border:#e8ddd0;
+    --shadow:0 4px 24px rgba(61,43,26,0.10);
+    --radius:16px;
+    --font-display:'Playfair Display',Georgia,serif;
+    --font-body:'DM Sans',sans-serif;
   }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--cream); color: var(--ink); font-family: var(--font-body); min-height: 100vh; overflow-x: hidden; }
-  body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
-    background: radial-gradient(ellipse 80% 60% at 10% 0%, rgba(200,146,42,0.08) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 50% at 90% 100%, rgba(122,158,126,0.10) 0%, transparent 55%); }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--cream);color:var(--ink);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 80% 60% at 10% 0%,rgba(200,146,42,0.08) 0%,transparent 60%),
+               radial-gradient(ellipse 60% 50% at 90% 100%,rgba(122,158,126,0.10) 0%,transparent 55%)}
 
   /* HEADER */
-  header { position:relative; z-index:10; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); background:rgba(250,246,240,0.92); backdrop-filter:blur(12px); }
-  .logo { display:flex; align-items:center; gap:10px; }
-  .logo-img { width:44px; height:44px; border-radius:10px; object-fit:cover; box-shadow:0 2px 12px rgba(61,43,26,0.15); }
-  .logo-text { font-family:var(--font-display); font-size:1.2rem; font-weight:700; color:var(--brown); letter-spacing:-0.02em; line-height:1.1; }
-  .logo-text span { color:var(--gold); }
-  .logo-tagline { font-size:0.68rem; font-weight:400; color:#9a8878; font-style:italic; font-family:var(--font-display); display:block; }
-  .header-tag { font-size:0.7rem; font-weight:500; color:var(--sage); background:rgba(122,158,126,0.12); padding:4px 10px; border-radius:20px; letter-spacing:0.04em; text-transform:uppercase; }
+  header{position:relative;z-index:10;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(250,246,240,0.92);backdrop-filter:blur(12px)}
+  .logo{display:flex;align-items:center;gap:10px}
+  .logo-img{width:44px;height:44px;border-radius:10px;object-fit:cover;box-shadow:0 2px 12px rgba(61,43,26,0.15)}
+  .logo-text{font-family:var(--font-display);font-size:1.2rem;font-weight:700;color:var(--brown);letter-spacing:-0.02em;line-height:1.1}
+  .logo-text span{color:var(--gold)}
+  .logo-tagline{font-size:0.68rem;font-weight:400;color:#9a8878;font-style:italic;font-family:var(--font-display);display:block}
+  .header-tag{font-size:0.7rem;font-weight:500;color:var(--sage);background:rgba(122,158,126,0.12);padding:4px 10px;border-radius:20px;letter-spacing:0.04em;text-transform:uppercase}
 
   /* MAIN */
-  main { position:relative; z-index:1; max-width:620px; margin:0 auto; padding:40px 16px 60px; }
+  main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px 48px}
 
   /* HERO */
-  #hero { text-align:center; animation:fadeUp 0.7s ease both; }
-  .hero-eyebrow { display:inline-block; font-size:0.75rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); margin-bottom:16px; }
-  .hero-title { font-family:var(--font-display); font-size:clamp(2rem,6vw,3.4rem); font-weight:900; line-height:1.1; color:var(--brown); margin-bottom:14px; }
-  .hero-title em { font-style:italic; color:var(--terracotta); }
-  .hero-subtitle { font-size:1rem; font-weight:300; color:#6b5a47; line-height:1.6; max-width:440px; margin:0 auto 32px; }
-  .btn-start { display:inline-flex; align-items:center; gap:10px; background:linear-gradient(135deg,var(--gold),var(--terracotta)); color:white; font-family:var(--font-body); font-size:1rem; font-weight:600; padding:14px 32px; border-radius:50px; border:none; cursor:pointer; box-shadow:0 6px 24px rgba(200,146,42,0.35); transition:transform 0.2s,box-shadow 0.2s; }
-  .btn-start:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(200,146,42,0.45); }
-  .hero-trust { margin-top:20px; font-size:0.8rem; color:#9a8878; }
-  .hero-trust span { color:var(--sage); font-weight:600; }
+  #hero{text-align:center;animation:fadeUp 0.7s ease both}
+  .hero-eyebrow{display:inline-block;font-size:0.75rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
+  .hero-title{font-family:var(--font-display);font-size:clamp(2rem,6vw,3.2rem);font-weight:900;line-height:1.1;color:var(--brown);margin-bottom:12px}
+  .hero-title em{font-style:italic;color:var(--terracotta)}
+  .hero-subtitle{font-size:0.95rem;font-weight:300;color:#6b5a47;line-height:1.6;max-width:420px;margin:0 auto 28px}
+  .btn-start{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--gold),var(--terracotta));color:white;font-family:var(--font-body);font-size:1rem;font-weight:600;padding:13px 30px;border-radius:50px;border:none;cursor:pointer;box-shadow:0 6px 24px rgba(200,146,42,0.35);transition:transform 0.2s,box-shadow 0.2s}
+  .btn-start:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(200,146,42,0.45)}
+  .hero-trust{margin-top:16px;font-size:0.78rem;color:#9a8878}
+  .hero-trust span{color:var(--sage);font-weight:600}
 
   /* QUIZ */
-  #quiz { display:none; animation:fadeUp 0.5s ease both; }
-  .quiz-card { background:var(--card-bg); border-radius:var(--radius); padding:32px 28px; box-shadow:var(--shadow); border:1px solid var(--border); }
-  @media(max-width:480px) { .quiz-card { padding:24px 16px; } }
-  .progress-wrap { margin-bottom:28px; }
-  .progress-labels { display:flex; justify-content:space-between; font-size:0.75rem; font-weight:500; color:#a89480; margin-bottom:6px; }
-  .progress-bar-bg { height:4px; background:var(--border); border-radius:10px; overflow:hidden; }
-  .progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--gold),var(--terracotta)); border-radius:10px; transition:width 0.4s cubic-bezier(0.4,0,0.2,1); }
-  .step { display:none; }
-  .step.active { display:block; animation:fadeUp 0.4s ease both; }
-  .step-label { font-size:0.72rem; font-weight:600; letter-spacing:0.10em; text-transform:uppercase; color:var(--gold); margin-bottom:6px; }
-  .step-question { font-family:var(--font-display); font-size:1.35rem; font-weight:700; color:var(--brown); line-height:1.25; margin-bottom:22px; }
-  .quiz-input { width:100%; padding:12px 16px; border:2px solid var(--border); border-radius:12px; font-family:var(--font-body); font-size:0.95rem; color:var(--ink); background:var(--warm-white); outline:none; transition:border-color 0.2s; }
-  .quiz-input:focus { border-color:var(--gold); }
-  .quiz-input::placeholder { color:#c4b09a; }
-  .options-grid { display:flex; flex-wrap:wrap; gap:8px; }
-  .option-pill { padding:9px 16px; border-radius:50px; border:2px solid var(--border); background:var(--warm-white); font-family:var(--font-body); font-size:0.88rem; font-weight:500; color:#6b5a47; cursor:pointer; transition:all 0.18s; user-select:none; }
-  .option-pill:hover { border-color:var(--gold-light); background:rgba(200,146,42,0.06); color:var(--brown); }
-  .option-pill.selected { border-color:var(--gold); background:linear-gradient(135deg,rgba(200,146,42,0.12),rgba(196,98,58,0.08)); color:var(--brown); font-weight:600; }
-  .step-nav { display:flex; justify-content:space-between; align-items:center; margin-top:28px; }
-  .btn-back { background:none; border:none; font-family:var(--font-body); font-size:0.88rem; font-weight:500; color:#a89480; cursor:pointer; padding:8px 0; display:flex; align-items:center; gap:6px; transition:color 0.2s; }
-  .btn-back:hover { color:var(--brown); }
-  .btn-next { display:flex; align-items:center; gap:8px; background:var(--brown); color:var(--cream); font-family:var(--font-body); font-size:0.9rem; font-weight:600; padding:11px 24px; border-radius:50px; border:none; cursor:pointer; transition:all 0.2s; }
-  .btn-next:hover { background:var(--gold); transform:translateY(-1px); }
-  .btn-next:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
-  .btn-next.hidden { display:none !important; }
-  .btn-submit { background:linear-gradient(135deg,var(--gold),var(--terracotta)); box-shadow:0 4px 18px rgba(200,146,42,0.35); }
+  #quiz{display:none;animation:fadeUp 0.5s ease both}
+  .quiz-card{background:var(--card-bg);border-radius:var(--radius);padding:28px 24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+  @media(max-width:480px){.quiz-card{padding:22px 14px}}
+  .progress-wrap{margin-bottom:24px}
+  .progress-labels{display:flex;justify-content:space-between;font-size:0.74rem;font-weight:500;color:#a89480;margin-bottom:6px}
+  .progress-bar-bg{height:4px;background:var(--border);border-radius:10px;overflow:hidden}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--terracotta));border-radius:10px;transition:width 0.4s cubic-bezier(0.4,0,0.2,1)}
+  .step{display:none}
+  .step.active{display:block;animation:fadeUp 0.4s ease both}
+  .step-label{font-size:0.7rem;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+  .step-question{font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:var(--brown);line-height:1.25;margin-bottom:18px}
+  .quiz-input{width:100%;padding:11px 15px;border:2px solid var(--border);border-radius:12px;font-family:var(--font-body);font-size:0.93rem;color:var(--ink);background:var(--warm-white);outline:none;transition:border-color 0.2s}
+  .quiz-input:focus{border-color:var(--gold)}
+  .quiz-input::placeholder{color:#c4b09a}
+  .options-grid{display:flex;flex-wrap:wrap;gap:7px}
+  .option-pill{padding:8px 14px;border-radius:50px;border:2px solid var(--border);background:var(--warm-white);font-family:var(--font-body);font-size:0.86rem;font-weight:500;color:#6b5a47;cursor:pointer;transition:all 0.18s;user-select:none}
+  .option-pill:hover{border-color:var(--gold-light);background:rgba(200,146,42,0.06);color:var(--brown)}
+  .option-pill.selected{border-color:var(--gold);background:linear-gradient(135deg,rgba(200,146,42,0.12),rgba(196,98,58,0.08));color:var(--brown);font-weight:600}
+  /* Budget required indicator */
+  .budget-required-note{font-size:0.73rem;color:#c4623a;margin-top:6px;display:none}
+  .budget-required-note.visible{display:block}
+  .step-nav{display:flex;justify-content:space-between;align-items:center;margin-top:24px}
+  .btn-back{background:none;border:none;font-family:var(--font-body);font-size:0.86rem;font-weight:500;color:#a89480;cursor:pointer;padding:8px 0;display:flex;align-items:center;gap:5px;transition:color 0.2s}
+  .btn-back:hover{color:var(--brown)}
+  .btn-next{display:flex;align-items:center;gap:7px;background:var(--brown);color:var(--cream);font-family:var(--font-body);font-size:0.9rem;font-weight:600;padding:10px 22px;border-radius:50px;border:none;cursor:pointer;transition:all 0.2s}
+  .btn-next:hover{background:var(--gold);transform:translateY(-1px)}
+  .btn-next:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+  .btn-next.hidden{display:none!important}
+  .btn-submit{background:linear-gradient(135deg,var(--gold),var(--terracotta));box-shadow:0 4px 18px rgba(200,146,42,0.35)}
 
   /* EMAIL GATE */
-  #emailGate { display:none; animation:fadeUp 0.5s ease both; }
-  .email-gate-card { background:var(--card-bg); border-radius:var(--radius); padding:40px 32px; box-shadow:var(--shadow); border:1px solid var(--border); text-align:center; max-width:440px; margin:0 auto; }
-  .email-gate-icon { font-size:2.8rem; display:block; margin-bottom:14px; }
-  .email-gate-title { font-family:var(--font-display); font-size:1.6rem; font-weight:700; color:var(--brown); margin-bottom:8px; }
-  .email-gate-sub { font-size:0.9rem; color:#7a6855; line-height:1.6; margin-bottom:24px; }
-  .email-gate-input { width:100%; padding:12px 16px; border:2px solid var(--border); border-radius:12px; font-family:var(--font-body); font-size:1rem; color:var(--ink); background:var(--warm-white); outline:none; transition:border-color 0.2s; margin-bottom:12px; text-align:center; }
-  .email-gate-input:focus { border-color:var(--gold); }
-  .btn-reveal { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; background:linear-gradient(135deg,var(--gold),var(--terracotta)); color:white; font-family:var(--font-body); font-size:1rem; font-weight:600; padding:14px 32px; border-radius:50px; border:none; cursor:pointer; box-shadow:0 6px 24px rgba(200,146,42,0.35); transition:transform 0.2s; }
-  .btn-reveal:hover { transform:translateY(-2px); }
-  .btn-reveal:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
-  .email-gate-privacy { font-size:0.74rem; color:#b5a190; margin-top:10px; }
+  #emailGate{display:none;animation:fadeUp 0.5s ease both}
+  .email-gate-card{background:var(--card-bg);border-radius:var(--radius);padding:36px 28px;box-shadow:var(--shadow);border:1px solid var(--border);text-align:center;max-width:420px;margin:0 auto}
+  .email-gate-icon{font-size:2.8rem;display:block;margin-bottom:12px}
+  .email-gate-title{font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:var(--brown);margin-bottom:8px}
+  .email-gate-sub{font-size:0.88rem;color:#7a6855;line-height:1.6;margin-bottom:20px}
+  .email-gate-input{width:100%;padding:11px 15px;border:2px solid var(--border);border-radius:12px;font-family:var(--font-body);font-size:0.95rem;color:var(--ink);background:var(--warm-white);outline:none;transition:border-color 0.2s;margin-bottom:10px;text-align:center}
+  .email-gate-input:focus{border-color:var(--gold)}
+  .btn-reveal{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,var(--gold),var(--terracotta));color:white;font-family:var(--font-body);font-size:0.95rem;font-weight:600;padding:13px 28px;border-radius:50px;border:none;cursor:pointer;box-shadow:0 6px 24px rgba(200,146,42,0.35);transition:transform 0.2s}
+  .btn-reveal:hover{transform:translateY(-2px)}
+  .btn-reveal:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+  .email-gate-privacy{font-size:0.72rem;color:#b5a190;margin-top:8px}
 
   /* LOADING */
-  #loading { display:none; text-align:center; padding:60px 20px; animation:fadeUp 0.5s ease both; }
-  .loader-title { font-family:var(--font-display); font-size:1.5rem; font-weight:700; color:var(--brown); margin-bottom:8px; }
-  .loader-sub { font-size:0.9rem; color:#9a8878; }
-  .loader-dots { display:inline-flex; gap:6px; margin-top:20px; }
-  .loader-dots span { width:8px; height:8px; border-radius:50%; background:var(--gold); animation:dotPulse 1.4s ease-in-out infinite; }
-  .loader-dots span:nth-child(2) { animation-delay:0.2s; }
-  .loader-dots span:nth-child(3) { animation-delay:0.4s; }
+  #loading{display:none;text-align:center;padding:50px 20px;animation:fadeUp 0.5s ease both}
+  .loader-title{font-family:var(--font-display);font-size:1.4rem;font-weight:700;color:var(--brown);margin-bottom:8px}
+  .loader-sub{font-size:0.88rem;color:#9a8878}
+  .loader-dots{display:inline-flex;gap:6px;margin-top:18px}
+  .loader-dots span{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:dotPulse 1.4s ease-in-out infinite}
+  .loader-dots span:nth-child(2){animation-delay:0.2s}
+  .loader-dots span:nth-child(3){animation-delay:0.4s}
 
   /* RESULTS */
-  #results { display:none; animation:fadeUp 0.6s ease both; }
-  .results-header { text-align:center; margin-bottom:24px; }
-  .results-eyebrow { font-size:0.75rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--sage); margin-bottom:8px; }
-  .results-title { font-family:var(--font-display); font-size:clamp(1.6rem,4vw,2.4rem); font-weight:900; color:var(--brown); line-height:1.15; }
-  .results-title em { font-style:italic; color:var(--gold); }
+  #results{display:none;animation:fadeUp 0.6s ease both}
+  .results-header{text-align:center;margin-bottom:18px}
+  .results-eyebrow{font-size:0.73rem;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--sage);margin-bottom:6px}
+  .results-title{font-family:var(--font-display);font-size:clamp(1.5rem,4vw,2.2rem);font-weight:900;color:var(--brown);line-height:1.15}
+  .results-title em{font-style:italic;color:var(--gold)}
+  .results-note{background:#fff9f0;border-radius:10px;padding:9px 13px;border:1px solid #e8ddd0;margin-bottom:16px;font-size:0.72rem;color:#9a8878;line-height:1.5}
+  .results-note strong{color:var(--brown)}
 
-  /* DISCLAIMER NOTE */
-  .results-note { background:#fff9f0; border-radius:10px; padding:10px 14px; border:1px solid #e8ddd0; margin-bottom:20px; font-size:0.74rem; color:#9a8878; line-height:1.5; }
-  .results-note strong { color:var(--brown); }
+  /* STACKED CARD CAROUSEL */
+  .swipe-container{position:relative;margin-bottom:16px}
 
-  /* ── STACKED CARD CAROUSEL ─────────────────────────── */
-  .swipe-container { position:relative; margin-bottom:32px; }
-
-  /* FIX #7: Tighter height on mobile */
-  .swipe-stack { position:relative; width:100%; height:460px; }
-  @media(max-width:480px) { .swipe-stack { height:500px; } }
-
-  .product-card {
-    position:absolute; top:0; left:0; right:0;
-    background:var(--card-bg);
-    border-radius:var(--radius);
-    border:1px solid var(--border);
-    overflow:hidden;
-    display:flex; flex-direction:column;
-    transition: transform 0.42s cubic-bezier(0.4,0,0.2,1),
-                box-shadow 0.42s ease, opacity 0.42s ease;
-    will-change:transform,opacity;
+  /* FIX: use min-height not height — eliminates the dead gap below cards */
+  .swipe-stack{
+    position:relative;
+    width:100%;
+    min-height:380px;
+    height:auto;
   }
-  .product-card.pos-0 { transform:translateY(0) translateX(0) scale(1); box-shadow:0 10px 44px rgba(61,43,26,0.16); opacity:1; z-index:3; }
-  .product-card.pos-1 { transform:translateY(10px) translateX(10px) scale(0.97); box-shadow:0 6px 24px rgba(61,43,26,0.10); opacity:1; z-index:2; pointer-events:none; }
-  .product-card.pos-2 { transform:translateY(20px) translateX(20px) scale(0.94); box-shadow:0 3px 14px rgba(61,43,26,0.07); opacity:0.8; z-index:1; pointer-events:none; }
-  .product-card.pos-out { transform:translateX(-115%) rotate(-5deg) scale(0.95); opacity:0; z-index:4; pointer-events:none; }
-  .product-card.pos-in { transform:translateX(115%) scale(0.95); opacity:0; z-index:4; pointer-events:none; }
+  /* The stack needs a concrete height for absolute positioning to work.
+     We set it via JS after first render */
+  .swipe-stack.sized{height:var(--stack-h,420px);min-height:unset}
 
-  /* FIX #7: Smaller image on mobile */
-  .product-image-wrap { position:relative; width:100%; height:200px; overflow:hidden; background:var(--cream); flex-shrink:0; }
-  @media(max-width:480px) { .product-image-wrap { height:170px; } }
-  .product-image-wrap img { width:100%; height:100%; object-fit:cover; transition:transform 0.4s; }
-  .product-card.pos-0:hover .product-image-wrap img { transform:scale(1.03); }
+  .product-card{
+    position:absolute;top:0;left:0;right:0;
+    background:var(--card-bg);border-radius:var(--radius);border:1px solid var(--border);
+    overflow:hidden;display:flex;flex-direction:column;
+    transition:transform 0.42s cubic-bezier(0.4,0,0.2,1),box-shadow 0.42s ease,opacity 0.42s ease;
+    will-change:transform,opacity
+  }
+  /* Card positions set via inline JS transforms — no CSS classes needed */
 
-  .product-rank { position:absolute; top:12px; left:12px; width:28px; height:28px; background:linear-gradient(135deg,var(--gold),var(--terracotta)); color:white; font-weight:700; font-size:0.82rem; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+  .product-image-wrap{position:relative;width:100%;overflow:hidden;background:var(--cream);flex-shrink:0;height:190px}
+  @media(max-width:420px){.product-image-wrap{height:160px}}
+  .product-image-wrap img{width:100%;height:100%;object-fit:cover;transition:transform 0.4s}
+  .product-card[data-front='true']:hover .product-image-wrap img{transform:scale(1.03)}
+  .product-rank{position:absolute;top:11px;left:11px;width:28px;height:28px;background:linear-gradient(135deg,var(--gold),var(--terracotta));color:white;font-weight:700;font-size:0.82rem;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
 
-  /* FIX #7: Tighter padding */
-  .product-info { padding:16px 18px 14px; display:flex; flex-direction:column; flex:1; overflow:hidden; }
-  .product-type-tag { font-size:0.67rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--sage); margin-bottom:4px; }
-  .product-name { font-family:var(--font-display); font-size:1.1rem; font-weight:700; color:var(--brown); line-height:1.2; margin-bottom:6px; }
-  .product-reason { font-size:0.82rem; color:#7a6855; line-height:1.5; flex:1; margin-bottom:12px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-  .product-footer { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
-  .product-price { font-size:1.25rem; font-weight:700; color:var(--brown); font-family:var(--font-display); }
-  .product-price small { font-family:var(--font-body); font-size:0.7rem; font-weight:400; color:#a89480; display:block; line-height:1; }
-
-  /* FIX #2: No price/no link fallback state */
-  .product-no-result { font-size:0.78rem; color:#b5a190; font-style:italic; padding:6px 0; }
-
-  .btn-buy { display:inline-flex; align-items:center; gap:5px; background:linear-gradient(135deg,var(--gold),var(--terracotta)); color:white; font-family:var(--font-body); font-size:0.82rem; font-weight:600; padding:9px 16px; border-radius:50px; text-decoration:none; transition:all 0.2s; box-shadow:0 3px 12px rgba(200,146,42,0.3); white-space:nowrap; }
-  .btn-buy:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(200,146,42,0.4); }
-
-  /* FIX #4: Chips — name only, no price */
-  .stores-list { display:flex; flex-wrap:wrap; gap:5px; }
-  .store-chip { font-size:0.72rem; background:rgba(122,158,126,0.12); color:var(--sage); padding:3px 10px; border-radius:20px; font-weight:500; text-decoration:none; transition:background 0.15s; }
-  .store-chip:hover { background:rgba(122,158,126,0.25); }
-
-  /* FIX #8: Single store note */
-  .single-store-note { font-size:0.72rem; color:#b5a190; font-style:italic; margin-top:4px; }
+  .product-info{padding:14px 16px 13px;display:flex;flex-direction:column;flex:1;overflow:hidden}
+  .product-type-tag{font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--sage);margin-bottom:3px}
+  .product-name{font-family:var(--font-display);font-size:1.05rem;font-weight:700;color:var(--brown);line-height:1.2;margin-bottom:5px}
+  .product-reason{font-size:0.8rem;color:#7a6855;line-height:1.45;flex:1;margin-bottom:10px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .product-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .product-price{font-size:1.2rem;font-weight:700;color:var(--brown);font-family:var(--font-display)}
+  .product-price small{font-family:var(--font-body);font-size:0.68rem;font-weight:400;color:#a89480;display:block;line-height:1}
+  .product-no-result{font-size:0.75rem;color:#b5a190;font-style:italic;padding:4px 0}
+  .btn-buy{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,var(--gold),var(--terracotta));color:white;font-family:var(--font-body);font-size:0.8rem;font-weight:600;padding:8px 14px;border-radius:50px;text-decoration:none;transition:all 0.2s;box-shadow:0 3px 12px rgba(200,146,42,0.3);white-space:nowrap}
+  .btn-buy:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(200,146,42,0.4)}
+  .stores-list{display:flex;flex-wrap:wrap;gap:5px}
+  .store-chip{font-size:0.7rem;background:rgba(122,158,126,0.12);color:var(--sage);padding:3px 9px;border-radius:20px;font-weight:500;text-decoration:none;transition:background 0.15s}
+  .store-chip:hover{background:rgba(122,158,126,0.25)}
+  .single-store-note{font-size:0.69rem;color:#b5a190;font-style:italic;margin-top:3px}
 
   /* SWIPE NAV */
-  .swipe-nav { display:flex; align-items:center; justify-content:center; gap:14px; margin-top:14px; }
-  .swipe-btn { width:40px; height:40px; border-radius:50%; background:var(--card-bg); border:2px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; font-size:1rem; box-shadow:var(--shadow); }
-  .swipe-btn:hover { border-color:var(--gold); background:rgba(200,146,42,0.06); }
-  .swipe-btn:disabled { opacity:0.3; cursor:not-allowed; }
-  .swipe-dots { display:flex; gap:8px; }
-  .swipe-dot { width:8px; height:8px; border-radius:50%; background:var(--border); cursor:pointer; transition:all 0.2s; }
-  .swipe-dot.active { background:var(--gold); transform:scale(1.35); }
+  .swipe-nav{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px}
+  .swipe-btn{width:38px;height:38px;border-radius:50%;background:var(--card-bg);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;font-size:0.95rem;box-shadow:var(--shadow)}
+  .swipe-btn:hover{border-color:var(--gold);background:rgba(200,146,42,0.06)}
+  .swipe-btn:disabled{opacity:0.3;cursor:not-allowed}
+  .swipe-dots{display:flex;gap:7px}
+  .swipe-dot{width:7px;height:7px;border-radius:50%;background:var(--border);cursor:pointer;transition:all 0.2s}
+  .swipe-dot.active{background:var(--gold);transform:scale(1.35)}
 
   /* RESTART SECTION */
-  .restart-section { display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; padding-top:6px; }
-  .btn-restart { background:none; border:2px solid var(--border); font-family:var(--font-body); font-size:0.85rem; font-weight:500; color:#9a8878; padding:10px 20px; border-radius:50px; cursor:pointer; transition:all 0.2s; }
-  .btn-restart:hover { border-color:var(--brown); color:var(--brown); }
-  .btn-refresh { background:none; border:2px solid var(--gold); font-family:var(--font-body); font-size:0.85rem; font-weight:600; color:var(--gold); padding:10px 20px; border-radius:50px; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:6px; }
-  .btn-refresh:hover { background:rgba(200,146,42,0.08); transform:translateY(-1px); }
-  .btn-refresh:disabled { opacity:0.35; cursor:not-allowed; transform:none; }
-  .refresh-count { font-size:0.7rem; color:#a89480; text-align:center; margin-top:5px; }
+  .restart-section{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding-top:4px}
+  .btn-restart{background:none;border:2px solid var(--border);font-family:var(--font-body);font-size:0.83rem;font-weight:500;color:#9a8878;padding:9px 18px;border-radius:50px;cursor:pointer;transition:all 0.2s}
+  .btn-restart:hover{border-color:var(--brown);color:var(--brown)}
+  .btn-refresh{background:none;border:2px solid var(--gold);font-family:var(--font-body);font-size:0.83rem;font-weight:600;color:var(--gold);padding:9px 18px;border-radius:50px;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px}
+  .btn-refresh:hover{background:rgba(200,146,42,0.08);transform:translateY(-1px)}
+  .btn-refresh:disabled{opacity:0.35;cursor:not-allowed;transform:none}
+  .refresh-count{font-size:0.68rem;color:#a89480;text-align:center;margin-top:4px}
 
   /* LOCKOUT MODAL */
-  .modal-overlay { display:none; position:fixed; inset:0; z-index:100; background:rgba(26,18,8,0.65); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:20px; }
-  .modal-overlay.active { display:flex; animation:fadeUp 0.3s ease both; }
-  .modal-box { background:var(--card-bg); border-radius:22px; padding:36px 28px; max-width:400px; width:100%; text-align:center; box-shadow:0 24px 80px rgba(61,43,26,0.28); border:1px solid var(--border); animation:fadeUp 0.35s ease both; }
-  .modal-emoji { font-size:3rem; display:block; margin-bottom:14px; }
-  .modal-title { font-family:var(--font-display); font-size:1.5rem; font-weight:900; color:var(--brown); margin-bottom:10px; line-height:1.2; }
-  .modal-body { font-size:0.92rem; color:#7a6855; line-height:1.65; margin-bottom:24px; }
-  .modal-body strong { color:var(--terracotta); }
-  .btn-modal-restart { display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,var(--gold),var(--terracotta)); color:white; font-family:var(--font-body); font-size:0.95rem; font-weight:600; padding:13px 28px; border-radius:50px; border:none; cursor:pointer; box-shadow:0 6px 24px rgba(200,146,42,0.35); transition:all 0.2s; }
-  .btn-modal-restart:hover { transform:translateY(-2px); }
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:1000;background:rgba(26,18,8,0.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
+  .modal-overlay.active{display:flex!important;animation:fadeUp 0.25s ease both}
+  .modal-box{background:var(--card-bg);border-radius:22px;padding:34px 26px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(61,43,26,0.3);border:1px solid var(--border);animation:fadeUp 0.3s ease both}
+  .modal-emoji{font-size:3rem;display:block;margin-bottom:12px}
+  .modal-title{font-family:var(--font-display);font-size:1.45rem;font-weight:900;color:var(--brown);margin-bottom:10px;line-height:1.2}
+  .modal-body{font-size:0.9rem;color:#7a6855;line-height:1.65;margin-bottom:22px}
+  .modal-body strong{color:var(--terracotta)}
+  .btn-modal-restart{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--gold),var(--terracotta));color:white;font-family:var(--font-body);font-size:0.92rem;font-weight:600;padding:12px 26px;border-radius:50px;border:none;cursor:pointer;box-shadow:0 6px 24px rgba(200,146,42,0.35);transition:all 0.2s}
+  .btn-modal-restart:hover{transform:translateY(-2px)}
 
   /* ERROR */
-  #error { display:none; text-align:center; padding:50px 20px; animation:fadeUp 0.5s ease both; }
-  .error-emoji { font-size:3rem; display:block; margin-bottom:14px; }
-  .error-title { font-family:var(--font-display); font-size:1.4rem; font-weight:700; color:var(--brown); margin-bottom:8px; }
-  .error-msg { font-size:0.88rem; color:#9a8878; margin-bottom:24px; }
+  #error{display:none;text-align:center;padding:44px 20px;animation:fadeUp 0.5s ease both}
+  .error-emoji{font-size:2.8rem;display:block;margin-bottom:12px}
+  .error-title{font-family:var(--font-display);font-size:1.35rem;font-weight:700;color:var(--brown);margin-bottom:8px}
+  .error-msg{font-size:0.86rem;color:#9a8878;margin-bottom:22px}
 
-  footer { position:relative; z-index:1; text-align:center; padding:20px; font-size:0.75rem; color:#b5a190; border-top:1px solid var(--border); }
+  footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:0.72rem;color:#b5a190;border-top:1px solid var(--border)}
 
-  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-  @keyframes dotPulse { 0%,80%,100%{transform:scale(0.8);opacity:0.5} 40%{transform:scale(1.2);opacity:1} }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  @keyframes dotPulse{0%,80%,100%{transform:scale(0.8);opacity:0.5}40%{transform:scale(1.2);opacity:1}}
 </style>
 </head>
 <body>
@@ -226,21 +209,21 @@
   <!-- HERO -->
   <section id="hero">
     <img src="https://raw.githubusercontent.com/ShopGenieAi/ShopGenieAI/main/logo.png" alt="ShopGenieAI"
-      style="width:140px;height:140px;border-radius:28px;object-fit:cover;box-shadow:0 8px 40px rgba(61,43,26,0.18);margin-bottom:20px;display:block;margin-left:auto;margin-right:auto;" />
+      style="width:130px;height:130px;border-radius:26px;object-fit:cover;box-shadow:0 8px 40px rgba(61,43,26,0.18);margin-bottom:18px;display:block;margin-left:auto;margin-right:auto;" />
     <div class="hero-eyebrow">✨ AI-Powered Gift Finder</div>
     <h1 class="hero-title">Find the <em>perfect</em> gift<br>for any Kiwi</h1>
     <p class="hero-subtitle">Answer a few quick questions and our Genie finds 3 hand-picked gift ideas available right here in New Zealand.</p>
     <button class="btn-start" onclick="showQuiz()">Start the Quiz →</button>
     <p class="hero-trust">Takes <span>under 2 minutes</span> · Free · No account needed</p>
-    <div style="margin-top:28px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;align-items:center;">
+    <div style="margin-top:24px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;align-items:center;">
       <button onclick="comingSoon()" style="background:none;border:none;cursor:pointer;padding:0;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-        <img src="https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-app-store.svg" alt="App Store" style="height:44px;" />
+        <img src="https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-app-store.svg" alt="App Store" style="height:40px;" />
       </button>
       <button onclick="comingSoon()" style="background:none;border:none;cursor:pointer;padding:0;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-        <img src="https://raw.githubusercontent.com/ShopGenieAi/ShopGenieAI/main/googleplay.png" alt="Google Play" style="height:44px;" />
+        <img src="https://raw.githubusercontent.com/ShopGenieAi/ShopGenieAI/main/googleplay.png" alt="Google Play" style="height:40px;" />
       </button>
     </div>
-    <div id="comingSoonMsg" style="display:none;margin-top:12px;font-size:0.82rem;color:#c8922a;font-weight:600;">
+    <div id="comingSoonMsg" style="display:none;margin-top:10px;font-size:0.8rem;color:#c8922a;font-weight:600;">
       🧞 App coming soon — use the web version for now!
     </div>
   </section>
@@ -311,7 +294,9 @@
       <div class="step" id="step4">
         <div class="step-label">Step 4 — Budget & Occasion</div>
         <div class="step-question">What's your budget?</div>
-        <div class="options-grid" style="margin-bottom:24px;">
+        <!-- FIX: budget required note shown if user tries to advance without selecting -->
+        <div class="budget-required-note" id="budgetRequiredNote">⚠️ Please select a budget first</div>
+        <div class="options-grid" style="margin-bottom:20px;">
           <div class="option-pill" onclick="selectBudget(this,30)">Under NZ$30</div>
           <div class="option-pill" onclick="selectBudget(this,50)">NZ$30–$50</div>
           <div class="option-pill" onclick="selectBudget(this,100)">NZ$50–$100</div>
@@ -320,18 +305,18 @@
           <div class="option-pill" onclick="selectBudget(this,500)">NZ$300–$500</div>
           <div class="option-pill" onclick="selectBudget(this,501)">NZ$500+</div>
         </div>
-        <div class="step-question" style="font-size:1.1rem;margin-bottom:14px">What's the occasion?</div>
+        <div class="step-question" style="font-size:1.05rem;margin-bottom:12px">What's the occasion?</div>
         <div class="options-grid">
-          <div class="option-pill" onclick="selectPill(this,'q4occ')">Birthday</div>
-          <div class="option-pill" onclick="selectPill(this,'q4occ')">Christmas</div>
-          <div class="option-pill" onclick="selectPill(this,'q4occ')">Anniversary</div>
-          <div class="option-pill" onclick="selectPill(this,'q4occ')">Valentine's Day</div>
-          <div class="option-pill" onclick="selectPill(this,'q4occ')">Mother's Day</div>
-          <div class="option-pill" onclick="selectPill(this,'q4occ')">Father's Day</div>
-          <div class="option-pill" onclick="selectPill(this,'q4occ')">Wedding / Engagement</div>
-          <div class="option-pill" onclick="selectPill(this,'q4occ')">New Baby</div>
-          <div class="option-pill" onclick="selectPill(this,'q4occ')">Graduation</div>
-          <div class="option-pill" onclick="selectPill(this,'q4occ')">Just Because</div>
+          <div class="option-pill" onclick="selectOccasion(this)">Birthday</div>
+          <div class="option-pill" onclick="selectOccasion(this)">Christmas</div>
+          <div class="option-pill" onclick="selectOccasion(this)">Anniversary</div>
+          <div class="option-pill" onclick="selectOccasion(this)">Valentine's Day</div>
+          <div class="option-pill" onclick="selectOccasion(this)">Mother's Day</div>
+          <div class="option-pill" onclick="selectOccasion(this)">Father's Day</div>
+          <div class="option-pill" onclick="selectOccasion(this)">Wedding / Engagement</div>
+          <div class="option-pill" onclick="selectOccasion(this)">New Baby</div>
+          <div class="option-pill" onclick="selectOccasion(this)">Graduation</div>
+          <div class="option-pill" onclick="selectOccasion(this)">Just Because</div>
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goTo(3)">← Back</button>
@@ -345,8 +330,8 @@
         <textarea class="quiz-input" id="q5interests" rows="3"
           placeholder="e.g. loves hiking and cooking, big fan of Kathmandu, into sustainable brands..."
           style="resize:vertical;line-height:1.5"></textarea>
-        <div style="font-size:0.76rem;color:#b5a190;margin-top:6px;margin-bottom:12px">Optional but helps a lot — feel free to skip</div>
-        <div style="background:#fff9f0;border-radius:10px;padding:10px 14px;border:1px solid #e8ddd0;font-size:0.74rem;color:#9a8878;line-height:1.5;">
+        <div style="font-size:0.73rem;color:#b5a190;margin-top:5px;margin-bottom:10px">Optional but helps a lot — feel free to skip</div>
+        <div style="background:#fff9f0;border-radius:10px;padding:9px 13px;border:1px solid #e8ddd0;font-size:0.72rem;color:#9a8878;line-height:1.5;">
           <strong style="color:#3d2b1a;">📋 Quick note:</strong> ShopGenieAI searches NZ retailers in real-time. Prices are approximate — always confirm on the retailer's site.
         </div>
         <div class="step-nav">
@@ -362,7 +347,7 @@
     <div class="email-gate-card">
       <span class="email-gate-icon">🎁</span>
       <div class="email-gate-title">Almost there!</div>
-      <div class="email-gate-sub">Pop in your email and we'll reveal your 3 personalised gift picks — and send them to you so you don't lose them!</div>
+      <div class="email-gate-sub">Pop in your email and we'll reveal your 3 personalised gift picks — and send them to you!</div>
       <input type="email" class="email-gate-input" id="emailInput" placeholder="you@example.co.nz" oninput="updateRevealBtn()" />
       <button class="btn-reveal" id="btnReveal" onclick="submitQuiz()" disabled>Reveal My Gifts 🧞</button>
       <div class="email-gate-privacy">🔒 No spam, ever. Unsubscribe anytime.</div>
@@ -372,7 +357,7 @@
   <!-- LOADING -->
   <section id="loading">
     <img src="https://raw.githubusercontent.com/ShopGenieAi/ShopGenieAI/main/logo.png" alt="ShopGenieAI"
-      style="width:90px;height:90px;border-radius:20px;object-fit:cover;margin-bottom:16px;animation:float 2s ease-in-out infinite;box-shadow:0 6px 24px rgba(61,43,26,0.15);display:block;margin-left:auto;margin-right:auto;" />
+      style="width:84px;height:84px;border-radius:18px;object-fit:cover;margin-bottom:14px;animation:float 2s ease-in-out infinite;box-shadow:0 6px 24px rgba(61,43,26,0.15);display:block;margin-left:auto;margin-right:auto;" />
     <div class="loader-title">Your Genie is thinking…</div>
     <div class="loader-sub">Searching NZ stores for the perfect picks</div>
     <div class="loader-dots"><span></span><span></span><span></span></div>
@@ -385,18 +370,16 @@
       <h2 class="results-title">Here are your <em>3 gifts</em></h2>
     </div>
     <div class="results-note">
-      <strong>📋 A note from ShopGenieAI:</strong> 'Best Products Found' takes you to the best matched NZ retailer — browse, compare and buy at your convenience!
+      <strong>📋 ShopGenieAI:</strong> 'Shop This Gift' takes you to the best matched NZ retailer — browse and buy at your convenience!
     </div>
-
     <div class="swipe-container">
       <div class="swipe-stack" id="swipeStack"></div>
       <div class="swipe-nav">
-        <button class="swipe-btn" id="swipePrev" onclick="swipeTo(currentCard - 1)" disabled>←</button>
+        <button class="swipe-btn" id="swipePrev" onclick="swipeTo(currentCard-1)" disabled>←</button>
         <div class="swipe-dots" id="swipeDots"></div>
-        <button class="swipe-btn" id="swipeNext" onclick="swipeTo(currentCard + 1)">→</button>
+        <button class="swipe-btn" id="swipeNext" onclick="swipeTo(currentCard+1)">→</button>
       </div>
     </div>
-
     <div class="restart-section">
       <button class="btn-restart" onclick="restart()">↩ Start over</button>
       <button class="btn-refresh" id="btnRefresh" onclick="refreshProducts()">🔀 Refresh 3 Products</button>
@@ -439,153 +422,166 @@ let currentCard = 0;
 let totalCards = 0;
 let shownProductNames = [];
 
-function show(id) { document.getElementById(id).style.display = 'block'; }
-function hide(id) { document.getElementById(id).style.display = 'none'; }
-function showQuiz() { hide('hero'); show('quiz'); updateProgress(1); }
+function show(id){ document.getElementById(id).style.display='block' }
+function hide(id){ document.getElementById(id).style.display='none' }
+function showQuiz(){ hide('hero'); show('quiz'); updateProgress(1) }
 
-function goTo(step) {
+function goTo(step){
   document.getElementById('step'+currentStep).classList.remove('active');
   document.getElementById('step'+step).classList.add('active');
-  currentStep = step;
-  updateProgress(step);
+  currentStep=step; updateProgress(step);
 }
 
-function updateProgress(step) {
-  const pct = Math.round(((step-1)/TOTAL_STEPS)*100);
-  document.getElementById('progressBar').style.width = pct+'%';
-  document.getElementById('progressLabel').textContent = `Question ${step} of ${TOTAL_STEPS}`;
-  document.getElementById('progressPct').textContent = pct+'%';
+function updateProgress(step){
+  const pct=Math.round(((step-1)/TOTAL_STEPS)*100);
+  document.getElementById('progressBar').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent=`Question ${step} of ${TOTAL_STEPS}`;
+  document.getElementById('progressPct').textContent=pct+'%';
 }
 
-function selectPill(el, key) {
-  el.parentElement.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
+function selectPill(el,key){
+  el.parentElement.querySelectorAll('.option-pill').forEach(p=>p.classList.remove('selected'));
   el.classList.add('selected');
-  answers[key] = el.textContent.trim();
-  setTimeout(() => {
-    if (key === 'q1gift') nextFromStep1();
-    if (key === 'q2') goTo(3);
-    if (key === 'q3') goTo(4);
-    if (key === 'q4occ') { answers.q4occ = el.textContent.trim(); checkBudgetOccasion(); if (answers.q4budget > 0) goTo(5); }
-  }, 300);
+  answers[key]=el.textContent.trim();
+  setTimeout(()=>{
+    if(key==='q1gift') nextFromStep1();
+    if(key==='q2') goTo(3);
+    if(key==='q3') goTo(4);
+  },300);
 }
 
-function nextFromStep1() {
-  if (answers.q1gift === 'Something for myself') { answers.q2 = 'Myself'; goTo(3); }
+function nextFromStep1(){
+  if(answers.q1gift==='Something for myself'){ answers.q2='Myself'; goTo(3); }
   else goTo(2);
 }
 
-function selectBudget(el, val) {
-  el.parentElement.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
+function selectBudget(el,val){
+  el.parentElement.querySelectorAll('.option-pill').forEach(p=>p.classList.remove('selected'));
   el.classList.add('selected');
-  answers.q4budget = val;
-  answers.q4budgetLabel = el.textContent.trim();
-  checkBudgetOccasion();
-  if (answers.q4occ !== '') setTimeout(() => goTo(5), 300);
+  answers.q4budget=val;
+  answers.q4budgetLabel=el.textContent.trim();
+  document.getElementById('budgetRequiredNote').classList.remove('visible');
+  checkStep4();
+  // Auto-advance only if occasion already selected
+  if(answers.q4occ!=='') setTimeout(()=>goTo(5),300);
 }
 
-function checkBudgetOccasion() {
-  document.getElementById('next4').disabled = !(answers.q4budget > 0 && answers.q4occ !== '');
+// FIX: separate occasion handler — only auto-advances if budget is ALSO selected
+function selectOccasion(el){
+  el.parentElement.querySelectorAll('.option-pill').forEach(p=>p.classList.remove('selected'));
+  el.classList.add('selected');
+  answers.q4occ=el.textContent.trim();
+  checkStep4();
+  // FIX: only advance if budget has been selected — show nudge if not
+  if(answers.q4budget>0){
+    setTimeout(()=>goTo(5),300);
+  } else {
+    document.getElementById('budgetRequiredNote').classList.add('visible');
+  }
 }
 
-function updateBudget(val) { answers.q4budget = parseInt(val); }
+function checkStep4(){
+  const ok=answers.q4budget>0 && answers.q4occ!=='';
+  document.getElementById('next4').disabled=!ok;
+  if(ok) document.getElementById('next4').classList.remove('hidden');
+}
 
-function showEmailGate() {
-  answers.q5interests = document.getElementById('q5interests').value.trim();
+function updateBudget(val){ answers.q4budget=parseInt(val) }
+
+function showEmailGate(){
+  answers.q5interests=document.getElementById('q5interests').value.trim();
   hide('quiz'); show('emailGate');
 }
 
-function updateRevealBtn() {
-  const val = document.getElementById('emailInput').value.trim();
-  document.getElementById('btnReveal').disabled = !/\S+@\S+\.\S+/.test(val);
+function updateRevealBtn(){
+  const val=document.getElementById('emailInput').value.trim();
+  document.getElementById('btnReveal').disabled=!/\S+@\S+\.\S+/.test(val);
 }
 
-async function submitQuiz() {
-  answers.email = document.getElementById('emailInput').value.trim();
+async function submitQuiz(){
+  answers.email=document.getElementById('emailInput').value.trim();
   hide('emailGate');
-  refreshCount = 0;
-  shownProductNames = [];
+  refreshCount=0; shownProductNames=[];
   updateRefreshUI();
   await fetchRecommendations(0);
 }
 
-async function refreshProducts() {
-  // FIX #6: increment FIRST, then check
+async function refreshProducts(){
+  // FIX: increment first, then check, show modal before any fetch
   refreshCount++;
-  if (refreshCount > MAX_REFRESHES) {
-    refreshCount = MAX_REFRESHES; // cap it
-    showLockoutModal();
-    return;
-  }
   updateRefreshUI();
+  if(refreshCount>MAX_REFRESHES){
+    refreshCount=MAX_REFRESHES;
+    updateRefreshUI();
+    showLockoutModal();
+    return; // ← return immediately, no fetch
+  }
   await fetchRecommendations(refreshCount);
 }
 
-function updateRefreshUI() {
-  const remaining = MAX_REFRESHES - refreshCount;
-  const btn = document.getElementById('btnRefresh');
-  const countEl = document.getElementById('refreshCount');
-  if (remaining <= 0) {
-    btn.disabled = true;
-    countEl.textContent = 'No refreshes left';
+function updateRefreshUI(){
+  const remaining=MAX_REFRESHES-refreshCount;
+  const btn=document.getElementById('btnRefresh');
+  const countEl=document.getElementById('refreshCount');
+  if(remaining<=0){
+    btn.disabled=true;
+    countEl.textContent='No refreshes left';
   } else {
-    btn.disabled = false;
-    countEl.textContent = `${remaining} refresh${remaining === 1 ? '' : 'es'} remaining`;
+    btn.disabled=false;
+    countEl.textContent=`${remaining} refresh${remaining===1?'':'es'} remaining`;
   }
 }
 
-function showLockoutModal() {
-  document.getElementById('lockoutModal').classList.add('active');
+function showLockoutModal(){
+  const modal=document.getElementById('lockoutModal');
+  modal.classList.add('active');
+  // Force reflow so the display:flex kicks in before animation runs
+  modal.offsetHeight;
 }
 
-function closeModalAndRestart() {
+function closeModalAndRestart(){
   document.getElementById('lockoutModal').classList.remove('active');
   restart();
 }
 
-async function fetchRecommendations(seed) {
-  // FIX #1: Reset to card 1 immediately when loading starts
-  currentCard = 0;
-  hide('results');
-  show('loading');
+async function fetchRecommendations(seed){
+  currentCard=0;
+  hide('results'); show('loading');
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 65000);
-    const response = await fetch(`${window.location.origin}/api/recommend`, {
-      signal: controller.signal,
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: answers.email,
-        shoppingFor: answers.q1gift,
-        whoFor: answers.q2,
-        vibe: answers.q3,
-        budget: answers.q4budget,
-        occasion: answers.q4occ,
-        interests: answers.q5interests,  // FIX #5: always included
-        refreshSeed: seed,
-        excludeProducts: shownProductNames
+    const controller=new AbortController();
+    const timeoutId=setTimeout(()=>controller.abort(),65000);
+    const response=await fetch(`${window.location.origin}/api/recommend`,{
+      signal:controller.signal,
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        email:answers.email,
+        shoppingFor:answers.q1gift,
+        whoFor:answers.q2,
+        vibe:answers.q3,
+        budget:answers.q4budget,
+        occasion:answers.q4occ,
+        interests:answers.q5interests,
+        refreshSeed:seed,
+        excludeProducts:shownProductNames
       })
     });
     clearTimeout(timeoutId);
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      if (errData.message) throw new Error('INAPPROPRIATE: ' + errData.message);
+    if(!response.ok){
+      const errData=await response.json().catch(()=>({}));
+      if(errData.message) throw new Error('INAPPROPRIATE: '+errData.message);
       throw new Error(`API error: ${response.status}`);
     }
-    const data = await response.json();
-    if (data.products) {
-      data.products.forEach(p => {
-        if (p.name && !shownProductNames.includes(p.name)) shownProductNames.push(p.name);
-      });
-    }
+    const data=await response.json();
+    if(data.products) data.products.forEach(p=>{ if(p.name&&!shownProductNames.includes(p.name)) shownProductNames.push(p.name); });
     hide('loading');
     renderResults(data.products);
-  } catch (err) {
+  } catch(err){
     hide('loading');
-    if (err.message && err.message.includes('INAPPROPRIATE')) {
-      document.getElementById('errorMsg').textContent = err.message.replace('INAPPROPRIATE: ','');
+    if(err.message&&err.message.includes('INAPPROPRIATE')){
+      document.getElementById('errorMsg').textContent=err.message.replace('INAPPROPRIATE: ','');
     } else {
-      document.getElementById('errorMsg').textContent = err.message || 'Something went wrong. Try again!';
+      document.getElementById('errorMsg').textContent=err.message||'Something went wrong. Try again!';
     }
     show('error');
   }
@@ -593,143 +589,161 @@ async function fetchRecommendations(seed) {
 
 // ── STACKED CARD CAROUSEL ─────────────────────────────────────────────────────
 
-function renderResults(products) {
-  const stack = document.getElementById('swipeStack');
-  const dotsContainer = document.getElementById('swipeDots');
-  stack.innerHTML = '';
-  dotsContainer.innerHTML = '';
-  totalCards = products.length;
-  currentCard = 0; // FIX #1: always Card 1 on new render
+function renderResults(products){
+  const stack=document.getElementById('swipeStack');
+  const dotsContainer=document.getElementById('swipeDots');
+  stack.innerHTML=''; dotsContainer.innerHTML='';
+  stack.classList.remove('sized');
+  totalCards=products.length; currentCard=0;
 
-  products.forEach((p, i) => {
-    const pricePrefix = p.priceIsMatched ? '' : 'from ';
-
-    // FIX #2: Smart price/button display
-    let priceHtml = '';
-    let buyHtml = '';
-    if (p.price && p.buyLink) {
-      priceHtml = `<div class="product-price">${pricePrefix}NZ$${p.price}<small>approx.</small></div>`;
-      buyHtml = `<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener">Best Products Found →</a>`;
-    } else if (p.price && !p.buyLink) {
-      priceHtml = `<div class="product-price">${pricePrefix}NZ$${p.price}<small>approx.</small></div>`;
-      buyHtml = `<span style="font-size:0.78rem;color:#b5a190;font-style:italic;">Search "${p.name}" at your local NZ retailer</span>`;
-    } else if (!p.price && p.buyLink) {
-      priceHtml = '';
-      buyHtml = `<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener">Best Products Found →</a>`;
+  products.forEach((p,i)=>{
+    const pricePrefix=p.priceIsMatched?'':'from ';
+    let priceHtml='', buyHtml='';
+    if(p.price&&p.buyLink){
+      priceHtml=`<div class="product-price">${pricePrefix}NZ$${p.price}<small>approx.</small></div>`;
+      buyHtml=`<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener">Shop This Gift →</a>`;
+    } else if(p.price&&!p.buyLink){
+      priceHtml=`<div class="product-price">${pricePrefix}NZ$${p.price}<small>approx.</small></div>`;
+      buyHtml=`<span class="product-no-result">Search "${p.name}" at your local NZ retailer</span>`;
+    } else if(!p.price&&p.buyLink){
+      buyHtml=`<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener">Shop This Gift →</a>`;
     } else {
-      // FIX #2: Both null — show helpful fallback
-      priceHtml = '';
-      buyHtml = `<div class="product-no-result">🔍 Try searching "${p.name}" at Noel Leeming, PB Tech or Farmers</div>`;
+      buyHtml=`<div class="product-no-result">🔍 Try "${p.name}" at Noel Leeming, PB Tech or Farmers</div>`;
     }
 
-    // FIX #4: Chips — name only, no price
-    const storeLinks = (p.stores || [])
-      .map(s => `<a class="store-chip" href="${s.link||'#'}" target="_blank" rel="noopener">${s.name}</a>`)
+    const storeLinks=(p.stores||[])
+      .map(s=>`<a class="store-chip" href="${s.link||'#'}" target="_blank" rel="noopener">${s.name}</a>`)
       .join('');
+    const storeNote=p.storeCount===1
+      ?`<div class="single-store-note">Only one NZ retailer found — try searching directly</div>`:'';
 
-    // FIX #8: Single store note
-    const storeNote = p.storeCount === 1
-      ? `<div class="single-store-note">Only one NZ retailer found — try searching directly for more options</div>`
-      : '';
-
-    const card = document.createElement('div');
-    card.className = 'product-card';
-    card.dataset.index = i;
-    card.innerHTML = `
+    const card=document.createElement('div');
+    card.className='product-card'; card.dataset.index=i;
+    card.innerHTML=`
       <div class="product-image-wrap">
-        <img src="${p.imageUrl || 'https://placehold.co/700x200/faf6f0/c8922a?text=Gift'}"
-             alt="${p.name}"
-             onerror="this.src='https://placehold.co/700x200/faf6f0/c8922a?text=Gift'" />
+        <img src="${p.imageUrl||'https://placehold.co/600x190/faf6f0/c8922a?text=Gift'}"
+             alt="${p.name}" onerror="this.src='https://placehold.co/600x190/faf6f0/c8922a?text=Gift'" />
         <div class="product-rank">${i+1}</div>
       </div>
       <div class="product-info">
-        <div class="product-type-tag">${p.type || 'Gift Idea'}</div>
+        <div class="product-type-tag">${p.type||'Gift Idea'}</div>
         <div class="product-name">${p.name}</div>
         <div class="product-reason">${p.reason}</div>
         <div class="product-footer">${priceHtml}${buyHtml}</div>
-        ${storeLinks ? `<div class="stores-list">${storeLinks}</div>` : ''}
+        ${storeLinks?`<div class="stores-list">${storeLinks}</div>`:''}
         ${storeNote}
       </div>`;
 
-    card.addEventListener('click', () => {
-      if (parseInt(card.dataset.index) !== currentCard) swipeTo(parseInt(card.dataset.index));
-    });
-
+    card.addEventListener('click',()=>{ if(parseInt(card.dataset.index)!==currentCard) swipeTo(parseInt(card.dataset.index)); });
     stack.appendChild(card);
 
-    const dot = document.createElement('div');
-    dot.className = 'swipe-dot' + (i === 0 ? ' active' : '');
-    dot.onclick = () => swipeTo(i);
+    const dot=document.createElement('div');
+    dot.className='swipe-dot'+(i===0?' active':'');
+    dot.onclick=()=>swipeTo(i);
     dotsContainer.appendChild(dot);
   });
 
+  // FIX: measure front card height and set stack height to eliminate gap
+  positionCards();
+
   // Touch swipe
-  let touchStartX = 0;
-  stack.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
-  stack.addEventListener('touchend', e => {
-    const diff = touchStartX - e.changedTouches[0].screenX;
-    if (Math.abs(diff) > 50) swipeTo(diff > 0 ? currentCard + 1 : currentCard - 1);
+  let touchStartX=0;
+  stack.addEventListener('touchstart',e=>{ touchStartX=e.changedTouches[0].screenX; },{passive:true});
+  stack.addEventListener('touchend',e=>{
+    const diff=touchStartX-e.changedTouches[0].screenX;
+    if(Math.abs(diff)>50) swipeTo(diff>0?currentCard+1:currentCard-1);
   });
 
-  positionCards();
   updateSwipeNav();
   show('results');
-  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function positionCards() {
-  document.querySelectorAll('.product-card').forEach((card, i) => {
-    card.classList.remove('pos-0','pos-1','pos-2','pos-out','pos-in');
+function positionCards(){
+  // Pure maths — every card's transform is calculated from (i - currentCard).
+  // rel < 0  → already viewed, slide off LEFT  (translateX -115%)
+  // rel = 0  → front card, full size
+  // rel = 1  → first card behind, peek 10px down+right, scale 0.97
+  // rel = 2  → second card behind, peek 20px down+right, scale 0.94
+  // rel > 2  → further behind, same as rel=2 (hidden by front cards)
+  document.querySelectorAll('.product-card').forEach((card,i)=>{
     const rel = i - currentCard;
-    if (rel === 0) card.classList.add('pos-0');
-    else if (rel === 1) card.classList.add('pos-1');
-    else if (rel >= 2) card.classList.add('pos-2');
-    else card.classList.add('pos-out'); // rel < 0 — already viewed
+    if(rel < 0){
+      // Viewed cards — slide off left, invisible
+      card.style.transform = 'translateX(-115%) rotate(-5deg) scale(0.95)';
+      card.style.opacity   = '0';
+      card.style.zIndex    = '0';
+      card.style.boxShadow = 'none';
+      card.style.pointerEvents = 'none';
+      card.dataset.front = 'false';
+    } else if(rel === 0){
+      // Active front card
+      card.style.transform = 'translateY(0px) translateX(0px) scale(1)';
+      card.style.opacity   = '1';
+      card.style.zIndex    = '3';
+      card.style.boxShadow = '0 10px 44px rgba(61,43,26,0.16)';
+      card.style.pointerEvents = 'auto';
+      card.dataset.front = 'true';
+    } else if(rel === 1){
+      // First card peeking behind
+      card.style.transform = 'translateY(10px) translateX(10px) scale(0.97)';
+      card.style.opacity   = '1';
+      card.style.zIndex    = '2';
+      card.style.boxShadow = '0 6px 24px rgba(61,43,26,0.10)';
+      card.style.pointerEvents = 'none';
+    } else {
+      // Second+ card peeking further behind
+      card.style.transform = 'translateY(20px) translateX(20px) scale(0.94)';
+      card.style.opacity   = '0.75';
+      card.style.zIndex    = '1';
+      card.style.boxShadow = '0 3px 14px rgba(61,43,26,0.07)';
+      card.style.pointerEvents = 'none';
+    }
   });
 }
 
-function swipeTo(index) {
-  if (index < 0 || index >= totalCards) return;
-  currentCard = index;
+function swipeTo(index){
+  if(index<0||index>=totalCards) return;
+  currentCard=index;
   positionCards();
-  document.querySelectorAll('.swipe-dot').forEach((d, i) => d.classList.toggle('active', i === currentCard));
+  document.querySelectorAll('.swipe-dot').forEach((d,i)=>d.classList.toggle('active',i===currentCard));
   updateSwipeNav();
+
 }
 
-function updateSwipeNav() {
-  document.getElementById('swipePrev').disabled = currentCard === 0;
-  document.getElementById('swipeNext').disabled = currentCard === totalCards - 1;
+function updateSwipeNav(){
+  document.getElementById('swipePrev').disabled=currentCard===0;
+  document.getElementById('swipeNext').disabled=currentCard===totalCards-1;
 }
 
-function restart() {
-  ['error','results','loading','emailGate','quiz'].forEach(id => hide(id));
+function restart(){
+  ['error','results','loading','emailGate','quiz'].forEach(id=>hide(id));
   answers.q1gift=''; answers.q2=''; answers.q3='';
   answers.q4budget=0; answers.q4occ=''; answers.q5interests=''; answers.email='';
-  document.querySelectorAll('.option-pill').forEach(p => p.classList.remove('selected'));
-  document.getElementById('q5interests').value = '';
-  document.getElementById('emailInput').value = '';
-  ['next1','next2','next3','next4','btnReveal'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = true;
-  });
+  document.querySelectorAll('.option-pill').forEach(p=>p.classList.remove('selected'));
+  document.getElementById('q5interests').value='';
+  document.getElementById('emailInput').value='';
+  ['next1','next2','next3','next4','btnReveal'].forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=true; });
   document.getElementById('next3').classList.add('hidden');
-  document.getElementById('next5').disabled = false;
-  answers.q4budgetLabel = '';
-  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('next4').classList.add('hidden');
+  document.getElementById('next5').disabled=false;
+  document.getElementById('budgetRequiredNote').classList.remove('visible');
+  answers.q4budgetLabel='';
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
   document.getElementById('step1').classList.add('active');
-  currentStep = 1; refreshCount = 0; currentCard = 0; shownProductNames = [];
+  currentStep=1; refreshCount=0; currentCard=0; shownProductNames=[];
   updateRefreshUI();
   show('hero');
 }
 
-function comingSoon() {
-  const msg = document.getElementById('comingSoonMsg');
-  msg.style.display = 'block';
-  setTimeout(() => msg.style.display = 'none', 3000);
+function comingSoon(){
+  const msg=document.getElementById('comingSoonMsg');
+  msg.style.display='block';
+  setTimeout(()=>msg.style.display='none',3000);
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('next5').disabled = false;
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('next5').disabled=false;
   updateBudget(100);
   updateRefreshUI();
 });
