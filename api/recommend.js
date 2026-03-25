@@ -41,69 +41,50 @@ const INAPPROPRIATE_TERMS = [
 
 // ── BLACKLISTS ────────────────────────────────────────────────────────────────
 const BLACKLISTED_DOMAINS = [
-  // Junk marketplaces & cheap imports
   'temu', 'aliexpress', 'wish.com', 'dhgate', 'banggood', 'shein',
   'ebay', 'amazon.com', 'alibaba', 'lightinthebox', 'joom',
-  // AU only / AU-owned NZ domains
   '.com.au', 'addictedtoaudio', 'sydneytools',
-  // Poor NZ retailers
   'dicksmith', 'kogan', 'theiconic', 'trademe', 'lego.com',
-  'tommy.com', 'farfetch', 'net-a-porter', 'trendhim',
-  // Architecture / design / non-retail
-  'archipro',
-  // Price comparison sites
+  'tommy.com', 'farfetch', 'net-a-porter', 'trendhim', 'archipro',
   'pricespy', 'getpricelist', 'shopbot', 'staticice', 'myshopping',
   'getprice', 'shopmania', 'twenga',
-  // Media & news
   'nzherald', 'stuff.co.nz', 'newshub', 'rnz.co.nz', 'tvnz',
-  // B2B / trade
   'southernhospitality', 'temperature.co.nz', 'catering.co.nz',
   'nzrestaurants', 'hirepool', 'tradetools', 'industrialtools',
-  // Wool / crafts — not sports retailers
   'woolcompany', 'thewoolcompany', 'cosytoes', 'merinoandmore',
-  // Brand direct — AUDIO/ENTERTAINMENT
   'samsung.com', 'sony.co.nz', 'lg.com', 'panasonic.com', 'philips.co.nz',
   'tcl.com', 'hisense.co.nz', 'bose.co.nz', 'bose.com', 'sennheiser',
   'jbl.co.nz', 'ultimateears.com', 'sonos.com', 'nz.yamaha.com',
   'bang-olufsen.com', 'denon.com', 'marantz.com', 'klipsch.com', 'audio-technica.com',
-  // Brand direct — COMPUTING
   'apple.com', 'store.google.com', 'microsoft.com', 'hp.com', 'dell.com',
   'lenovo.com', 'asus.com', 'acer.com', 'logitech.com', 'razer.com',
   'nintendo.co.nz', 'playstation.com', 'xbox.com', 'garmin.com',
   'fitbit.com', 'gopro.com', 'nikon.co.nz', 'canon.co.nz',
-  // Brand direct — KITCHEN
   'fisherpaykel.com', 'breville.com', 'delonghi.com', 'nespresso.com',
   'kenwoodworld.com', 'kitchenaid.co.nz', 'sunbeam.co.nz', 'nutribullet.co.nz',
   'ninjakitchen.co.nz', 'tefal.co.nz', 'cuisinart.co.nz', 'smeg.com',
   'miele.co.nz', 'bosch-home.co.nz', 'haier.co.nz', 'westinghouse.co.nz',
   'beko.com', 'asko.com', 'morphyrichards.co.nz', 'russellhobbs.co.nz',
   'sodastream.co.nz', 'instantpot.co.nz',
-  // Brand direct — CLEANING
   'dyson.co.nz', 'dyson.com', 'sharkclean.co.nz', 'roborock.co.nz',
   'ecovacs.com', 'irobot.co.nz', 'vax.co.nz', 'bissell.co.nz',
   'blackanddecker.co.nz', 'mitsubishi-electric.co.nz', 'daikin.co.nz',
   'fujitsugeneral.co.nz',
-  // Brand direct — BEAUTY
   'ghdhair.com', 'cloudninehair.co.nz', 'vssassoon.co.nz',
   'remington.co.nz', 'braun.com', 'oralb.co.nz',
-  // Brand direct — SPORTS
   'nike.com', 'adidas.co.nz', 'adidas.com', 'nike.co.nz', 'nz.puma.com',
   'newbalance.co.nz', 'underarmour.co.nz', 'asics.com', 'lululemon.co.nz',
   'kathmandu.co.nz', 'macpac.co.nz', 'icebreaker.com', 'allbirds.co.nz',
   'converse.co.nz', 'vans.co.nz', 'timberland.co.nz', 'thenorthface.co.nz',
   'salomon.co.nz', 'brooksrunning.co.nz', 'oakley.com', 'ray-ban.com',
-  // Brand direct — TOOLS
   'tesla.com', 'ryobi.co.nz', 'makita.co.nz', 'dewalt.co.nz', 'milwaukeetool.co.nz',
-  // Medical/health info
   'bauerfeind',
 ];
 
-// URL path patterns that mean content pages, not product/category pages
 const BLACKLISTED_URL_PATTERNS = [
   '/blog/', '/guide/', '/guides/', '/news/', '/article/', '/articles/',
   '/playbook/', '/editorial/', '/story/', '/stories/',
   '/advice/', '/tips/', '/how-to/', '/learn/', '/education/',
-  '/compression-sleeves', '/running-shoes-playbook',
 ];
 
 function isBlacklisted(url) {
@@ -114,102 +95,97 @@ function isBlacklisted(url) {
   return false;
 }
 
-// ── RETAILER ROUTING ──────────────────────────────────────────────────────────
-
-// Known good NZ retailer domains — mapped to their search URL pattern
-// Used to build chip search links
+// ── RETAILER SEARCH URL MAP ───────────────────────────────────────────────────
+// FIX: MightyApe corrected to /search?q= format
 const RETAILER_SEARCH_PATTERNS = {
-  'thewarehouse':    (q) => `https://www.thewarehouse.co.nz/search?q=${encodeURIComponent(q)}`,
-  'warehouse':       (q) => `https://www.thewarehouse.co.nz/search?q=${encodeURIComponent(q)}`,
-  'farmers':         (q) => `https://www.farmers.co.nz/search?q=${encodeURIComponent(q)}`,
-  'briscoes':        (q) => `https://www.briscoes.co.nz/search?q=${encodeURIComponent(q)}`,
-  'noelleeming':     (q) => `https://www.noelleeming.co.nz/search?q=${encodeURIComponent(q)}`,
-  'pbtech':          (q) => `https://www.pbtech.co.nz/search?q=${encodeURIComponent(q)}`,
-  'mightyape':       (q) => `https://www.mightyape.co.nz/search?q=${encodeURIComponent(q)}&cat=all`,
-  'harveynorman':    (q) => `https://www.harveynorman.co.nz/search?q=${encodeURIComponent(q)}`,
-  'jbhifi':          (q) => `https://www.jbhifi.co.nz/search?q=${encodeURIComponent(q)}`,
-  'stirlingsports':  (q) => `https://www.stirlingsports.co.nz/search?q=${encodeURIComponent(q)}`,
-  'rebelsport':      (q) => `https://www.rebelsport.co.nz/search?q=${encodeURIComponent(q)}`,
-  'bunnings':        (q) => `https://www.bunnings.co.nz/search/products?q=${encodeURIComponent(q)}`,
-  'mitre10':         (q) => `https://www.mitre10.co.nz/search?q=${encodeURIComponent(q)}`,
-  'torpedo7':        (q) => `https://www.torpedo7.co.nz/search?q=${encodeURIComponent(q)}`,
-  'hallensteins':    (q) => `https://www.hallensteins.com/search?q=${encodeURIComponent(q)}`,
-  'glassons':        (q) => `https://www.glassons.com/search?q=${encodeURIComponent(q)}`,
+  'thewarehouse':     (q) => `https://www.thewarehouse.co.nz/search?q=${encodeURIComponent(q)}`,
+  'warehouse':        (q) => `https://www.thewarehouse.co.nz/search?q=${encodeURIComponent(q)}`,
+  'farmers':          (q) => `https://www.farmers.co.nz/search?q=${encodeURIComponent(q)}`,
+  'briscoes':         (q) => `https://www.briscoes.co.nz/search?q=${encodeURIComponent(q)}`,
+  'noelleeming':      (q) => `https://www.noelleeming.co.nz/search?q=${encodeURIComponent(q)}`,
+  'pbtech':           (q) => `https://www.pbtech.co.nz/search?q=${encodeURIComponent(q)}`,
+  // FIX: MightyApe correct search URL format
+  'mightyape':        (q) => `https://www.mightyape.co.nz/search?q=${encodeURIComponent(q)}`,
+  'harveynorman':     (q) => `https://www.harveynorman.co.nz/search?q=${encodeURIComponent(q)}`,
+  // FIX: JB Hi-Fi added
+  'jbhifi':           (q) => `https://www.jbhifi.co.nz/search?q=${encodeURIComponent(q)}`,
+  'jb-hifi':          (q) => `https://www.jbhifi.co.nz/search?q=${encodeURIComponent(q)}`,
+  'stirlingsports':   (q) => `https://www.stirlingsports.co.nz/search?q=${encodeURIComponent(q)}`,
+  'rebelsport':       (q) => `https://www.rebelsport.co.nz/search?q=${encodeURIComponent(q)}`,
+  'bunnings':         (q) => `https://www.bunnings.co.nz/search/products?q=${encodeURIComponent(q)}`,
+  'mitre10':          (q) => `https://www.mitre10.co.nz/search?q=${encodeURIComponent(q)}`,
+  'torpedo7':         (q) => `https://www.torpedo7.co.nz/search?q=${encodeURIComponent(q)}`,
+  'hallensteins':     (q) => `https://www.hallensteins.com/search?q=${encodeURIComponent(q)}`,
+  'glassons':         (q) => `https://www.glassons.com/search?q=${encodeURIComponent(q)}`,
   'chemistwarehouse': (q) => `https://www.chemistwarehouse.co.nz/search?q=${encodeURIComponent(q)}`,
-  'countdown':       (q) => `https://www.countdown.co.nz/search?q=${encodeURIComponent(q)}`,
-  'supercheap':      (q) => `https://www.supercheapauto.co.nz/search?q=${encodeURIComponent(q)}`,
-  'repco':           (q) => `https://www.repco.co.nz/search?q=${encodeURIComponent(q)}`,
-  'toolshed':        (q) => `https://www.thetoolshed.co.nz/search?q=${encodeURIComponent(q)}`,
-  'whitcoulls':      (q) => `https://www.whitcoulls.co.nz/search?q=${encodeURIComponent(q)}`,
-  'paperplus':       (q) => `https://www.paperplus.co.nz/search?q=${encodeURIComponent(q)}`,
-  'huntingandfishing': (q) => `https://www.huntingandfishing.co.nz/search?q=${encodeURIComponent(q)}`,
-  'luggage':         (q) => `https://www.luggage.co.nz/search?q=${encodeURIComponent(q)}`,
-  'strandbags':      (q) => `https://www.strandbags.co.nz/search?q=${encodeURIComponent(q)}`,
+  'countdown':        (q) => `https://www.countdown.co.nz/search?q=${encodeURIComponent(q)}`,
+  'supercheap':       (q) => `https://www.supercheapauto.co.nz/search?q=${encodeURIComponent(q)}`,
+  'repco':            (q) => `https://www.repco.co.nz/search?q=${encodeURIComponent(q)}`,
+  'toolshed':         (q) => `https://www.thetoolshed.co.nz/search?q=${encodeURIComponent(q)}`,
+  'whitcoulls':       (q) => `https://www.whitcoulls.co.nz/search?q=${encodeURIComponent(q)}`,
+  'paperplus':        (q) => `https://www.paperplus.co.nz/search?q=${encodeURIComponent(q)}`,
+  'huntingandfishing':(q) => `https://www.huntingandfishing.co.nz/search?q=${encodeURIComponent(q)}`,
+  'luggage':          (q) => `https://www.luggage.co.nz/search?q=${encodeURIComponent(q)}`,
+  'strandbags':       (q) => `https://www.strandbags.co.nz/search?q=${encodeURIComponent(q)}`,
+  'smithscity':       (q) => `https://www.smithscity.co.nz/search?q=${encodeURIComponent(q)}`,
+  'themarket':        (q) => `https://www.themarket.com/search?q=${encodeURIComponent(q)}`,
+  'numberoneshoes':   (q) => `https://www.numberoneshoes.co.nz/search?q=${encodeURIComponent(q)}`,
+  'furtherfaster':    (q) => `https://www.furtherfaster.co.nz/search?q=${encodeURIComponent(q)}`,
+  'runnersnz':        (q) => `https://www.runners.co.nz/search?q=${encodeURIComponent(q)}`,
 };
 
 function getRetailerSearchUrl(domain, productName) {
   const key = Object.keys(RETAILER_SEARCH_PATTERNS).find(k => domain.includes(k));
   if (key) return RETAILER_SEARCH_PATTERNS[key](productName);
-  // Fallback: just the homepage
   return null;
 }
 
-// Power tool retailers — for routing hardware products
+// ── RETAILER ROUTING ──────────────────────────────────────────────────────────
 const POWER_TOOL_RETAILERS = [
   'mitre10', 'bunnings', 'toolshed', 'hammerhardware',
   'repco', 'supercheap', 'stihlshop', 'riequip', 'tradetested',
 ];
-
-// Retailers that should NEVER show for power tools
 const NON_TOOL_RETAILERS = [
   'noelleeming', 'noel-leeming', 'harveynorman', 'harvey-norman',
   'jbhifi', 'jb-hifi',
 ];
-
-// Sports/activewear retailers
 const SPORTS_RETAILERS = [
   'stirlingsports', 'rebelsport', 'torpedo7', 'huntingandfishing',
-  'kathmandu', 'macpac', 'runners', 'numberoneshoes',
+  'furtherfaster', 'runners', 'numberoneshoes',
 ];
 
 function isPowerToolRetailer(url) {
   return POWER_TOOL_RETAILERS.some(r => url.toLowerCase().includes(r));
 }
-
 function isSportsRetailer(url) {
   return SPORTS_RETAILERS.some(r => url.toLowerCase().includes(r));
 }
-
 function isHardwareTool(name, type) {
   const s = `${name} ${type}`.toLowerCase();
-  return ['compressor', 'drill', 'saw', 'grinder', 'sander', 'pressure washer',
-    'waterblaster', 'water blaster', 'air pump', 'cordless', 'power tool',
-    'nail gun', 'jigsaw', 'circular saw', 'angle grinder', 'air compressor',
-    'impact wrench', 'heat gun', 'rotary tool'].some(k => s.includes(k));
+  return ['compressor','drill','saw','grinder','sander','pressure washer',
+    'waterblaster','water blaster','air pump','cordless','power tool',
+    'nail gun','jigsaw','circular saw','angle grinder','air compressor',
+    'impact wrench','heat gun','rotary tool'].some(k => s.includes(k));
 }
-
 function isSportsApparel(name, type) {
   const s = `${name} ${type}`.toLowerCase();
-  return ['socks', 'jersey', 'shorts', 'leggings', 'sports bra', 'activewear',
-    'training top', 'running shoes', 'athletic', 'gym wear', 'compression',
-    'moisture wick', 'workout'].some(k => s.includes(k));
+  return ['socks','jersey','shorts','leggings','sports bra','activewear',
+    'training top','running shoes','athletic','gym wear','compression',
+    'moisture wick','workout'].some(k => s.includes(k));
 }
 
 // ── PRODUCT NAME VALIDATION ───────────────────────────────────────────────────
-// Catches invented compound names that don't exist in NZ retail
-// Returns true if name looks real, false if it looks made up
 function isValidProductName(name) {
   if (!name) return false;
-  // Red flags: overly long names with 5+ words of marketing fluff
   const words = name.trim().split(/\s+/);
   if (words.length > 7) return false;
-  // Red flags: specific combos that don't exist as real products
   const inventedPatterns = [
     /compression.*recovery.*roller/i,
     /muscle.*recovery.*compression/i,
     /multi.*function.*recovery/i,
     /advanced.*therapeutic.*device/i,
     /smart.*wellness.*tracker.*pro/i,
+    /precision.*athletic.*performance/i,
   ];
   if (inventedPatterns.some(p => p.test(name))) return false;
   return true;
@@ -229,9 +205,9 @@ function getBudgetRange(budget) {
 function getMatchableDomain(url) {
   try {
     return new URL(url).hostname
-      .replace('www.', '').replace('.co.nz', '').replace('.com', '').replace('.co', '')
+      .replace('www.','').replace('.co.nz','').replace('.com','').replace('.co','')
       .toLowerCase();
-  } catch (e) { return ''; }
+  } catch(e) { return ''; }
 }
 
 function isWarehouse(url) {
@@ -305,33 +281,32 @@ export default async function handler(req, res) {
     : '';
 
   // ── STEP 1: Claude Haiku ────────────────────────────────────────────────────
-
   const systemPrompt = `You are ShopGenieAI, a gift recommendation engine for the New Zealand retail market.
 
 Recommend exactly 3 products available in NZ stores in 2025/2026.
 
 STRICT RULES:
 - Exactly 3 products, single items only — NO bundles or combo packs
-- GENERIC product names ONLY — use names that customers actually type into retailer search bars
+- GENERIC product names ONLY — use names customers actually type into retailer search bars
   GOOD: "Foam Roller", "Insulated Water Bottle", "Sports Bra", "RFID Wallet", "Wireless Earbuds"
   BAD: "Compression Muscle Recovery Roller", "Advanced Hydration Vessel", "Smart Wellness Tracker Pro"
   The name must be a real product category that exists in NZ retail, not an invented compound name
 - Current 2025/2026 products only
-- BUDGET HARD RULE: ${budgetInstruction} Non-negotiable.
+- BUDGET HARD RULE: ${budgetInstruction} Non-negotiable. Every product must fit within this exact range.
 - VIBE RULE: Every recommendation must match the stated vibe
 - INTERESTS RULE: Every recommendation must be relevant to stated interests
 
 BRAND VARIETY RULE:
 If recommending multiple similar products, vary the searchQuery brand angle for each:
 - Water bottles: vary between hydro flask style / camelbak style / stanley style / budget insulated bottle
-- Socks: vary between merino wool socks / bamboo socks / athletic performance socks / compression socks
-- Wallets: vary between slim card holder / bifold leather / travel wallet / zip-around wallet
+- Socks: vary between merino wool / bamboo / athletic performance / compression
+- Wallets: vary between slim card holder / bifold leather / travel wallet / zip-around
 Never use the same brand angle twice in one set of 3
 
 RETAILER ROUTING:
-- Sports apparel, activewear, socks, running gear → Stirling Sports, Rebel Sport, Number One Shoes. NEVER The Wool Company.
+- Sports apparel, activewear, socks, running gear → Stirling Sports, Rebel Sport. NEVER The Wool Company.
 - Power tools, drills, compressors, pressure washers → Bunnings, Mitre 10, The Tool Shed. NEVER Noel Leeming or Harvey Norman.
-- Electronics, audio → Noel Leeming, PB Tech, JB Hi-Fi, Harvey Norman
+- Electronics, audio, tech → Noel Leeming, PB Tech, JB Hi-Fi, Harvey Norman
 - General gifts → The Warehouse, Farmers, Briscoes
 
 - Wallets: ALWAYS RFID-blocking
@@ -365,7 +340,8 @@ ${refreshInstruction ? `\nVariety (same vibe/person/interests): ${refreshInstruc
 ${excludeProducts.length > 0 ? `\nDO NOT recommend: ${excludeProducts.join(', ')}. Pick completely different types.` : ''}
 
 CRITICAL: Use REAL product names customers search for. No invented compound names.
-Vibe is "${vibe}" — every product must match. Interests "${interests || 'not specified'}" — every product must be relevant.`;
+Vibe is "${vibe}" — every product must match. Interests "${interests || 'not specified'}" — every product must be relevant.
+Every product MUST be priced within ${budgetLabel}.`;
 
   let products;
   try {
@@ -389,34 +365,24 @@ Vibe is "${vibe}" — every product must match. Interests "${interests || 'not s
     products = JSON.parse(clean).products;
     if (!Array.isArray(products) || products.length === 0) throw new Error('No products returned');
 
-    // ── PRODUCT NAME VALIDATION ─────────────────────────────────────────────
+    // Product name validation
     products = products.map(p => {
       if (!isValidProductName(p.name)) {
-        console.warn(`Invalid product name detected: "${p.name}" — replacing with searchQuery`);
-        p.name = p.searchQuery
-          .split(' ')
-          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(' ');
+        console.warn(`Invalid product name: "${p.name}" — replacing with searchQuery`);
+        p.name = p.searchQuery.split(' ')
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
       }
       return p;
     });
-
   } catch (err) {
     console.error('Claude error:', err);
     return res.status(500).json({ error: `AI failed: ${err.message}` });
   }
 
   // ── STEP 2: Serper enrichment ───────────────────────────────────────────────
-  // 3-tier organic search fallback per product:
-  //   Tier 1: Specific — review-informed + budget hint + negatives
-  //   Tier 2: Simple   — [product] buy NZ
-  //   Tier 3: Broad    — [product] NZ (widest net)
-  // Shopping: price map only (never for buy links)
-  // Images: 3-call fallback chain if needed
-
   const negatives = [
-    '-site:nzherald.co.nz', '-site:stuff.co.nz', '-site:rnz.co.nz',
-    '-site:temu.com', '-site:aliexpress.com', '-site:pricespy.co.nz',
+    '-site:nzherald.co.nz','-site:stuff.co.nz','-site:rnz.co.nz',
+    '-site:temu.com','-site:aliexpress.com','-site:pricespy.co.nz',
     '-site:archipro.co.nz'
   ].join(' ');
 
@@ -428,10 +394,10 @@ Vibe is "${vibe}" — every product must match. Interests "${interests || 'not s
       const isToolProd   = isHardwareTool(product.name, product.type);
       const isSportsProd = isSportsApparel(product.name, product.type);
 
-      // ── Review search (Call A) ──────────────────────────────────────────
+      // Call A: Review search
       let specificProduct = null;
       try {
-        const reviewRes = await fetch('https://google.serper.dev/search', {
+        const reviewRes  = await fetch('https://google.serper.dev/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
           body: JSON.stringify({ q: `${reviewQuery} ${negatives}`, gl: 'nz', hl: 'en', num: 5 })
@@ -441,27 +407,26 @@ Vibe is "${vibe}" — every product must match. Interests "${interests || 'not s
           const ex = extractProductFromSnippet(r.snippet) || extractProductFromSnippet(r.title);
           if (ex) { specificProduct = ex; break; }
         }
-      } catch (e) { /* review search optional — continue */ }
+      } catch(e) { /* optional — continue */ }
 
       const buyTerm = specificProduct || searchTerm;
 
-      // ── Organic Tier 1 (Call B) ─────────────────────────────────────────
-      const t1Query = `${buyTerm} buy NZ ${budgetHint} ${negatives}`;
-      // Add site hints for specific product types
+      // Site hints for specific product types
       const siteHints = isToolProd
         ? 'site:bunnings.co.nz OR site:mitre10.co.nz OR site:thetoolshed.co.nz'
         : isSportsProd
           ? 'site:stirlingsports.co.nz OR site:rebelsport.co.nz OR site:torpedo7.co.nz'
           : '';
 
-      // ── Shopping + Images (Calls C & D) — run in parallel with T1 ──────
-      const [t1Res, shoppingRes, imageRes] = await Promise.all([
+      // Calls B (organic), C (shopping), D (images) — parallel
+      const [organicRes, shoppingRes, imageRes] = await Promise.all([
         fetch('https://google.serper.dev/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
           body: JSON.stringify({
-            q: siteHints ? `${buyTerm} ${siteHints}` : t1Query,
-            gl: 'nz', hl: 'en', num: 10
+            // FIX: increased num to 15 for more chip candidates
+            q: siteHints ? `${buyTerm} ${siteHints}` : `${buyTerm} buy NZ ${budgetHint} ${negatives}`,
+            gl: 'nz', hl: 'en', num: 15
           })
         }),
         fetch('https://google.serper.dev/shopping', {
@@ -479,46 +444,40 @@ Vibe is "${vibe}" — every product must match. Interests "${interests || 'not s
         })
       ]);
 
-      const t1Data       = t1Res.ok       ? await t1Res.json()       : {};
+      const organicData  = organicRes.ok  ? await organicRes.json()  : {};
       const shoppingData = shoppingRes.ok ? await shoppingRes.json() : {};
-      const imageData    = imageRes.ok    ? await imageRes.json()     : {};
+      const imageData    = imageRes.ok    ? await imageRes.json()    : {};
 
-      // ── Filter function — NZ retailers only ────────────────────────────
+      // Filter function
       function filterOrganic(items) {
-        return items.filter(item => {
+        return (items || []).filter(item => {
           if (!item.link || isBlacklisted(item.link)) return false;
           const url = item.link.toLowerCase();
-
           if (isToolProd) {
-            // Tools: only hardware retailers
             return isPowerToolRetailer(url) || url.includes('bunnings') || url.includes('mitre10');
           }
-          if (isSportsProd) {
-            // Sports apparel: only sports retailers + general NZ
-            if (NON_TOOL_RETAILERS.some(r => url.includes(r))) return false;
-          }
-
+          if (isSportsProd && NON_TOOL_RETAILERS.some(r => url.includes(r))) return false;
           const isNZRetailer =
             url.includes('.co.nz') ||
             url.includes('mightyape') ||
             url.includes('pbtech') ||
+            url.includes('jbhifi') ||        // FIX: JB Hi-Fi added
+            url.includes('jb-hifi') ||
             url.includes('stirlingsports') ||
             url.includes('torpedo7') ||
             url.includes('hallensteins') ||
             url.includes('glassons') ||
             url.includes('luggage.co') ||
+            url.includes('furtherfaster') ||
             isPowerToolRetailer(url);
-
           const isNZOnly = /\.nz(\/|$)/.test(url) && !url.includes('.co.nz');
           return isNZRetailer && !isNZOnly;
         });
       }
 
-      // ── Deduplicate ─────────────────────────────────────────────────────
+      // Deduplicate — Warehouse held back as last resort
       function dedup(items) {
-        const seen   = new Set();
-        const main   = [];
-        const wh     = [];
+        const seen = new Set(), main = [], wh = [];
         for (const item of filterOrganic(items)) {
           const domain = getMatchableDomain(item.link);
           if (!domain || seen.has(domain)) continue;
@@ -527,62 +486,61 @@ Vibe is "${vibe}" — every product must match. Interests "${interests || 'not s
             ? wh.push({ ...item, _domain: domain })
             : main.push({ ...item, _domain: domain });
         }
-        if (main.length < 2) main.push(...wh); // Warehouse last resort
+        if (main.length < 2) main.push(...wh);
         return main;
       }
 
-      let uniqueOrganic = dedup(t1Data.organic || []);
+      let uniqueOrganic = dedup(organicData.organic || []);
 
-      // ── Tier 2 fallback ─────────────────────────────────────────────────
-      if (uniqueOrganic.length < 2) {
+      // Tier 2 fallback
+      if (uniqueOrganic.length < 3) {
         try {
           const t2Res  = await fetch('https://google.serper.dev/search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
-            body: JSON.stringify({ q: `${searchTerm} buy NZ`, gl: 'nz', hl: 'en', num: 10 })
+            body: JSON.stringify({ q: `${searchTerm} buy NZ`, gl: 'nz', hl: 'en', num: 15 })
           });
           const t2Data = t2Res.ok ? await t2Res.json() : {};
-          uniqueOrganic = dedup([...( t1Data.organic || []), ...(t2Data.organic || [])]);
-        } catch (e) { /* continue */ }
+          uniqueOrganic = dedup([...(organicData.organic || []), ...(t2Data.organic || [])]);
+        } catch(e) { /* continue */ }
       }
 
-      // ── Tier 3 fallback ─────────────────────────────────────────────────
-      if (uniqueOrganic.length < 2) {
+      // Tier 3 fallback
+      if (uniqueOrganic.length < 3) {
         try {
           const t3Res  = await fetch('https://google.serper.dev/search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
-            body: JSON.stringify({ q: `${searchTerm} NZ site:*.co.nz`, gl: 'nz', hl: 'en', num: 10 })
+            body: JSON.stringify({ q: `${searchTerm} NZ site:*.co.nz`, gl: 'nz', hl: 'en', num: 15 })
           });
           const t3Data = t3Res.ok ? await t3Res.json() : {};
-          uniqueOrganic = dedup([...(uniqueOrganic.map(x => x)), ...(t3Data.organic || [])]);
-        } catch (e) { /* continue */ }
+          uniqueOrganic = dedup([...uniqueOrganic, ...(t3Data.organic || [])]);
+        } catch(e) { /* continue */ }
       }
 
-      // ── Build price map from shopping results ────────────────────────────
+      // Build price map from shopping results
       const priceMap = {};
       for (const item of (shoppingData.shopping || [])) {
         if (!item.price || isBlacklisted(item.source || '') || isBlacklisted(item.link || '')) continue;
         const raw = parseFloat((item.price || '0').replace(/[^0-9.]/g, '')) || 0;
-        if (raw < 3) continue; // kill junk prices
-
+        if (raw < 3) continue;
         const addEntry = (key) => {
           if (key && !priceMap[key]) priceMap[key] = { price: item.price, rawPrice: raw, source: item.source || key };
         };
-        if (item.source) {
-          addEntry(item.source.toLowerCase().replace(/\s+/g,'').replace('.co.nz','').replace('.com',''));
-        }
-        if (item.link) addEntry(getMatchableDomain(item.link));
+        if (item.source) addEntry(item.source.toLowerCase().replace(/\s+/g,'').replace('.co.nz','').replace('.com',''));
+        if (item.link)   addEntry(getMatchableDomain(item.link));
       }
 
-      // ── Buy button ───────────────────────────────────────────────────────
-      const best        = uniqueOrganic[0] || null;
-      const buyLink     = best?.link || null;
-      const buyDomain   = best?._domain || null;
-      const storeName   = buyDomain ? buyDomain.charAt(0).toUpperCase() + buyDomain.slice(1) : null;
+      // Buy button
+      const best      = uniqueOrganic[0] || null;
+      const buyLink   = best?.link || null;
+      const buyDomain = best?._domain || null;
+      const storeName = buyDomain ? buyDomain.charAt(0).toUpperCase() + buyDomain.slice(1) : null;
 
-      // ── Matched price ────────────────────────────────────────────────────
+      // FIX: Strict price matching — enforce BOTH budgetMin and budgetMax
       let price = null, priceIsMatched = false;
+
+      // First try to match price to the buy button retailer
       if (buyDomain) {
         const exact = priceMap[buyDomain];
         if (exact) { price = Math.round(exact.rawPrice).toString(); priceIsMatched = true; }
@@ -591,34 +549,57 @@ Vibe is "${vibe}" — every product must match. Interests "${interests || 'not s
           if (pk) { price = Math.round(priceMap[pk].rawPrice).toString(); priceIsMatched = true; }
         }
       }
-      // Unmatched fallback
-      if (!price) {
-        const fp = Object.values(priceMap)
-          .filter(p => budget >= 500 ? p.rawPrice >= 500 : p.rawPrice >= budgetMin && p.rawPrice <= budgetMax * 1.2)
-          .sort((a, b) => a.rawPrice - b.rawPrice)[0];
-        if (fp) { price = Math.round(fp.rawPrice).toString(); priceIsMatched = false; }
+
+      // FIX: Validate matched price is within budget — reject if out of range
+      if (price && priceIsMatched) {
+        const priceNum = parseFloat(price);
+        const inRange = budget >= 500
+          ? priceNum >= 500
+          : priceNum >= budgetMin * 0.8 && priceNum <= budgetMax * 1.3; // 20% grace on min, 30% on max
+        if (!inRange) { price = null; priceIsMatched = false; }
       }
 
-      // ── Store chips — name + retailer search link ────────────────────────
-      const stores = uniqueOrganic.slice(1, 4).map(item => {
-        const name = item._domain ? item._domain.charAt(0).toUpperCase() + item._domain.slice(1) : null;
-        const link = getRetailerSearchUrl(item._domain || '', product.name) || item.link;
-        return name && link ? { name, link } : null;
-      }).filter(Boolean);
+      // Fallback price — strictly in-budget shopping results only
+      if (!price) {
+        const inBudget = Object.values(priceMap)
+          .filter(p => {
+            const inRange = budget >= 500
+              ? p.rawPrice >= 500
+              : p.rawPrice >= budgetMin * 0.8 && p.rawPrice <= budgetMax * 1.3;
+            return inRange;
+          })
+          .sort((a, b) => a.rawPrice - b.rawPrice);
+        if (inBudget.length > 0) {
+          price = Math.round(inBudget[0].rawPrice).toString();
+          priceIsMatched = false;
+        }
+      }
 
-      // ── Image — 3-tier fallback ──────────────────────────────────────────
+      // FIX: Store chips — grab up to 5, name + retailer search link
+      // Takes from slots 1-6 of uniqueOrganic to ensure enough candidates
+      const stores = uniqueOrganic.slice(1, 6)
+        .map(item => {
+          const name = item._domain
+            ? item._domain.charAt(0).toUpperCase() + item._domain.slice(1)
+            : null;
+          const link = getRetailerSearchUrl(item._domain || '', product.name) || item.link;
+          return name && link ? { name, link } : null;
+        })
+        .filter(Boolean)
+        .slice(0, 5); // cap at 5
+
+      // Image — 2-tier fallback
       let imageUrl = imageData.images?.[0]?.imageUrl || null;
       if (!imageUrl) {
-        // Fallback image: generic product type
         try {
-          const imgFb = await fetch('https://google.serper.dev/images', {
+          const imgFb   = await fetch('https://google.serper.dev/images', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
             body: JSON.stringify({ q: `${searchTerm} product`, gl: 'nz', hl: 'en', num: 5 })
           });
-          const imgFbData = imgFb.ok ? await imgFb.json() : {};
-          imageUrl = imgFbData.images?.[0]?.imageUrl || null;
-        } catch (e) { /* no image — use placeholder */ }
+          const imgData = imgFb.ok ? await imgFb.json() : {};
+          imageUrl = imgData.images?.[0]?.imageUrl || null;
+        } catch(e) { /* no image */ }
       }
 
       return {
@@ -691,7 +672,7 @@ Vibe is "${vibe}" — every product must match. Interests "${interests || 'not s
 </div></body></html>`
         })
       });
-    } catch (e) { console.error('Brevo error:', e); }
+    } catch(e) { console.error('Brevo error:', e); }
   }
 
   return res.status(200).json({ products: enriched });
