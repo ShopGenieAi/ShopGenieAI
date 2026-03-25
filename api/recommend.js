@@ -166,7 +166,8 @@ export default async function handler(req, res) {
 
   const {
     email, shoppingFor, whoFor, vibe, budget, occasion, interests,
-    refreshSeed = 0  // increments each refresh — forces Claude to pick different products
+    refreshSeed = 0,
+    excludeProducts = []  // product names already shown — Claude must not repeat these
   } = req.body;
 
   // Inappropriate content guard
@@ -258,7 +259,9 @@ OUTPUT FORMAT:
 - Interests: ${interests || 'Not specified'}
 ${refreshInstruction ? `\n${refreshInstruction}` : ''}
 
-Use GENERIC product names only. No brand names on display name. Every product MUST be within the stated budget range.`;
+Use GENERIC product names only. No brand names on display name. Every product MUST be within the stated budget range.
+${excludeProducts.length > 0 ? `
+DO NOT recommend any of these products — they have already been shown: ${excludeProducts.join(", ")}. Recommend completely different product types.` : ""}`;
 
   let products;
   try {
