@@ -14,7 +14,6 @@ function isRateLimited(ip) {
   return record.count > RATE_LIMIT;
 }
 
-// Rotating inappropriate messages
 const INAPPROPRIATE_MESSAGES = [
   "Does your mum know what you're searching for? 😳 The Genie only does GIFTS mate!",
   "Haere atu! 🧞 That's not a gift wish — that's a cry for help. Try again!",
@@ -25,7 +24,6 @@ const INAPPROPRIATE_MESSAGES = [
   "DUDE!!!! Even for an AI that's now burned into my digital retinas 😱 ShopGenieAI has alerted your Mum and Dad you sicko!"
 ];
 
-// Blacklisted domains — never show these
 const BLACKLISTED_DOMAINS = [
   // Junk marketplaces & cheap import sites
   'temu', 'aliexpress', 'wish.com', 'dhgate', 'banggood', 'shein',
@@ -37,7 +35,7 @@ const BLACKLISTED_DOMAINS = [
   'tommy.com', 'farfetch', 'net-a-porter',
   // Dodgy NZ-domain foreign companies
   'trendhim',
-  // Price comparison / review aggregator sites — not retailers
+  // Price comparison / review aggregator sites
   'pricespy', 'getpricelist', 'shopbot', 'staticice', 'myshopping',
   'getprice', 'shopmania', 'twenga',
   // Media & news sites
@@ -82,15 +80,27 @@ const BLACKLISTED_DOMAINS = [
   // Brand direct — TOOLS & AUTO
   'tesla.com', 'ryobi.co.nz', 'makita.co.nz', 'dewalt.co.nz',
   'milwaukeetool.co.nz',
+  // Health/medical info pages
+  'bauerfeind',
+];
+
+// URL path patterns that indicate content/blog pages — not product pages
+// FIX #3: Block guide/blog/article pages slipping through .co.nz filter
+const BLACKLISTED_URL_PATTERNS = [
+  '/blog/', '/guide/', '/guides/', '/news/', '/article/', '/articles/',
+  '/pages/', '/playbook/', '/editorial/', '/story/', '/stories/',
+  '/advice/', '/tips/', '/how-to/', '/learn/', '/education/',
+  '/compression-sleeves-for-running', '/running-shoes-playbook',
 ];
 
 function isBlacklisted(url) {
   if (!url) return true;
   const lower = url.toLowerCase();
-  return BLACKLISTED_DOMAINS.some(d => lower.includes(d));
+  if (BLACKLISTED_DOMAINS.some(d => lower.includes(d))) return true;
+  if (BLACKLISTED_URL_PATTERNS.some(p => lower.includes(p))) return true;
+  return false;
 }
 
-// Known good NZ retailers for power tools / outdoor equipment
 const POWER_TOOL_RETAILERS = [
   'mitre10', 'bunnings', 'toolshed', 'hammerhardware',
   'repco', 'supercheap', 'stihlshop', 'riequip', 'tradetested',
@@ -102,7 +112,6 @@ function isPowerToolRetailer(url) {
   return POWER_TOOL_RETAILERS.some(r => lower.includes(r));
 }
 
-// Budget range helper
 function getBudgetRange(budget) {
   if (budget <= 30)  return [0,   30];
   if (budget <= 50)  return [30,  50];
@@ -113,7 +122,6 @@ function getBudgetRange(budget) {
   return [500, 99999];
 }
 
-// Extract matchable domain key e.g. "www.thewarehouse.co.nz" → "thewarehouse"
 function getMatchableDomain(url) {
   try {
     return new URL(url).hostname
@@ -131,11 +139,8 @@ function isWarehouse(url) {
   return lower.includes('thewarehouse') || lower.includes('warehouse.co.nz');
 }
 
-// Extract a specific product name from Serper review snippets
-// Looks for patterns like "The [Brand Model]", "Best overall: [Product]", "#1 [Product]"
 function extractProductFromSnippet(snippet) {
   if (!snippet) return null;
-  // Common review patterns
   const patterns = [
     /best overall[:\s]+([A-Z][^,.\n]{5,50})/i,
     /our top pick[:\s]+([A-Z][^,.\n]{5,50})/i,
@@ -143,7 +148,6 @@ function extractProductFromSnippet(snippet) {
     /#1[:\s]+([A-Z][^,.\n]{5,50})/i,
     /top pick[:\s]+([A-Z][^,.\n]{5,50})/i,
     /editor.s choice[:\s]+([A-Z][^,.\n]{5,50})/i,
-    /best[:\s]+([A-Z][a-zA-Z0-9\s\-]{5,40}(?:headphone|speaker|watch|wallet|tool|camera|phone|tablet|blaster|washer|drill|saw)[^,.\n]{0,20})/i,
   ];
   for (const p of patterns) {
     const match = snippet.match(p);
@@ -167,10 +171,9 @@ export default async function handler(req, res) {
   const {
     email, shoppingFor, whoFor, vibe, budget, occasion, interests,
     refreshSeed = 0,
-    excludeProducts = []  // product names already shown — Claude must not repeat these
+    excludeProducts = []
   } = req.body;
 
-  // Inappropriate content guard
   const inappropriateTerms = [
     'gun', 'guns', 'ammo', 'ammunition', 'firearm', 'weapon',
     'porn', 'pornography', 'sex toy', 'dildo', 'vibrator', 'xxx',
@@ -200,14 +203,15 @@ export default async function handler(req, res) {
     ? 'Products MUST be priced NZ$500 or above. Do not recommend anything under NZ$500.'
     : `Products MUST be priced between NZ$${budgetMin} and NZ$${budgetMax}. Do not recommend anything outside this range.`;
 
-  // Refresh variation instructions — forces different picks on each refresh
+  // FIX #5: Refresh variations are ADDITIVE only — never override vibe, person, or interests
+  // They only suggest product diversity, not a change of direction
   const refreshVariations = [
     '',
-    'IMPORTANT: Recommend completely DIFFERENT product categories from typical suggestions. Think outside the box.',
-    'IMPORTANT: Recommend UNEXPECTED gift ideas — avoid the most obvious choices for this vibe and person.',
-    'IMPORTANT: Focus on NICHE or SPECIALIST products a typical gift guide would overlook.',
-    'IMPORTANT: Recommend PREMIUM or UPGRADED versions — think best-in-class for the budget.',
-    'IMPORTANT: Think EXPERIENTIAL or LIFESTYLE products — things that enhance a hobby or daily routine.',
+    'Find 3 DIFFERENT product categories from the first set — still matching the same vibe, person and interests.',
+    'Suggest ALTERNATIVE gift ideas — different from previous results but still matching vibe, person and interests exactly.',
+    'Focus on NICHE or specialist products that match the same vibe and interests but are less obvious choices.',
+    'Suggest PREMIUM or best-in-class versions of products that still match the vibe, person and interests.',
+    'Think EXPERIENTIAL or lifestyle products — still within the same vibe, person and interests.',
   ];
   const refreshInstruction = refreshSeed > 0
     ? (refreshVariations[refreshSeed] || refreshVariations[refreshVariations.length - 1])
@@ -222,19 +226,21 @@ Recommend exactly 3 products available in NZ stores in 2025/2026.
 STRICT RULES:
 - Exactly 3 products, single items only — NO bundles or combo packs
 - Use GENERIC product names — NO brand names on display
-  GOOD: "Wireless Bluetooth Speaker", "Electric Shaver", "Basketball", "RFID Leather Wallet"
-  BAD: "JBL Go 3", "Braun Series 7", "Spalding NBA Basketball", "Tommy Hilfiger Wallet"
-- Current 2025/2026 products only — nothing discontinued or outdated
+  GOOD: "Wireless Bluetooth Speaker", "Sports Bra", "RFID Leather Wallet"
+  BAD: "JBL Go 3", "Nike Pro Bra", "Tommy Hilfiger Wallet"
+- Current 2025/2026 products only
 - BUDGET HARD RULE: ${budgetInstruction} This is non-negotiable.
+- VIBE RULE: Always respect the stated vibe — it must guide every recommendation
+- INTERESTS RULE: If interests/hobbies are provided, every recommendation MUST be relevant to them
 - Vibe "Sporty": sport/fitness products only
 - Vibe "Luxe": premium products available in NZ mainstream stores
 - Vibe "Quirky/Fun": fun unique items at NZ mainstream retailers
 - Wallets: ALWAYS recommend RFID-blocking wallets
-- For hardware/tools/waterblasters/power tools: use reviewQuery to find top-rated models
-- For fragrance: products at Chemist Warehouse or online perfume stores — NOT Farmers
-- NEVER recommend alcohol, wine, beer, spirits or any alcoholic products
+- For hardware/tools: recommend products from Mitre 10, Bunnings, The Tool Shed
+- For fragrance: Chemist Warehouse or online perfume stores — NOT Farmers
+- NEVER recommend alcohol or any alcoholic products
 - searchQuery: SHORT GENERIC 2-4 words, no brand names
-- reviewQuery: a search query to find "best [product] NZ reviews 2025" — used to find the top-rated specific model before searching for price. Include the budget range hint.
+- reviewQuery: "best [product type] NZ review 2025 under $X"
 - Return ONLY valid JSON, no preamble, no markdown
 
 OUTPUT FORMAT:
@@ -256,12 +262,12 @@ OUTPUT FORMAT:
 - Vibe: ${vibe}
 - Budget: ${budgetLabel} — HARD RULE: ${budgetInstruction}
 - Occasion: ${occasion}
-- Interests: ${interests || 'Not specified'}
-${refreshInstruction ? `\n${refreshInstruction}` : ''}
+- Interests/hobbies: ${interests || 'Not specified'}
+${refreshInstruction ? `\nVariety instruction (keep same vibe/person/interests): ${refreshInstruction}` : ''}
+${excludeProducts.length > 0 ? `\nDO NOT recommend these — already shown: ${excludeProducts.join(', ')}. Pick completely different product types.` : ''}
 
-Use GENERIC product names only. No brand names on display name. Every product MUST be within the stated budget range.
-${excludeProducts.length > 0 ? `
-DO NOT recommend any of these products — they have already been shown: ${excludeProducts.join(", ")}. Recommend completely different product types.` : ""}`;
+IMPORTANT: The vibe is "${vibe}" and interests are "${interests || 'not specified'}" — every product MUST match both.
+Use GENERIC product names only. Every product MUST be within budget.`;
 
   let products;
   try {
@@ -291,15 +297,6 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
   }
 
   // ── STEP 2: Serper → review-informed NZ retail search with matched pricing ──
-  //
-  // NEW 4-CALL STRATEGY PER PRODUCT:
-  //   Call A — /search with reviewQuery → find best-rated specific product from NZ reviews
-  //   Call B — /search with buy query (using review-discovered product if found) → direct retailer URLs
-  //   Call C — /shopping → price map keyed by retailer domain
-  //   Call D — /images → product photo
-  //
-  // WAREHOUSE RULE: Last resort for buy button only. Chip only if best price.
-  // PRICE RULE: Price shown = same retailer as buy button (matched). Fallback = "from NZ$X".
 
   const enriched = await Promise.all(products.map(async (product) => {
     try {
@@ -308,32 +305,23 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
       const budgetHint = budget >= 500 ? 'over $500' : `under $${budgetMax}`;
       const negatives = '-site:nzherald.co.nz -site:stuff.co.nz -site:rnz.co.nz -site:temu.com -site:aliexpress.com -site:pricespy.co.nz';
 
-      // ── Call A: Review search (find best-rated specific model) ───────────────
+      // Call A: Review search
       const reviewRes = await fetch('https://google.serper.dev/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
-        body: JSON.stringify({
-          q: `${reviewQuery} ${negatives}`,
-          gl: 'nz', hl: 'en', num: 5
-        })
+        body: JSON.stringify({ q: `${reviewQuery} ${negatives}`, gl: 'nz', hl: 'en', num: 5 })
       });
       const reviewData = reviewRes.ok ? await reviewRes.json() : {};
 
-      // Try to extract a specific product name from review snippets
       let specificProduct = null;
       for (const result of (reviewData.organic || [])) {
-        const extracted = extractProductFromSnippet(result.snippet);
+        const extracted = extractProductFromSnippet(result.snippet) || extractProductFromSnippet(result.title);
         if (extracted) { specificProduct = extracted; break; }
-        // Also try the title
-        const fromTitle = extractProductFromSnippet(result.title);
-        if (fromTitle) { specificProduct = fromTitle; break; }
       }
 
-      // Use specific product for buy search if found, otherwise fall back to generic
       const buySearchTerm = specificProduct || searchTerm;
-      console.log(`[${product.name}] Review found: ${specificProduct || 'none — using generic'}`);
 
-      // ── Calls B, C, D in parallel ────────────────────────────────────────────
+      // Calls B, C, D in parallel
       const organicQuery = `${buySearchTerm} buy NZ ${budgetHint} ${negatives}`;
 
       const [organicRes, shoppingRes, imageRes] = await Promise.all([
@@ -358,12 +346,10 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
       const shoppingData = shoppingRes.ok ? await shoppingRes.json() : {};
       const imageData = imageRes.ok ? await imageRes.json() : {};
 
-      // ── Filter organic results ───────────────────────────────────────────────
-      // Strict: .co.nz only OR known NZ retailer. Reject .nz-only domains.
-      const isPowerTool = isPowerToolRetailer(''); // evaluated per item below
+      // FIX #3: Filter organic — block content/blog pages AND .nz-only domains
       const organicItems = (organicData.organic || []).filter(item => {
         if (!item.link) return false;
-        if (isBlacklisted(item.link)) return false;
+        if (isBlacklisted(item.link)) return false; // now includes URL pattern check
         const url = item.link.toLowerCase();
 
         const isNZRetailer =
@@ -377,13 +363,13 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
           url.includes('luggage.co') ||
           isPowerToolRetailer(url);
 
-        // Reject .nz-only domains (not genuine NZ retailers)
+        // Strict: reject .nz-only (not .co.nz)
         const isNZOnly = /\.nz(\/|$)/.test(url) && !url.includes('.co.nz');
 
         return isNZRetailer && !isNZOnly;
       });
 
-      // Deduplicate by domain, hold Warehouse back
+      // Deduplicate, hold Warehouse back
       const seenDomains = new Set();
       const uniqueOrganic = [];
       const warehouseItems = [];
@@ -399,10 +385,9 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
         }
       }
 
-      // Only use Warehouse as buy button if fewer than 2 other NZ retailers found
       if (uniqueOrganic.length < 2) uniqueOrganic.push(...warehouseItems);
 
-      // ── Build shopping price map ─────────────────────────────────────────────
+      // Build shopping price map
       const shoppingPriceMap = {};
       for (const item of (shoppingData.shopping || [])) {
         if (!item.price) continue;
@@ -426,7 +411,7 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
         }
       }
 
-      // ── Buy button = first clean organic result ──────────────────────────────
+      // Buy button
       const bestOrganic = uniqueOrganic[0] || null;
       const buyLink = bestOrganic?.link || null;
       const buyDomain = bestOrganic?._domain || null;
@@ -434,7 +419,7 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
         ? buyDomain.charAt(0).toUpperCase() + buyDomain.slice(1)
         : null;
 
-      // ── Match price to buy button retailer ───────────────────────────────────
+      // Price matching
       let price = null;
       let priceIsMatched = false;
 
@@ -454,22 +439,19 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
         }
       }
 
-      // Fallback: best in-budget price if no retailer match
       if (!price) {
-        const fallbackPrices = Object.values(shoppingPriceMap)
+        const fallback = Object.values(shoppingPriceMap)
           .filter(p => budget >= 500 ? p.rawPrice >= 500 : p.rawPrice >= budgetMin && p.rawPrice <= budgetMax * 1.2)
           .sort((a, b) => a.rawPrice - b.rawPrice);
-        if (fallbackPrices.length > 0) {
-          price = Math.round(fallbackPrices[0].rawPrice).toString();
+        if (fallback.length > 0) {
+          price = Math.round(fallback[0].rawPrice).toString();
           priceIsMatched = false;
         }
       }
 
-      // ── Store chips — other retailers with price overlay ─────────────────────
-      // Include Warehouse chip only if it has the best/cheapest price
+      // FIX #4: Store chips — name only, NO price displayed
       const warehouseForChips = warehouseItems.filter(item => {
-        const wDomain = item._domain;
-        const wEntry = shoppingPriceMap[wDomain] ||
+        const wEntry = shoppingPriceMap[item._domain] ||
           Object.entries(shoppingPriceMap).find(([k]) => k.includes('warehouse'))?.[1];
         if (!wEntry) return false;
         const cheapest = Object.values(shoppingPriceMap)
@@ -484,17 +466,7 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
         const storeName = item._domain
           ? item._domain.charAt(0).toUpperCase() + item._domain.slice(1)
           : null;
-        let storePrice = null;
-        const exact = shoppingPriceMap[item._domain];
-        if (exact) {
-          storePrice = exact.price;
-        } else {
-          const partialKey = Object.keys(shoppingPriceMap).find(k =>
-            k.includes(item._domain) || item._domain.includes(k)
-          );
-          if (partialKey) storePrice = shoppingPriceMap[partialKey].price;
-        }
-        return { name: storeName, link: item.link, price: storePrice };
+        return { name: storeName, link: item.link }; // FIX #4: no price on chips
       }).filter(s => s.name && s.link);
 
       const imageUrl = imageData.images?.[0]?.imageUrl || null;
@@ -509,7 +481,7 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
         buyLink,
         imageUrl,
         stores,
-        specificProduct // pass through for debugging — frontend ignores this
+        storeCount: uniqueOrganic.length // FIX #8: lets frontend know how many stores found
       };
 
     } catch (err) {
@@ -523,7 +495,8 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
         bestStoreName: null,
         buyLink: null,
         imageUrl: null,
-        stores: []
+        stores: [],
+        storeCount: 0
       };
     }
   }));
@@ -544,7 +517,7 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
             </div>
             ${p.buyLink ? `<a href="${p.buyLink}" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Best Products Found →</a>` : ''}
           </div>
-          ${p.stores && p.stores.length > 0 ? `<div style="margin-top:10px;font-size:12px;color:#9a8878;">Also try: ${p.stores.map(s => `<a href="${s.link}" style="color:#c8922a;">${s.name}${s.price ? ` (${s.price})` : ''}</a>`).join(' · ')}</div>` : ''}
+          ${p.stores && p.stores.length > 0 ? `<div style="margin-top:10px;font-size:12px;color:#9a8878;">Also try: ${p.stores.map(s => `<a href="${s.link}" style="color:#c8922a;">${s.name}</a>`).join(' · ')}</div>` : ''}
         </div>
       `).join('');
 
@@ -581,7 +554,6 @@ DO NOT recommend any of these products — they have already been shown: ${exclu
           htmlContent
         })
       });
-      console.log(`Email sent to ${email}`);
     } catch (emailErr) {
       console.error('Brevo email error:', emailErr);
     }
