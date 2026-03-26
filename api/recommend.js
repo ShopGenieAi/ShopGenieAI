@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // ShopGenieAI — recommend.js
-// Architecture: Claude → NormalizeQuery → Retailer Routing → Brave Images
-// No Serper. Every link is a guaranteed retailer search page.
+// Architecture: Claude → NormalizeQuery → Warehouse buy button + Google Shopping chips
+// Zero 404s. Zero broken links. Built for NZ retail reality.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── RATE LIMITER ──────────────────────────────────────────────────────────────
@@ -55,379 +55,208 @@ const INAPPROPRIATE_TERMS = [
 ];
 
 // ── NZ SEARCH TERM NORMALISATION ──────────────────────────────────────────────
-// Converts AI-generated generic terms to NZ retail "Known-Good" search terms
-// Based on Mark's spreadsheet + extended with common AI term patterns
-// Format: [ [trigger_pattern, nz_term, fallback_category] ]
-// Trigger uses substring matching (lowercase) — first match wins
-
+// Converts AI-generated generic terms to NZ "Known-Good" retail search terms
+// Built from Mark's spreadsheet + common AI term patterns
 const NZ_TERM_MAP = [
-  // ── TECH & MOBILE (from spreadsheet + extensions) ──
-  ['cell phone',          'mobile phone',           'mobile phone'],
-  ['smartphone',          'mobile phone',           'mobile phone'],
-  ['smart phone',         'mobile phone',           'mobile phone'],
-  ['sport watch',         'smart watch',            'smart watch'],
-  ['sports watch',        'smart watch',            'smart watch'],
-  ['fitness watch',       'smart watch',            'smart watch'],
-  ['activity tracker',    'smart watch',            'smart watch'],
-  ['smartwatch',          'smart watch',            'smart watch'],
-  ['airpods',             'wireless earbuds',       'wireless earbuds'],
-  ['earbuds',             'wireless earbuds',       'wireless earbuds'],
-  ['earphones',           'wireless earbuds',       'wireless earbuds'],
-  ['in-ear headphones',   'wireless earbuds',       'wireless earbuds'],
-  ['laptop computer',     'laptop',                 'laptop'],
-  ['notebook computer',   'laptop',                 'laptop'],
-  ['tablet computer',     'tablet',                 'tablet'],
-  ['e-reader',            'ereader',                'ereader'],
-  ['smart speaker',       'bluetooth speaker',      'bluetooth speaker'],
-  ['bluetooth headset',   'bluetooth headphones',   'bluetooth headphones'],
-  ['noise cancelling',    'noise cancelling headphones', 'headphones'],
-  ['wireless charger',    'wireless charger',       'charger'],
-  ['power bank',          'portable charger',       'portable charger'],
-  ['portable charger',    'portable charger',       'portable charger'],
-  ['dash cam',            'dashcam',                'dashcam'],
-  ['dash camera',         'dashcam',                'dashcam'],
-  ['action camera',       'action camera',          'action camera'],
-  ['security camera',     'security camera',        'security camera'],
-
-  // ── CLOTHING & FOOTWEAR (from spreadsheet + extensions) ──
-  ['sneakers',            'running shoes',          'shoes'],
-  ['tennis shoes',        'running shoes',          'shoes'],
-  ['athletic shoes',      'running shoes',          'shoes'],
-  ['trainers',            'running shoes',          'shoes'],
-  ['flip flops',          'jandals',                'jandals'],
-  ['thongs',              'jandals',                'jandals'],
-  ['bathing suit',        'togs',                   'togs'],
-  ['swimsuit',            'togs',                   'togs'],
-  ['swimming costume',    'togs',                   'togs'],
-  ['swimwear',            'togs',                   'togs'],
-  ['sweater',             'jersey',                 'jersey'],
-  ['pullover',            'jersey',                 'jersey'],
-  ['sweatshirt',          'hoodie',                 'hoodie'],
-  ['underwear',           'undies',                 'underwear'],
-  ['panties',             'undies',                 'underwear'],
-  ['bra',                 'bra',                    'lingerie'],
-  ['lingerie',            'lingerie',               'lingerie'],
-  ['activewear set',      'activewear',             'activewear'],
-  ['gym wear',            'activewear',             'activewear'],
-  ['workout clothes',     'activewear',             'activewear'],
-  ['rain jacket',         'rain jacket',            'jacket'],
-  ['waterproof jacket',   'rain jacket',            'jacket'],
-  ['puffer jacket',       'puffer jacket',          'jacket'],
-  ['down jacket',         'puffer jacket',          'jacket'],
-  ['beanie hat',          'beanie',                 'beanie'],
-  ['woolen hat',          'beanie',                 'beanie'],
-  ['knit cap',            'beanie',                 'beanie'],
-  ['sunglasses',          'sunglasses',             'sunglasses'],
-  ['sunnies',             'sunglasses',             'sunglasses'],
-
-  // ── HOME & LIVING (from spreadsheet + extensions) ──
-  ['comforter',           'duvet',                  'duvet'],
-  ['duvet cover',         'duvet cover',            'duvet cover'],
-  ['bedding set',         'bed linen',              'bed linen'],
-  ['sheets set',          'bed sheets',             'bed sheets'],
-  ['kitchen appliances',  'kitchen appliances',     'kitchen appliances'],
-  ['whiteware',           'whiteware',              'whiteware'],
-  ['trash can',           'rubbish bin',            'rubbish bin'],
-  ['garbage bin',         'rubbish bin',            'rubbish bin'],
-  ['faucet',              'tap',                    'tap'],
-  ['countertop',          'benchtop',               'benchtop'],
-  ['couch',               'sofa',                   'sofa'],
-  ['loveseat',            'sofa',                   'sofa'],
-  ['coffee table',        'coffee table',           'coffee table'],
-  ['area rug',            'floor rug',              'rug'],
-  ['throw pillow',        'cushion',                'cushion'],
-  ['throw blanket',       'throw blanket',          'blanket'],
-  ['candle set',          'candles',                'candles'],
-  ['picture frame',       'photo frame',            'photo frame'],
-  ['photo frame set',     'photo frame',            'photo frame'],
-  ['storage basket',      'storage basket',         'storage'],
-  ['laundry hamper',      'laundry basket',         'laundry basket'],
-
-  // ── DIY & GARDEN (from spreadsheet + extensions) ──
-  ['flashlight',          'torch',                  'torch'],
-  ['flash light',         'torch',                  'torch'],
-  ['yard tools',          'garden tools',           'garden tools'],
-  ['garden tools set',    'garden tools',           'garden tools'],
-  ['cinder block',        'concrete block',         'concrete block'],
-  ['drywall',             'plasterboard',           'plasterboard'],
-  ['sheetrock',           'gib board',              'plasterboard'],
-  ['garden hose',         'garden hose',            'garden hose'],
-  ['lawn mower',          'lawnmower',              'lawnmower'],
-  ['leaf blower',         'leaf blower',            'leaf blower'],
-  ['pressure washer',     'water blaster',          'water blaster'],
-  ['power washer',        'water blaster',          'water blaster'],
-  ['weed killer',         'weed spray',             'weed spray'],
-  ['fertilizer',          'fertiliser',             'fertiliser'],
-  ['plant pot',           'plant pot',              'pot plant'],
-  ['flower pot',          'plant pot',              'pot plant'],
-
-  // ── BABY & FAMILY (from spreadsheet + extensions) ──
-  ['diapers',             'nappies',                'nappies'],
-  ['diaper',              'nappies',                'nappies'],
-  ['pacifier',            'dummy',                  'dummy'],
-  ['soother',             'dummy',                  'dummy'],
-  ['baby formula',        'baby formula',           'baby formula'],
-  ['stroller',            'pram',                   'pram'],
-  ['baby carriage',       'pram',                   'pram'],
-  ['car seat',            'baby car seat',          'car seat'],
-  ['baby monitor',        'baby monitor',           'baby monitor'],
-  ['baby bouncer',        'baby bouncer',           'baby bouncer'],
-
-  // ── SPORTS & FITNESS ──
-  ['gym bag',             'sports bag',             'sports bag'],
-  ['duffel bag',          'sports bag',             'sports bag'],
-  ['duffle bag',          'sports bag',             'sports bag'],
-  ['yoga mat',            'yoga mat',               'yoga mat'],
-  ['exercise mat',        'yoga mat',               'yoga mat'],
-  ['resistance bands',    'resistance bands',       'resistance bands'],
-  ['foam roller',         'foam roller',            'foam roller'],
-  ['massage gun',         'massage gun',            'massage gun'],
-  ['protein shaker',      'protein shaker',         'protein shaker'],
-  ['water bottle insulated','insulated drink bottle','drink bottle'],
-  ['hydro flask',         'insulated drink bottle', 'drink bottle'],
-  ['drink bottle',        'drink bottle',           'drink bottle'],
-  ['water bottle',        'drink bottle',           'drink bottle'],
-  ['running backpack',    'hydration pack',         'running pack'],
-  ['tennis racquet',      'tennis racket',          'tennis racket'],
-  ['soccer ball',         'football',               'football'],
-  ['soccer cleats',       'football boots',         'football boots'],
-  ['soccer boots',        'football boots',         'football boots'],
-  ['shin guards',         'shin pads',              'shin pads'],
-  ['goggles swimming',    'swimming goggles',       'swimming goggles'],
-  ['swim goggles',        'swimming goggles',       'swimming goggles'],
-  ['cycling helmet',      'bike helmet',            'bike helmet'],
-  ['bicycle helmet',      'bike helmet',            'bike helmet'],
-
-  // ── FOOD & DRINK ──
-  ['soda',                'soft drink',             'soft drink'],
-  ['pop drink',           'fizzy drink',            'soft drink'],
-  ['candy',               'lollies',                'lollies'],
-  ['sweets',              'lollies',                'lollies'],
-  ['chips snack',         'crisps',                 'crisps'],
-  ['potato chips',        'crisps',                 'crisps'],
-  ['cookie',              'biscuits',               'biscuits'],
-  ['cookies',             'biscuits',               'biscuits'],
-
-  // ── MISCELLANEOUS (from spreadsheet + extensions) ──
-  ['fanny pack',          'bum bag',                'bum bag'],
-  ['hip pack',            'bum bag',                'bum bag'],
-  ['waist bag',           'bum bag',                'bum bag'],
-  ['rfid wallet',         'rfid wallet',            'wallet'],
-  ['card holder wallet',  'card holder',            'wallet'],
-  ['travel wallet',       'travel wallet',          'wallet'],
-  ['mens wallet',         'leather wallet',         'wallet'],
-  ['womens wallet',       'purse wallet',           'wallet'],
-  ['sunscreen',           'sunscreen',              'sunscreen'],
-  ['bug spray',           'insect repellent',       'insect repellent'],
-  ['insect repellent',    'insect repellent',       'insect repellent'],
-  ['first aid kit',       'first aid kit',          'first aid kit'],
-  ['gift card',           'gift card',              'gift card'],
-  ['scented candle',      'scented candle',         'candle'],
-  ['essential oil diffuser', 'oil diffuser',        'diffuser'],
-  ['book',                'book',                   'books'],
-  ['novel',               'novel',                  'books'],
-  ['cookbook',            'cookbook',               'cookbook'],
-  ['journal diary',       'diary journal',          'journal'],
-  ['planner notebook',    'planner',                'planner'],
-  ['puzzle',              'jigsaw puzzle',          'puzzle'],
-  ['board game',          'board game',             'board game'],
-  ['card game',           'card game',              'card game'],
-  ['soft toy',            'soft toy',               'soft toy'],
-  ['stuffed animal',      'soft toy',               'soft toy'],
-  ['teddy bear',          'teddy bear',             'soft toy'],
-  ['perfume',             'perfume',                'perfume'],
-  ['cologne',             'mens fragrance',         'fragrance'],
-  ['aftershave',          'aftershave',             'aftershave'],
-  ['body wash set',       'body wash gift set',     'body wash'],
-  ['skincare set',        'skincare gift set',      'skincare'],
-  ['makeup kit',          'makeup gift set',        'makeup'],
-  ['hair dryer',          'hair dryer',             'hair dryer'],
-  ['hair straightener',   'hair straightener',      'hair straightener'],
-  ['electric toothbrush', 'electric toothbrush',    'toothbrush'],
-  ['luggage set',         'suitcase',               'luggage'],
-  ['carry on luggage',    'carry on bag',           'luggage'],
-  ['travel pillow',       'travel pillow',          'travel pillow'],
-  ['passport holder',     'passport wallet',        'passport wallet'],
+  // Tech & Mobile
+  ['cell phone',          'mobile phone'],
+  ['smartphone',          'mobile phone'],
+  ['smart phone',         'mobile phone'],
+  ['sport watch',         'smart watch'],
+  ['sports watch',        'smart watch'],
+  ['fitness watch',       'smart watch'],
+  ['activity tracker',    'smart watch'],
+  ['smartwatch',          'smart watch'],
+  ['airpods',             'wireless earbuds'],
+  ['earbuds',             'wireless earbuds'],
+  ['earphones',           'wireless earbuds'],
+  ['in-ear headphones',   'wireless earbuds'],
+  ['laptop computer',     'laptop'],
+  ['notebook computer',   'laptop'],
+  ['tablet computer',     'tablet'],
+  ['e-reader',            'ereader'],
+  ['smart speaker',       'bluetooth speaker'],
+  ['bluetooth headset',   'bluetooth headphones'],
+  ['noise cancelling',    'noise cancelling headphones'],
+  ['wireless charger',    'wireless charger'],
+  ['power bank',          'portable charger'],
+  ['portable charger',    'portable charger'],
+  ['dash cam',            'dashcam'],
+  ['dash camera',         'dashcam'],
+  ['action camera',       'action camera'],
+  ['security camera',     'security camera'],
+  // Clothing & Footwear
+  ['sneakers',            'running shoes'],
+  ['tennis shoes',        'running shoes'],
+  ['athletic shoes',      'running shoes'],
+  ['trainers',            'running shoes'],
+  ['flip flops',          'jandals'],
+  ['thongs',              'jandals'],
+  ['bathing suit',        'togs'],
+  ['swimsuit',            'togs'],
+  ['swimming costume',    'togs'],
+  ['swimwear',            'togs'],
+  ['sweater',             'jersey'],
+  ['pullover',            'jersey'],
+  ['sweatshirt',          'hoodie'],
+  ['underwear',           'undies'],
+  ['panties',             'undies'],
+  ['activewear set',      'activewear'],
+  ['gym wear',            'activewear'],
+  ['workout clothes',     'activewear'],
+  ['rain jacket',         'rain jacket'],
+  ['waterproof jacket',   'rain jacket'],
+  ['puffer jacket',       'puffer jacket'],
+  ['down jacket',         'puffer jacket'],
+  ['beanie hat',          'beanie'],
+  ['woolen hat',          'beanie'],
+  ['knit cap',            'beanie'],
+  ['sunglasses',          'sunglasses'],
+  // Home & Living
+  ['comforter',           'duvet'],
+  ['bedding set',         'bed linen'],
+  ['sheets set',          'bed sheets'],
+  ['kitchen appliances',  'kitchen appliances'],
+  ['trash can',           'rubbish bin'],
+  ['garbage bin',         'rubbish bin'],
+  ['faucet',              'tap'],
+  ['countertop',          'benchtop'],
+  ['couch',               'sofa'],
+  ['loveseat',            'sofa'],
+  ['area rug',            'floor rug'],
+  ['throw pillow',        'cushion'],
+  ['throw blanket',       'throw blanket'],
+  ['picture frame',       'photo frame'],
+  ['photo frame set',     'photo frame'],
+  ['laundry hamper',      'laundry basket'],
+  // DIY & Garden
+  ['flashlight',          'torch'],
+  ['flash light',         'torch'],
+  ['yard tools',          'garden tools'],
+  ['garden tools set',    'garden tools'],
+  ['pressure washer',     'water blaster'],
+  ['power washer',        'water blaster'],
+  ['weed killer',         'weed spray'],
+  ['fertilizer',          'fertiliser'],
+  ['plant pot',           'plant pot'],
+  ['flower pot',          'plant pot'],
+  // Baby & Family
+  ['diapers',             'nappies'],
+  ['diaper',              'nappies'],
+  ['pacifier',            'dummy'],
+  ['soother',             'dummy'],
+  ['stroller',            'pram'],
+  ['baby carriage',       'pram'],
+  ['car seat',            'baby car seat'],
+  // Sports & Fitness
+  ['gym bag',             'sports bag'],
+  ['duffel bag',          'sports bag'],
+  ['duffle bag',          'sports bag'],
+  ['exercise mat',        'yoga mat'],
+  ['resistance bands',    'resistance bands'],
+  ['water bottle insulated', 'drink bottle'],
+  ['hydro flask',         'drink bottle'],
+  ['water bottle',        'drink bottle'],
+  ['drink bottle',        'drink bottle'],
+  ['running backpack',    'hydration pack'],
+  ['tennis racquet',      'tennis racket'],
+  ['soccer ball',         'football'],
+  ['soccer cleats',       'football boots'],
+  ['soccer boots',        'football boots'],
+  ['shin guards',         'shin pads'],
+  ['goggles swimming',    'swimming goggles'],
+  ['swim goggles',        'swimming goggles'],
+  ['cycling helmet',      'bike helmet'],
+  ['bicycle helmet',      'bike helmet'],
+  // Food & Drink
+  ['soda',                'soft drink'],
+  ['candy',               'lollies'],
+  ['sweets',              'lollies'],
+  ['potato chips',        'crisps'],
+  ['cookies',             'biscuits'],
+  ['cookie',              'biscuits'],
+  // Misc
+  ['fanny pack',          'bum bag'],
+  ['hip pack',            'bum bag'],
+  ['waist bag',           'bum bag'],
+  ['rfid wallet',         'rfid wallet'],
+  ['mens wallet',         'leather wallet'],
+  ['womens wallet',       'purse wallet'],
+  ['insect repellent',    'insect repellent'],
+  ['bug spray',           'insect repellent'],
+  ['scented candle',      'scented candle'],
+  ['essential oil diffuser', 'oil diffuser'],
+  ['stuffed animal',      'soft toy'],
+  ['teddy bear',          'soft toy'],
+  ['cologne',             'mens fragrance'],
+  ['aftershave',          'aftershave'],
+  ['body wash set',       'body wash gift set'],
+  ['skincare set',        'skincare gift set'],
+  ['makeup kit',          'makeup gift set'],
+  ['hair dryer',          'hair dryer'],
+  ['hair straightener',   'hair straightener'],
+  ['electric toothbrush', 'electric toothbrush'],
+  ['luggage set',         'suitcase'],
+  ['carry on luggage',    'carry on bag'],
+  ['passport holder',     'passport wallet'],
+  ['board game',          'board game'],
+  ['card game',           'card game'],
+  ['perfume',             'perfume'],
 ];
 
-// ── NORMALIZE QUERY ───────────────────────────────────────────────────────────
-// Converts any AI-generated search term to a NZ retail Known-Good term
-// Returns { term, fallback } where:
-//   term     = the best NZ retail search term to use
-//   fallback = a broad category fallback if term returns no results (v3)
 function normalizeQuery(rawQuery) {
-  if (!rawQuery) return { term: rawQuery, fallback: rawQuery };
+  if (!rawQuery) return rawQuery;
   const lower = rawQuery.toLowerCase().trim();
-
-  for (const [trigger, nzTerm, fallback] of NZ_TERM_MAP) {
-    if (lower.includes(trigger)) {
-      return { term: nzTerm, fallback };
-    }
+  for (const [trigger, nzTerm] of NZ_TERM_MAP) {
+    if (lower.includes(trigger)) return nzTerm;
   }
-
-  // No mapping found — clean up the raw query and use as-is
-  // Remove brand names that commonly appear (common AI mistake)
-  const cleaned = lower
-    .replace(/\b(nike|adidas|apple|samsung|sony|lg|philips|dyson|breville|delonghi|nespresso|tefal|sunbeam)\b/gi, '')
+  // Remove common brand names Claude slips in
+  return lower
+    .replace(/\b(nike|adidas|apple|samsung|sony|lg|philips|dyson|breville|delonghi|nespresso|tefal|sunbeam|garmin|fitbit)\b/gi, '')
     .replace(/\s+/g, ' ')
-    .trim();
-
-  return { term: cleaned || rawQuery, fallback: rawQuery };
+    .trim() || rawQuery;
 }
 
-// ── RETAILER SEARCH URL MAP ───────────────────────────────────────────────────
-const RETAILER_SEARCH_PATTERNS = {
-  'thewarehouse':     (q) => `https://www.thewarehouse.co.nz/search?q=${encodeURIComponent(q)}`,
-  'farmers':          (q) => `https://www.farmers.co.nz/search?q=${encodeURIComponent(q)}`,
-  'briscoes':         (q) => `https://www.briscoes.co.nz/search?q=${encodeURIComponent(q)}`,
-  'noelleeming':      (q) => `https://www.noelleeming.co.nz/search?q=${encodeURIComponent(q)}`,
-  'pbtech':           (q) => `https://www.pbtech.co.nz/search?pg=1&stype=1&q=${encodeURIComponent(q)}`,
-  'mightyape':        (q) => `https://www.mightyape.co.nz/search?q=${encodeURIComponent(q)}`,
-  'harveynorman':     (q) => `https://www.harveynorman.co.nz/search?q=${encodeURIComponent(q)}`,
-  'jbhifi':           (q) => `https://www.jbhifi.co.nz/search?q=${encodeURIComponent(q)}`,
-  'kmart':            (q) => `https://www.kmart.co.nz/search?q=${encodeURIComponent(q)}`,
-  'stirlingsports':   (q) => `https://www.stirlingsports.co.nz/search?q=${encodeURIComponent(q)}`,
-  'rebelsport':       (q) => `https://www.rebelsport.co.nz/search?q=${encodeURIComponent(q)}`,
-  'torpedo7':         (q) => `https://www.torpedo7.co.nz/search?q=${encodeURIComponent(q)}`,
-  'bunnings':         (q) => `https://www.bunnings.co.nz/search/products?q=${encodeURIComponent(q)}`,
-  'mitre10':          (q) => `https://www.mitre10.co.nz/search?q=${encodeURIComponent(q)}`,
-  'toolshed':         (q) => `https://www.thetoolshed.co.nz/search?q=${encodeURIComponent(q)}`,
-  'hallensteins':     (q) => `https://www.hallensteins.com/search?q=${encodeURIComponent(q)}`,
-  'glassons':         (q) => `https://www.glassons.com/search?q=${encodeURIComponent(q)}`,
-  'chemistwarehouse': (q) => `https://www.chemistwarehouse.co.nz/search?q=${encodeURIComponent(q)}`,
-  'whitcoulls':       (q) => `https://www.whitcoulls.co.nz/search?q=${encodeURIComponent(q)}`,
-  'paperplus':        (q) => `https://www.paperplus.co.nz/search?q=${encodeURIComponent(q)}`,
-  'huntingandfishing':(q) => `https://www.huntingandfishing.co.nz/search?q=${encodeURIComponent(q)}`,
-  'supercheap':       (q) => `https://www.supercheapauto.co.nz/search?q=${encodeURIComponent(q)}`,
-  'repco':            (q) => `https://www.repco.co.nz/search?q=${encodeURIComponent(q)}`,
-  'countdown':        (q) => `https://www.countdown.co.nz/search?q=${encodeURIComponent(q)}`,
-  'luggage':          (q) => `https://www.luggage.co.nz/search?q=${encodeURIComponent(q)}`,
-  'strandbags':       (q) => `https://www.strandbags.co.nz/search?q=${encodeURIComponent(q)}`,
-  'numberoneshoes':   (q) => `https://www.numberoneshoes.co.nz/search?q=${encodeURIComponent(q)}`,
-  'smithscity':       (q) => `https://www.smithscity.co.nz/search?q=${encodeURIComponent(q)}`,
-  'themarket':        (q) => `https://www.themarket.com/search?q=${encodeURIComponent(q)}`,
-  'torpedo7':         (q) => `https://www.torpedo7.co.nz/search?q=${encodeURIComponent(q)}`,
-  'furtherfaster':    (q) => `https://www.furtherfaster.co.nz/search?q=${encodeURIComponent(q)}`,
-};
+// ── LINK BUILDERS ─────────────────────────────────────────────────────────────
 
-// Friendly display names
-const RETAILER_NAMES = {
-  'thewarehouse': 'The Warehouse', 'farmers': 'Farmers', 'briscoes': 'Briscoes',
-  'noelleeming': 'Noel Leeming', 'pbtech': 'PB Tech', 'mightyape': 'Mighty Ape',
-  'harveynorman': 'Harvey Norman', 'jbhifi': 'JB Hi-Fi', 'kmart': 'Kmart',
-  'stirlingsports': 'Stirling Sports', 'rebelsport': 'Rebel Sport',
-  'torpedo7': 'Torpedo7', 'bunnings': 'Bunnings', 'mitre10': 'Mitre 10',
-  'toolshed': 'The Tool Shed', 'hallensteins': 'Hallensteins', 'glassons': 'Glassons',
-  'chemistwarehouse': 'Chemist Warehouse', 'whitcoulls': 'Whitcoulls',
-  'paperplus': 'Paper Plus', 'huntingandfishing': 'Hunting & Fishing',
-  'supercheap': 'Supercheap Auto', 'repco': 'Repco', 'countdown': 'Countdown',
-  'luggage': 'Luggage.co.nz', 'strandbags': 'Strandbags',
-  'numberoneshoes': 'Number One Shoes', 'smithscity': "Smiths City",
-  'themarket': 'The Market', 'furtherfaster': 'Further Faster',
-};
-
-// ── SMART RETAILER ROUTING ────────────────────────────────────────────────────
-// Maps product type to ordered retailer list — most relevant first
-const RETAILER_ROUTES = {
-  electronics:    ['noelleeming','jbhifi','pbtech','harveynorman','mightyape'],
-  audio:          ['noelleeming','jbhifi','pbtech','harveynorman','mightyape'],
-  tech:           ['noelleeming','pbtech','jbhifi','harveynorman','mightyape'],
-  gaming:         ['mightyape','jbhifi','pbtech','noelleeming','thewarehouse'],
-  camera:         ['noelleeming','jbhifi','pbtech','harveynorman'],
-  sports:         ['stirlingsports','rebelsport','torpedo7','huntingandfishing','farmers'],
-  fitness:        ['stirlingsports','rebelsport','torpedo7','farmers','thewarehouse'],
-  outdoor:        ['torpedo7','huntingandfishing','stirlingsports','rebelsport'],
-  running:        ['stirlingsports','rebelsport','numberoneshoes','torpedo7'],
-  cycling:        ['torpedo7','huntingandfishing','stirlingsports','rebelsport'],
-  kitchen:        ['briscoes','farmers','harveynorman','thewarehouse','noelleeming'],
-  home:           ['briscoes','farmers','thewarehouse','kmart','harveynorman'],
-  appliance:      ['harveynorman','noelleeming','briscoes','farmers','thewarehouse'],
-  tools:          ['bunnings','mitre10','toolshed','supercheap','repco'],
-  hardware:       ['bunnings','mitre10','toolshed','supercheap'],
-  automotive:     ['supercheap','repco','mitre10','bunnings'],
-  fashion:        ['glassons','hallensteins','farmers','thewarehouse','kmart'],
-  clothing:       ['glassons','hallensteins','farmers','thewarehouse','kmart'],
-  footwear:       ['numberoneshoes','stirlingsports','farmers','thewarehouse'],
-  health:         ['chemistwarehouse','farmers','countdown','thewarehouse'],
-  beauty:         ['chemistwarehouse','farmers','thewarehouse','kmart'],
-  grooming:       ['chemistwarehouse','farmers','thewarehouse','kmart'],
-  books:          ['whitcoulls','paperplus','thewarehouse','mightyape'],
-  stationery:     ['whitcoulls','paperplus','thewarehouse','kmart'],
-  travel:         ['luggage','strandbags','farmers','torpedo7'],
-  bags:           ['strandbags','luggage','farmers','thewarehouse'],
-  toys:           ['thewarehouse','kmart','mightyape','farmers'],
-  kids:           ['thewarehouse','kmart','farmers','countdown'],
-  baby:           ['farmers','thewarehouse','kmart','countdown'],
-  food:           ['countdown','thewarehouse','farmers','kmart'],
-  general:        ['thewarehouse','farmers','briscoes','kmart','mightyape',
-                   'harveynorman','noelleeming','whitcoulls','paperplus',
-                   'chemistwarehouse','smithscity','themarket'],
-};
-
-function detectRoute(name, type) {
-  const s = `${name} ${type}`.toLowerCase();
-  if (/drill|saw|grinder|sander|compressor|nail gun|jigsaw|impact wrench|heat gun|power tool|water blaster|pressure washer|waterblaster/.test(s)) return 'tools';
-  if (/wrench|socket|hardware/.test(s)) return 'hardware';
-  if (/car |auto|vehicle|tyre|wheel|motor oil|wiper/.test(s)) return 'automotive';
-  if (/headphone|earphone|earbud|speaker|soundbar|audio/.test(s)) return 'audio';
-  if (/laptop|computer|tablet|monitor|keyboard|mouse|printer|router|hard drive|ssd|usb|webcam/.test(s)) return 'tech';
-  if (/phone|smart watch|smartwatch|wearable|fitness tracker|tv |television|projector|drone/.test(s)) return 'electronics';
-  if (/game|gaming|console|controller/.test(s)) return 'gaming';
-  if (/camera|lens|tripod|photography/.test(s)) return 'camera';
-  if (/running|marathon|jog/.test(s)) return 'running';
-  if (/cycling|bike|bicycle/.test(s)) return 'cycling';
-  if (/gym|workout|dumbbell|barbell|weight|foam roller|yoga|pilates|resistance band|protein|sports bag/.test(s)) return 'fitness';
-  if (/hiking|camping|tent|sleeping bag|kayak|fishing|hunting|surf|ski|snowboard/.test(s)) return 'outdoor';
-  if (/sport|football|rugby|cricket|tennis|basketball|volleyball|hockey|swimming|swim|togs/.test(s)) return 'sports';
-  if (/blender|toaster|kettle|coffee|air fryer|microwave|knife|cookware|pot |pan |bakeware/.test(s)) return 'kitchen';
-  if (/appliance|washing machine|dryer|dishwasher|vacuum|iron|heater|fan |air con/.test(s)) return 'appliance';
-  if (/candle|diffuser|cushion|throw|blanket|frame|vase|lamp|rug|linen|towel|home decor|duvet|rubbish bin/.test(s)) return 'home';
-  if (/perfume|fragrance|cologne|skincare|makeup|moisturiser|aftershave/.test(s)) return 'beauty';
-  if (/shaver|razor|trimmer|hair dryer|straightener|curler/.test(s)) return 'grooming';
-  if (/supplement|vitamin|protein powder|pharmacy|health|sunscreen|insect repellent/.test(s)) return 'health';
-  if (/shoes|sneakers|boots|sandals|jandals|footwear/.test(s)) return 'footwear';
-  if (/shirt|pants|jeans|dress|jacket|hoodie|jumper|coat|swimwear|activewear|socks|underwear|undies|togs|jersey|beanie/.test(s)) return 'clothing';
-  if (/fashion|jewellery|jewelry|watch|necklace|bracelet|ring |earring|wallet|purse/.test(s)) return 'fashion';
-  if (/book|novel|cookbook|diary|journal|planner/.test(s)) return 'books';
-  if (/pen |pencil|stationery|notebook|art supply|paint|drawing/.test(s)) return 'stationery';
-  if (/luggage|suitcase|travel/.test(s)) return 'travel';
-  if (/bag|handbag|backpack|bum bag/.test(s)) return 'bags';
-  if (/toy|puzzle|board game|kids|children|baby|nappy|pram|dummy|soft toy/.test(s)) return 'toys';
-  if (/food|snack|chocolate|coffee beans|tea |spice|lollies|biscuit/.test(s)) return 'food';
-  return 'general';
+// BUY BUTTON: The Warehouse — most reliable NZ search engine, broad stock
+function buildWarehouseUrl(searchTerm) {
+  return `https://www.thewarehouse.co.nz/search?q=${encodeURIComponent(searchTerm)}`;
 }
 
-function getRetailers(name, type, count = 4) {
-  const route = detectRoute(name, type);
-  let list = [...(RETAILER_ROUTES[route] || RETAILER_ROUTES['general'])];
-  if (route === 'general') {
-    const hash = name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const offset = hash % list.length;
-    list = [...list.slice(offset), ...list.slice(0, offset)];
-  }
-  return list.slice(0, count);
+// CHIPS: Google Shopping NZ — uses Google's index, shows prices + retailers
+// Never 404s. Always finds products. Shows multiple NZ retailers at once.
+function buildGoogleShoppingUrl(searchTerm, budgetHint) {
+  // Add NZ and budget context to get relevant NZ results
+  const query = `${searchTerm} NZ ${budgetHint}`;
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}&tbm=shop&gl=nz&hl=en`;
 }
 
-function buildProductLinks(name, type, normalizedTerm) {
-  const retailers = getRetailers(name, type, 4);
-  const links = retailers.map(key => ({
-    name: RETAILER_NAMES[key] || key.charAt(0).toUpperCase() + key.slice(1),
-    url:  RETAILER_SEARCH_PATTERNS[key] ? RETAILER_SEARCH_PATTERNS[key](normalizedTerm) : null,
-  })).filter(l => l.url);
-
-  return {
-    buyLink:   links[0]?.url   || null,
-    storeName: links[0]?.name  || null,
-    stores:    links.slice(1, 4).map(l => ({ name: l.name, link: l.url })),
-  };
+// Build Google Shopping chips — 3 different search angle variations
+// This gives the user discovery options with different angles on the product
+function buildShoppingChips(searchTerm, productName, budgetHint) {
+  return [
+    {
+      name: '🛒 Shop NZ',
+      link: buildGoogleShoppingUrl(searchTerm, budgetHint),
+    },
+    {
+      name: '💰 Compare Prices',
+      link: `https://www.google.com/search?q=${encodeURIComponent(searchTerm + ' buy NZ')}&tbm=shop&gl=nz&hl=en`,
+    },
+    {
+      name: '⭐ Top Rated',
+      link: `https://www.google.com/search?q=${encodeURIComponent('best ' + searchTerm + ' NZ')}&tbm=shop&gl=nz&hl=en`,
+    },
+  ];
 }
 
 // ── BRAVE IMAGE SEARCH ────────────────────────────────────────────────────────
-async function getBraveImage(normalizedTerm, braveKey) {
+async function getBraveImage(searchTerm, braveKey) {
   if (!braveKey) return null;
   try {
     const res = await fetch(
-      `https://api.search.brave.com/res/v1/images/search?q=${encodeURIComponent(normalizedTerm + ' product NZ')}&count=3&safesearch=strict`,
+      `https://api.search.brave.com/res/v1/images/search?q=${encodeURIComponent(searchTerm + ' product')}&count=3&safesearch=strict`,
       {
         headers: {
           'Accept': 'application/json',
@@ -505,29 +334,31 @@ Recommend exactly 3 products available in NZ stores in 2025/2026.
 
 RULES:
 - Exactly 3 products, single items only — NO bundles, NO combo packs
-- GENERIC product names ONLY — names a Kiwi customer would say in a shop
-  GOOD: "Foam Roller", "Smart Watch", "Wireless Earbuds", "RFID Wallet", "Sports Bag"
+- GENERIC product names ONLY — what a Kiwi would actually say
+  GOOD: "Foam Roller", "Smart Watch", "Wireless Earbuds", "Sports Bag", "Drink Bottle"
   BAD: "Advanced Recovery Device", "Sport Watch Pro", invented compound names
 - BUDGET HARD RULE: ${budgetInstruction} Non-negotiable.
 - Every product MUST match the stated vibe
 - Every product MUST be relevant to stated interests
 - NEVER recommend alcohol, weapons, or adult products
+- NEVER repeat the same product category twice in one set of 3
 
-VARIETY RULE — never recommend the same category twice in one set:
-- Vary product types completely — e.g. not two types of headphones
+NZ TERMINOLOGY — always use these terms:
+- "drink bottle" not "water bottle"
+- "togs" not "swimwear" or "swimsuit"
+- "jandals" not "flip flops"
+- "jersey" not "sweater" or "pullover"
+- "smart watch" not "sport watch" or "fitness watch"
+- "sports bag" not "gym bag" or "duffel bag"
+- "wireless earbuds" not "earbuds" or "airpods"
+- "torch" not "flashlight"
+- "nappies" not "diapers"
+- "bum bag" not "fanny pack"
+- "rubbish bin" not "trash can"
+- "hoodie" not "sweatshirt"
+- "running shoes" not "sneakers" or "trainers"
 
-PRODUCT TYPE — use ONE of these exact values (critical for routing):
-electronics, audio, tech, gaming, camera, sports, fitness, outdoor, running, cycling,
-kitchen, home, appliance, tools, hardware, automotive, fashion, clothing, footwear,
-health, beauty, grooming, books, stationery, travel, bags, toys, kids, baby, food, general
-
-SEARCH QUERY RULES — this is the most important field:
-- Must be 2-4 words that work as a search term on NZ retailer websites
-- Use NZ terminology: "drink bottle" not "water bottle", "togs" not "swimwear",
-  "jandals" not "flip flops", "jersey" not "sweater", "smart watch" not "sport watch",
-  "sports bag" not "gym bag", "wireless earbuds" not "earbuds", "torch" not "flashlight"
-- NO brand names in searchQuery
-- NO model numbers in searchQuery
+SEARCH QUERY: 2-4 NZ retail words, no brand names, no model numbers.
 
 Return ONLY valid JSON, no preamble, no markdown.
 
@@ -536,7 +367,7 @@ OUTPUT FORMAT:
   "products": [
     {
       "name": "Smart Watch",
-      "type": "electronics",
+      "type": "Electronics",
       "reason": "1-2 sentences why this is perfect for this person",
       "searchQuery": "smart watch"
     }
@@ -551,7 +382,7 @@ OUTPUT FORMAT:
 - Occasion: ${occasion}
 - Interests/hobbies: ${interests || 'Not specified'}
 ${refreshInstruction ? `\nVariety: ${refreshInstruction}` : ''}
-${excludeProducts.length > 0 ? `\nAlready shown — do NOT repeat: ${excludeProducts.join(', ')}` : ''}`;
+${excludeProducts.length > 0 ? `\nDo NOT repeat: ${excludeProducts.join(', ')}` : ''}`;
 
   let products;
   try {
@@ -579,34 +410,32 @@ ${excludeProducts.length > 0 ? `\nAlready shown — do NOT repeat: ${excludeProd
     return res.status(500).json({ error: `AI recommendation failed: ${err.message}` });
   }
 
-  // ── STEP 2: Normalize + build links + images in parallel ──────────────────
+  // ── STEP 2: Normalise + build links + images ──────────────────────────────
   const enriched = await Promise.all(products.map(async (product) => {
 
-    // Run normalizeQuery on the searchQuery Claude returned
-    const { term: normalizedTerm } = normalizeQuery(product.searchQuery);
+    // Normalise to NZ Known-Good search term
+    const searchTerm = normalizeQuery(product.searchQuery || product.name);
 
-    // Build guaranteed retailer search links
-    const { buyLink, storeName, stores } = buildProductLinks(
-      product.name,
-      product.type,
-      normalizedTerm
-    );
+    // Buy button: The Warehouse — always works, broad NZ stock
+    const buyLink = buildWarehouseUrl(searchTerm);
 
-    // Brave image — parallel, non-blocking
-    const imageUrl = await getBraveImage(normalizedTerm, BRAVE_KEY);
+    // Chips: Google Shopping NZ — 3 discovery angles, never 404
+    const stores = buildShoppingChips(searchTerm, product.name, budgetHint);
 
-    console.log(`Product: "${product.name}" | Raw: "${product.searchQuery}" | Normalized: "${normalizedTerm}" | Route: ${detectRoute(product.name, product.type)} | Buy: ${storeName}`);
+    // Brave image — parallel
+    const imageUrl = await getBraveImage(searchTerm, BRAVE_KEY);
+
+    console.log(`"${product.name}" → normalized: "${searchTerm}" → Warehouse + Google Shopping chips`);
 
     return {
       name:          product.name,
       type:          product.type,
       reason:        product.reason,
       budgetLabel,
-      bestStoreName: storeName,
+      bestStoreName: 'The Warehouse',
       buyLink,
       imageUrl,
       stores,
-      searchTerm:    normalizedTerm, // sent to frontend for transparency
     };
   }));
 
@@ -619,13 +448,12 @@ ${excludeProducts.length > 0 ? `\nAlready shown — do NOT repeat: ${excludeProd
           <div style="font-size:20px;font-weight:700;color:#3d2b1a;margin-bottom:8px;">${i+1}. ${p.name}</div>
           <div style="font-size:14px;color:#7a6855;line-height:1.6;margin-bottom:12px;">${p.reason}</div>
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-            <div>
-              <div style="font-size:15px;font-weight:600;color:#c8922a;">${p.budgetLabel}</div>
-              ${p.bestStoreName ? `<div style="font-size:12px;color:#9a8878;">Best match at ${p.bestStoreName}</div>` : ''}
-            </div>
-            ${p.buyLink ? `<a href="${p.buyLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Shop This Gift →</a>` : ''}
+            <div><div style="font-size:15px;font-weight:600;color:#c8922a;">${p.budgetLabel}</div></div>
+            <a href="${p.buyLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Shop at The Warehouse →</a>
           </div>
-          ${p.stores?.length ? `<div style="margin-top:10px;font-size:12px;color:#9a8878;">Also at: ${p.stores.map(s=>`<a href="${s.link}" style="color:#c8922a;">${s.name}</a>`).join(' · ')}</div>` : ''}
+          <div style="margin-top:10px;font-size:12px;color:#9a8878;">
+            Also search: ${p.stores.map(s=>`<a href="${s.link}" style="color:#c8922a;">${s.name}</a>`).join(' · ')}
+          </div>
         </div>`).join('');
 
       await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -648,7 +476,7 @@ ${excludeProducts.length > 0 ? `\nAlready shown — do NOT repeat: ${excludeProd
   </div>
   <div style="background:white;border-radius:18px;padding:32px;border:1px solid #e8ddd0;margin-bottom:24px;">${rows}</div>
   <div style="background:#fff9f0;border-radius:12px;padding:16px 20px;border:1px solid #e8ddd0;margin-bottom:24px;font-size:12px;color:#9a8878;line-height:1.6;">
-    <strong style="color:#3d2b1a;">📋 Note:</strong> Links take you to NZ retailer search pages — browse and buy at your convenience!
+    <strong style="color:#3d2b1a;">📋 Note:</strong> The Warehouse link searches NZ stock. Google Shopping chips show prices across multiple NZ retailers.
   </div>
   <div style="text-align:center;margin-bottom:32px;">
     <a href="https://shopgenieai.com" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;">Find More Gifts 🧞</a>
