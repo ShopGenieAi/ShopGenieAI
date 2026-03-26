@@ -106,6 +106,7 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 @media(max-width:480px){.pimg{height:165px}}
 .pimg img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
 .pcard-front .pimg img:hover{transform:scale(1.03)}
+.pimg.no-image{display:none}
 .prank{position:absolute;top:12px;left:12px;width:26px;height:26px;background:linear-gradient(135deg,var(--gold),var(--terra));color:white;font-weight:700;font-size:.8rem;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .pinfo{padding:14px 16px;display:flex;flex-direction:column;flex:1}
 .ptag{font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--sage);margin-bottom:3px}
@@ -361,10 +362,8 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 <footer>Made in Aotearoa 🇳🇿 · Powered by AI · ShopGenieAI © 2025</footer>
 
 <script>
-// ── CONFIG ────────────────────────────────────────────────────────────────────
-const MAX_REFRESHES = 3; // After 3 refreshes lockout shows immediately
+const MAX_REFRESHES = 3;
 
-// ── USELESS FACTS — rotate every 6 seconds (slowed down) ─────────────────────
 const FACTS = [
   "🥝 New Zealand has more cats per capita than any other country. Probably all demanding expensive gifts.",
   "🐑 There are 6 sheep for every person in NZ. None of them know what they want for Christmas.",
@@ -387,203 +386,110 @@ const FACTS = [
   "🏉 NZ invented the haka — still the best pre-match intimidation tactic in history.",
   "🎸 Split Enz and Crowded House both called NZ home. Australia tried to claim them. NZ said no.",
 ];
-let factIdx = 0, factTimer = null;
+let factIdx=0,factTimer=null;
+function startFacts(){factIdx=Math.floor(Math.random()*FACTS.length);rotateFact();factTimer=setInterval(rotateFact,6000);}
+function rotateFact(){const el=document.getElementById('factText');if(!el)return;el.style.animation='none';el.offsetHeight;el.style.animation='factSlide .4s ease both';el.textContent=FACTS[factIdx++%FACTS.length];}
+function stopFacts(){if(factTimer){clearInterval(factTimer);factTimer=null;}}
 
-function startFacts() {
-  factIdx = Math.floor(Math.random() * FACTS.length);
-  rotateFact();
-  factTimer = setInterval(rotateFact, 6000); // FIX: 6 seconds — slower rotation
-}
-function rotateFact() {
-  const el = document.getElementById('factText');
-  if (!el) return;
-  el.style.animation = 'none'; el.offsetHeight;
-  el.style.animation = 'factSlide .4s ease both';
-  el.textContent = FACTS[factIdx++ % FACTS.length];
-}
-function stopFacts() {
-  if (factTimer) { clearInterval(factTimer); factTimer = null; }
-}
+const A={q1:'',q2:'',q3:'',budgetTier:'',occ:'',interests:'',email:''};
+let step=1,refCount=0,curCard=0,totalCards=0,cards=[],seenProducts=[];
+const $=id=>document.getElementById(id);
+const sh=id=>$(id).style.display='block';
+const hi=id=>$(id).style.display='none';
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
-const A = { q1:'', q2:'', q3:'', budgetTier:'', occ:'', interests:'', email:'' };
-let step=1, refCount=0, curCard=0, totalCards=0, cards=[], seenProducts=[];
-
-const $ = id => document.getElementById(id);
-const sh = id => $(id).style.display = 'block';
-const hi = id => $(id).style.display = 'none';
-
-// ── QUIZ ──────────────────────────────────────────────────────────────────────
-function showQuiz() { hi('hero'); sh('quiz'); setProgress(1); }
-function goTo(s) {
-  $('step'+step).classList.remove('active');
-  $('step'+s).classList.add('active');
-  step=s; setProgress(s);
-}
-function setProgress(s) {
-  const pct=Math.round(((s-1)/5)*100);
-  $('progBar').style.width=pct+'%';
-  $('progLbl').textContent=`Question ${s} of 5`;
-  $('progPct').textContent=pct+'%';
-}
-function pickPill(el, key) {
+function showQuiz(){hi('hero');sh('quiz');setProgress(1);}
+function goTo(s){$('step'+step).classList.remove('active');$('step'+s).classList.add('active');step=s;setProgress(s);}
+function setProgress(s){const pct=Math.round(((s-1)/5)*100);$('progBar').style.width=pct+'%';$('progLbl').textContent=`Question ${s} of 5`;$('progPct').textContent=pct+'%';}
+function pickPill(el,key){
   el.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('sel'));
-  el.classList.add('sel'); A[key]=el.textContent.trim();
+  el.classList.add('sel');A[key]=el.textContent.trim();
   setTimeout(()=>{
-    if(key==='q1') fromStep1();
-    if(key==='q2') goTo(3);
-    if(key==='q3') goTo(4);
-    if(key==='q4occ'){ A.occ=el.textContent.trim(); checkStep4(); if(A.budgetTier) goTo(5); }
+    if(key==='q1')fromStep1();
+    if(key==='q2')goTo(3);
+    if(key==='q3')goTo(4);
+    if(key==='q4occ'){A.occ=el.textContent.trim();checkStep4();if(A.budgetTier)goTo(5);}
   },300);
 }
-function fromStep1() {
-  if(A.q1==='Something for myself'){A.q2='Myself';goTo(3);}
-  else goTo(2);
-}
-function pickBudget(el, tier) {
+function fromStep1(){if(A.q1==='Something for myself'){A.q2='Myself';goTo(3);}else goTo(2);}
+function pickBudget(el,tier){
   el.parentElement.querySelectorAll('.budget-pill').forEach(p=>p.classList.remove('sel'));
-  el.classList.add('sel'); A.budgetTier=tier;
-  checkStep4();
-  if(A.occ!=='') setTimeout(()=>goTo(5),300);
+  el.classList.add('sel');A.budgetTier=tier;checkStep4();
+  if(A.occ!=='')setTimeout(()=>goTo(5),300);
 }
-function checkStep4() {
-  const ok=A.budgetTier!==''&&A.occ!=='';
-  $('n4').disabled=!ok;
-  ok?$('n4').classList.remove('hide'):$('n4').classList.add('hide');
-}
-function showEmail() { A.interests=$('q5').value.trim(); hi('quiz'); sh('emailGate'); }
-function checkEmail() { $('btnReveal').disabled=!/\S+@\S+\.\S+/.test($('emailIn').value.trim()); }
+function checkStep4(){const ok=A.budgetTier!==''&&A.occ!=='';$('n4').disabled=!ok;ok?$('n4').classList.remove('hide'):$('n4').classList.add('hide');}
+function showEmail(){A.interests=$('q5').value.trim();hi('quiz');sh('emailGate');}
+function checkEmail(){$('btnReveal').disabled=!/\S+@\S+\.\S+/.test($('emailIn').value.trim());}
 
-// ── SUBMIT & REFRESH ──────────────────────────────────────────────────────────
-async function submitQuiz() {
-  A.email=$('emailIn').value.trim();
-  hi('emailGate');
-  refCount=0; seenProducts=[];
-  await fetchRecs(0);
-}
+async function submitQuiz(){A.email=$('emailIn').value.trim();hi('emailGate');refCount=0;seenProducts=[];await fetchRecs(0);}
 
-async function doRefresh() {
+async function doRefresh(){
   refCount++;
-  // FIX: Show lockout IMMEDIATELY when limit hit — button stays active until then
-  if (refCount > MAX_REFRESHES) {
-    refCount = MAX_REFRESHES; // cap it
-    showLockout();
-    return;
-  }
+  if(refCount>MAX_REFRESHES){refCount=MAX_REFRESHES;showLockout();return;}
   await fetchRecs(refCount);
 }
+function showLockout(){hi('results');sh('lockout');}
+function hardRestart(){window.location.reload();}
 
-function showLockout() {
-  hi('results');
-  sh('lockout');
-}
-function hardRestart() { window.location.reload(); }
-
-// ── FETCH ─────────────────────────────────────────────────────────────────────
-async function fetchRecs(seed) {
-  curCard=0;
-  hi('results'); hi('lockout'); hi('error');
-  sh('loading'); startFacts();
-  try {
+async function fetchRecs(seed){
+  curCard=0;hi('results');hi('lockout');hi('error');sh('loading');startFacts();
+  try{
     const ctrl=new AbortController();
     const tid=setTimeout(()=>ctrl.abort(),65000);
     const resp=await fetch(`${location.origin}/api/recommend`,{
-      signal:ctrl.signal, method:'POST',
+      signal:ctrl.signal,method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        email:A.email, shoppingFor:A.q1, whoFor:A.q2, vibe:A.q3,
-        budgetTier:A.budgetTier, occasion:A.occ, interests:A.interests,
-        refreshSeed:seed, excludeProducts:seenProducts
-      })
+      body:JSON.stringify({email:A.email,shoppingFor:A.q1,whoFor:A.q2,vibe:A.q3,budgetTier:A.budgetTier,occasion:A.occ,interests:A.interests,refreshSeed:seed,excludeProducts:seenProducts})
     });
-    clearTimeout(tid); stopFacts();
-    if(!resp.ok){
-      const e=await resp.json().catch(()=>({}));
-      if(e.message) throw new Error('INAPPROPRIATE:'+e.message);
-      throw new Error('API error: '+resp.status);
-    }
+    clearTimeout(tid);stopFacts();
+    if(!resp.ok){const e=await resp.json().catch(()=>({}));if(e.message)throw new Error('INAPPROPRIATE:'+e.message);throw new Error('API error: '+resp.status);}
     const data=await resp.json();
-    (data.products||[]).forEach(p=>{
-      if(p.name&&!seenProducts.includes(p.name)) seenProducts.push(p.name);
-    });
-    hi('loading');
-    renderCards(data.products||[]);
-  } catch(err) {
-    stopFacts(); hi('loading');
-    if(err.message?.includes('INAPPROPRIATE')){
-      $('errMsg').textContent=err.message.replace('INAPPROPRIATE:','');
-    } else {
-      $('errMsg').textContent=err.message||'Something went wrong. Try again!';
-    }
+    (data.products||[]).forEach(p=>{if(p.name&&!seenProducts.includes(p.name))seenProducts.push(p.name);});
+    hi('loading');renderCards(data.products||[]);
+  }catch(err){
+    stopFacts();hi('loading');
+    if(err.message?.includes('INAPPROPRIATE')){$('errMsg').textContent=err.message.replace('INAPPROPRIATE:','');}
+    else{$('errMsg').textContent=err.message||'Something went wrong. Try again!';}
     sh('error');
   }
 }
 
-// ── CAROUSEL ──────────────────────────────────────────────────────────────────
-function applyPositions() {
+function applyPositions(){
   cards.forEach((c,i)=>{
     const rel=i-curCard;
-    if(rel<0){
-      c.style.transform='translateX(-108%) rotate(-4deg) scale(0.96)';
-      c.style.opacity='0'; c.style.zIndex='0';
-      c.style.boxShadow='none'; c.style.pointerEvents='none';
-      c.classList.remove('pcard-front');
-    } else if(rel===0){
-      c.style.transform='translateY(0) translateX(0) scale(1)';
-      c.style.opacity='1'; c.style.zIndex='3';
-      c.style.boxShadow='0 10px 44px rgba(61,43,26,.16)';
-      c.style.pointerEvents='auto';
-      c.classList.add('pcard-front');
-    } else if(rel===1){
-      c.style.transform='translateY(10px) translateX(10px) scale(0.97)';
-      c.style.opacity='1'; c.style.zIndex='2';
-      c.style.boxShadow='0 6px 24px rgba(61,43,26,.10)';
-      c.style.pointerEvents='none';
-      c.classList.remove('pcard-front');
-    } else {
-      c.style.transform='translateY(20px) translateX(20px) scale(0.94)';
-      c.style.opacity='0.75'; c.style.zIndex='1';
-      c.style.boxShadow='0 3px 14px rgba(61,43,26,.07)';
-      c.style.pointerEvents='none';
-      c.classList.remove('pcard-front');
-    }
+    if(rel<0){c.style.transform='translateX(-108%) rotate(-4deg) scale(0.96)';c.style.opacity='0';c.style.zIndex='0';c.style.boxShadow='none';c.style.pointerEvents='none';c.classList.remove('pcard-front');}
+    else if(rel===0){c.style.transform='translateY(0) translateX(0) scale(1)';c.style.opacity='1';c.style.zIndex='3';c.style.boxShadow='0 10px 44px rgba(61,43,26,.16)';c.style.pointerEvents='auto';c.classList.add('pcard-front');}
+    else if(rel===1){c.style.transform='translateY(10px) translateX(10px) scale(0.97)';c.style.opacity='1';c.style.zIndex='2';c.style.boxShadow='0 6px 24px rgba(61,43,26,.10)';c.style.pointerEvents='none';c.classList.remove('pcard-front');}
+    else{c.style.transform='translateY(20px) translateX(20px) scale(0.94)';c.style.opacity='0.75';c.style.zIndex='1';c.style.boxShadow='0 3px 14px rgba(61,43,26,.07)';c.style.pointerEvents='none';c.classList.remove('pcard-front');}
   });
   document.querySelectorAll('.sdot').forEach((d,i)=>d.classList.toggle('on',i===curCard));
   $('btnPrev').disabled=curCard===0;
   $('btnNext').disabled=curCard===totalCards-1;
 }
+function goCard(idx){if(idx<0||idx>=totalCards)return;curCard=idx;applyPositions();}
 
-function goCard(idx) {
-  if(idx<0||idx>=totalCards) return;
-  curCard=idx; applyPositions();
-}
-
-function renderCards(products) {
+function renderCards(products){
   const oldStack=$('stack');
   const newStack=document.createElement('div');
-  newStack.className='swipe-stack'; newStack.id='stack';
+  newStack.className='swipe-stack';newStack.id='stack';
   oldStack.parentNode.replaceChild(newStack,oldStack);
-  $('dots').innerHTML='';
-  cards=[]; totalCards=products.length; curCard=0;
+  $('dots').innerHTML='';cards=[];totalCards=products.length;curCard=0;
 
   products.forEach((p,i)=>{
-    const buyHtml = p.buyLink
-      ? `<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener noreferrer">Shop This Gift →</a>`
-      : `<div class="pno-result">🔍 Try "${p.name}" at Noel Leeming, PB Tech or Farmers</div>`;
-    const badgeHtml = p.budgetLabel
-      ? `<div class="budget-badge">${p.budgetLabel}</div>` : '';
-    const chipHtml=(p.stores||[])
-      .map(s=>`<a class="chip" href="${s.link}" target="_blank" rel="noopener noreferrer">${s.name}</a>`)
-      .join('');
+    const buyHtml=p.buyLink
+      ?`<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener noreferrer">Shop This Gift →</a>`
+      :`<div class="pno-result">🔍 Try "${p.name}" at Noel Leeming, PB Tech or Farmers</div>`;
+    const badgeHtml=p.budgetLabel?`<div class="budget-badge">${p.budgetLabel}</div>`:'';
+    const chipHtml=(p.stores||[]).map(s=>`<a class="chip" href="${s.link}" target="_blank" rel="noopener noreferrer">${s.name}</a>`).join('');
+
+    // ── IMAGE HANDLING — Brave API or no image (clean collapse) ──────────────
+    const imgHtml = p.imageUrl
+      ? `<img src="${p.imageUrl}" alt="${p.name}" onerror="this.parentElement.classList.add('no-image')"/>`
+      : '';
 
     const card=document.createElement('div');
     card.className='pcard';
     card.innerHTML=`
-      <div class="pimg">
-        <img src="${p.imageUrl||'https://placehold.co/600x190/faf6f0/c8922a?text=Gift'}"
-          alt="${p.name}" onerror="this.src='https://placehold.co/600x190/faf6f0/c8922a?text=Gift'"/>
-        <div class="prank">${i+1}</div>
-      </div>
+      <div class="pimg${p.imageUrl?'':' no-image'}">${imgHtml}<div class="prank">${i+1}</div></div>
       <div class="pinfo">
         <div class="ptag">${p.type||'Gift Idea'}</div>
         <div class="pname">${p.name}</div>
@@ -592,8 +498,8 @@ function renderCards(products) {
         ${chipHtml?`<div class="chips">${chipHtml}</div>`:''}
       </div>`;
 
-    card.addEventListener('click',()=>{ if(i!==curCard) goCard(i); });
-    newStack.appendChild(card); cards.push(card);
+    card.addEventListener('click',()=>{if(i!==curCard)goCard(i);});
+    newStack.appendChild(card);cards.push(card);
 
     const dot=document.createElement('div');
     dot.className='sdot'+(i===0?' on':'');
@@ -601,37 +507,20 @@ function renderCards(products) {
     $('dots').appendChild(dot);
   });
 
-  // Touch swipe
   let tx=0,ty=0,swiping=false;
   newStack.addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY;swiping=false;},{passive:true});
-  newStack.addEventListener('touchmove',e=>{
-    const dx=Math.abs(e.touches[0].clientX-tx),dy=Math.abs(e.touches[0].clientY-ty);
-    if(dx>dy&&dx>8){swiping=true;e.preventDefault();}
-  },{passive:false});
-  newStack.addEventListener('touchend',e=>{
-    if(!swiping) return;
-    const diff=tx-e.changedTouches[0].clientX;
-    if(Math.abs(diff)>40) goCard(diff>0?curCard+1:curCard-1);
-    swiping=false;
-  },{passive:true});
+  newStack.addEventListener('touchmove',e=>{const dx=Math.abs(e.touches[0].clientX-tx),dy=Math.abs(e.touches[0].clientY-ty);if(dx>dy&&dx>8){swiping=true;e.preventDefault();}},{passive:false});
+  newStack.addEventListener('touchend',e=>{if(!swiping)return;const diff=tx-e.changedTouches[0].clientX;if(Math.abs(diff)>40)goCard(diff>0?curCard+1:curCard-1);swiping=false;},{passive:true});
 
   cards.forEach(c=>{c.style.transition='none';});
   applyPositions();
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      cards.forEach(c=>{c.style.transition='transform .4s cubic-bezier(.4,0,.2,1),box-shadow .4s ease,opacity .4s ease';});
-    });
-  });
-  requestAnimationFrame(()=>{
-    if(cards[0]) newStack.style.height=(cards[0].offsetHeight+24)+'px';
-  });
-
+  requestAnimationFrame(()=>{requestAnimationFrame(()=>{cards.forEach(c=>{c.style.transition='transform .4s cubic-bezier(.4,0,.2,1),box-shadow .4s ease,opacity .4s ease';});});});
+  requestAnimationFrame(()=>{if(cards[0])newStack.style.height=(cards[0].offsetHeight+24)+'px';});
   sh('results');
   $('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-// ── RESTART ───────────────────────────────────────────────────────────────────
-function restart() {
+function restart(){
   ['error','results','loading','emailGate','quiz','lockout'].forEach(id=>hi(id));
   stopFacts();
   A.q1='';A.q2='';A.q3='';A.budgetTier='';A.occ='';A.interests='';A.email='';
