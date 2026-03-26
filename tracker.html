@@ -259,6 +259,8 @@ const TASKS = [
   {id:'v3-10',phase:'v3',title:'Post-April 8 Supabase anon key change test',tag:'infra',note:'Run test submission to confirm key change has no impact (assessed low risk)'},
   {id:'v3-11',phase:'v3',title:'Make.com Module 4 & 84 Anthropic connection re-link',tag:'infra',note:'Re-link connection 7673376, retype max_tokens as integer in Make UI'},
   {id:'v3-12',phase:'v3',title:'Brevo email — store chips as clickable links in email',tag:'backend',note:'Currently stores show as plain text in email. Add hyperlinks using retailer search URLs'},
+  {id:'v3-13', phase:'v3', title:'Railway Hobby Plan — upgrade to $5 USD/month', tag:'infra', note:'Already signed in with GitHub. Upgrade when ready to build the Playwright scraper service. railway.app'},
+  {id:'v3-14', phase:'v3', title:'Railway scraper service — build and deploy Playwright price scraper', tag:'backend', note:'Node.js + Playwright + Stealth Mode. Scrapes top 8 NZ retailers for real prices. Stores results in Supabase. Vercel polls and updates cards live.'},
 
   {id:'v4-1',phase:'v4',title:'Breadcrumb extraction + semantic similarity verification',tag:'backend',note:'Puppeteer/Playwright scraper extracts breadcrumb nav, vector embedding comparison for category match'},
   {id:'v4-2',phase:'v4',title:'Product comparison engine — Price + Shipping + Category accuracy score',tag:'backend',note:'Score each result: price fit, retailer trust, category accuracy, shipping speed'},
