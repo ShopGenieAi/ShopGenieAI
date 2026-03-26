@@ -431,7 +431,7 @@ function showLockout(){hi('results');sh('lockout');}
 function hardRestart(){window.location.reload();}
 
 async function fetchRecs(seed){
-  curCard=0;hi('results');hi('lockout');hi('error');sh('loading');startFacts();
+  curCard=0;hi('results');hi('lockout');hi('error');const fetchStart=Date.now();sh('loading');startFacts();
   try{
     const ctrl=new AbortController();
     const tid=setTimeout(()=>ctrl.abort(),65000);
@@ -440,7 +440,10 @@ async function fetchRecs(seed){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({email:A.email,shoppingFor:A.q1,whoFor:A.q2,vibe:A.q3,budgetTier:A.budgetTier,occasion:A.occ,interests:A.interests,refreshSeed:seed,excludeProducts:seenProducts})
     });
-    clearTimeout(tid);stopFacts();
+    clearTimeout(tid);
+    const elapsed=Date.now()-fetchStart;
+    if(elapsed<8000) await new Promise(r=>setTimeout(r,8000-elapsed));
+    stopFacts();
     if(!resp.ok){const e=await resp.json().catch(()=>({}));if(e.message)throw new Error('INAPPROPRIATE:'+e.message);throw new Error('API error: '+resp.status);}
     const data=await resp.json();
     (data.products||[]).forEach(p=>{if(p.name&&!seenProducts.includes(p.name))seenProducts.push(p.name);});
