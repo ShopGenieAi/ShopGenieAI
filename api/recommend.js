@@ -317,6 +317,17 @@ export default async function handler(req, res) {
     ? 'Products MUST be premium items priced NZ$500 or above.'
     : `Products MUST be priced between NZ$${budgetMin} and NZ$${budgetMax}.`;
 
+  // First load variations — randomised so same quiz answers don't always return same 3 products
+  const firstLoadVariations = [
+    '',
+    'Prioritise practical everyday products.',
+    'Prioritise stylish or trendy products.',
+    'Prioritise fun or unique products.',
+    'Prioritise premium quality products.',
+    'Prioritise compact or portable products.',
+    'Prioritise experience-enhancing products.',
+    'Prioritise durable long-lasting products.',
+  ];
   const refreshVariations = [
     '',
     'Find 3 DIFFERENT product categories — same vibe, person and interests.',
@@ -325,9 +336,11 @@ export default async function handler(req, res) {
     'Suggest PREMIUM best-in-class versions — same vibe and interests.',
     'Think EXPERIENTIAL or lifestyle products — same vibe and interests.',
   ];
+  // On first load (seed=0), pick a random variety nudge so products vary between sessions
+  const firstLoadNudge = firstLoadVariations[Math.floor(Math.random() * firstLoadVariations.length)];
   const refreshInstruction = refreshSeed > 0
     ? (refreshVariations[refreshSeed] || refreshVariations[refreshVariations.length - 1])
-    : '';
+    : firstLoadNudge;
 
   // ── STEP 1: Claude Haiku ────────────────────────────────────────────────────
   const systemPrompt = `You are ShopGenieAI, a gift recommendation engine for the New Zealand retail market.
