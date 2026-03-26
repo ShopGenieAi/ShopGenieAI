@@ -220,8 +220,10 @@ function normalizeQuery(rawQuery) {
 // ── LINK BUILDERS ─────────────────────────────────────────────────────────────
 
 // BUY BUTTON: The Warehouse — most reliable NZ search engine, broad stock
-function buildWarehouseUrl(searchTerm) {
-  return `https://www.thewarehouse.co.nz/search?q=${encodeURIComponent(searchTerm)}`;
+// priceTo parameter narrows results to budget range
+function buildWarehouseUrl(searchTerm, budgetMax) {
+  const base = `https://www.thewarehouse.co.nz/search?q=${encodeURIComponent(searchTerm)}`;
+  return budgetMax && budgetMax < 9999 ? `${base}&priceTo=${budgetMax}` : base;
 }
 
 // CHIPS: Google Shopping NZ — uses Google's index, shows prices + retailers
@@ -334,9 +336,17 @@ Recommend exactly 3 products available in NZ stores in 2025/2026.
 
 RULES:
 - Exactly 3 products, single items only — NO bundles, NO combo packs
-- GENERIC product names ONLY — what a Kiwi would actually say
+- GENERIC product names ONLY — what a Kiwi would actually say in a shop
   GOOD: "Foam Roller", "Smart Watch", "Wireless Earbuds", "Sports Bag", "Drink Bottle"
-  BAD: "Advanced Recovery Device", "Sport Watch Pro", invented compound names
+  BAD: "Advanced Recovery Device", "Recycled Plastic Sports Bag", "Bamboo Grooming Kit", invented compound names
+  NEVER include materials in product names (no "bamboo", "recycled", "organic cotton" in the NAME)
+  Materials belong in the reason field only, not the product name or searchQuery
+
+- STOCK REALITY: Products must be available at mainstream NZ retailers like The Warehouse, Farmers, Briscoes, Noel Leeming, Kmart
+  Do NOT recommend hyper-niche eco products that only specialist stores carry
+  Eco-friendly vibe = choose mainstream products with eco credentials, not obscure boutique items
+  GOOD eco picks: reusable drink bottle, bamboo toothbrush, cotton tote bag, beeswax wraps, keep cup
+  BAD eco picks: hand-poured soy candle set, artisan beeswax food wrap kit, hemp clothing set
 - BUDGET HARD RULE: ${budgetInstruction} Non-negotiable.
 - Every product MUST match the stated vibe
 - Every product MUST be relevant to stated interests
@@ -416,8 +426,8 @@ ${excludeProducts.length > 0 ? `\nDo NOT repeat: ${excludeProducts.join(', ')}` 
     // Normalise to NZ Known-Good search term
     const searchTerm = normalizeQuery(product.searchQuery || product.name);
 
-    // Buy button: The Warehouse — always works, broad NZ stock
-    const buyLink = buildWarehouseUrl(searchTerm);
+    // Buy button: The Warehouse with budget price filter
+    const buyLink = buildWarehouseUrl(searchTerm, budgetMax);
 
     // Chips: Google Shopping NZ — 3 discovery angles, never 404
     const stores = buildShoppingChips(searchTerm, product.name, budgetHint);
