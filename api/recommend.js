@@ -19,14 +19,12 @@ function isRateLimited(ip) {
 }
 
 // ── BUDGET TIER SYSTEM ────────────────────────────────────────────────────────
-// Maps the quiz tier value to a numeric range for searching
-// Funny labels live in index.html quiz — backend just needs the ranges
 const BUDGET_TIERS = {
-  'low':    { min: 0,   max: 50,   label: 'Low Budget 🤑',              hint: 'under $50'   },
-  'medium': { min: 50,  max: 150,  label: 'Medium Budget 💸',           hint: 'under $150'  },
-  'high':   { min: 150, max: 300,  label: 'High Budget 🎯',             hint: 'under $300'  },
-  'bigwed': { min: 300, max: 400,  label: 'Big Wednesday Spender 🎰',   hint: 'under $400'  },
-  'lotto':  { min: 500, max: 9999, label: 'OMG You Won Lotto 🎉',       hint: 'over $500'   },
+  'low':    { min: 0,   max: 50,   label: 'Low Budget 🤑',            hint: 'under $50'  },
+  'medium': { min: 50,  max: 150,  label: 'Medium Budget 💸',         hint: 'under $150' },
+  'high':   { min: 150, max: 300,  label: 'High Budget 🎯',           hint: 'under $300' },
+  'bigwed': { min: 300, max: 400,  label: 'Big Wednesday Spender 🎰', hint: 'under $400' },
+  'lotto':  { min: 500, max: 9999, label: 'OMG You Won Lotto 🎉',     hint: 'over $500'  },
 };
 
 function getTier(tierKey) {
@@ -45,84 +43,95 @@ const INAPPROPRIATE_MESSAGES = [
 ];
 
 const INAPPROPRIATE_TERMS = [
-  'gun', 'guns', 'ammo', 'ammunition', 'firearm', 'weapon',
-  'porn', 'pornography', 'sex toy', 'dildo', 'vibrator', 'xxx',
-  'drugs', 'cocaine', 'meth', 'cannabis', 'marijuana',
-  'explosive', 'bomb', 'grenade',
-  'alcohol', 'wine', 'beer', 'whisky', 'whiskey', 'vodka', 'gin',
-  'rum', 'spirits', 'bourbon', 'champagne', 'prosecco', 'liquor',
-  'booze', 'craft beer', 'brewery', 'winery', 'cider'
+  'gun','guns','ammo','ammunition','firearm','weapon',
+  'porn','pornography','sex toy','dildo','vibrator','xxx',
+  'drugs','cocaine','meth','cannabis','marijuana',
+  'explosive','bomb','grenade',
+  'alcohol','wine','beer','whisky','whiskey','vodka','gin',
+  'rum','spirits','bourbon','champagne','prosecco','liquor',
+  'booze','craft beer','brewery','winery','cider'
 ];
 
 // ── BLACKLISTED DOMAINS ───────────────────────────────────────────────────────
+// MASTER LIST — every domain ever requested to be blocked, preserved here permanently
 const BLACKLISTED_DOMAINS = [
-  // Junk marketplaces
-  'temu', 'aliexpress', 'wish.com', 'dhgate', 'banggood', 'shein',
-  'ebay', 'amazon.com', 'alibaba', 'lightinthebox', 'joom',
-  // AU only
-  '.com.au', 'addictedtoaudio', 'sydneytools',
-  // Poor retailers
-  'dicksmith', 'kogan', 'theiconic', 'trademe', 'lego.com',
-  'tommy.com', 'farfetch', 'net-a-porter', 'trendhim', 'archipro',
+  // Junk marketplaces & cheap imports
+  'temu','aliexpress','wish.com','dhgate','banggood','shein',
+  'ebay','amazon.com','alibaba','lightinthebox','joom',
+  // AU only / AU-owned
+  '.com.au','addictedtoaudio','sydneytools',
+  // Poor NZ retailers
+  'dicksmith','kogan','theiconic','trademe','lego.com',
+  'tommy.com','farfetch','net-a-porter','trendhim','archipro',
   // Overseas companies with NZ-looking domains
-  'red-equipment.co.nz', 'husqvarnadealers.co.nz', 'aladdins.husqvarnadealers',
-  // Price comparison
-  'pricespy', 'getpricelist', 'shopbot', 'staticice', 'myshopping',
-  'getprice', 'shopmania', 'twenga',
+  'red-equipment.co.nz','husqvarnadealers.co.nz','aladdins.husqvarnadealers',
+  // Price comparison / aggregator sites — NOT retailers
+  'pricespy','getpricelist','shopbot','staticice','myshopping',
+  'getprice','shopmania','twenga',
+  // Tech review & news sites — NOT retailers
+  'geekzone','techradar','cnet.com','theverge','engadget',
+  'pcmag','rtings','notebookcheck','gsmarena','phonearena',
+  // Refurbished / second-hand sites
+  'reebelo','backmarket','swappie','refurbed',
   // Media & news
-  'nzherald', 'stuff.co.nz', 'newshub', 'rnz.co.nz', 'tvnz',
-  // B2B / trade
-  'southernhospitality', 'temperature.co.nz', 'catering.co.nz',
-  'nzrestaurants', 'hirepool', 'tradetools', 'industrialtools',
-  // Wool/craft — not sports
-  'woolcompany', 'thewoolcompany', 'cosytoes', 'merinoandmore',
-  // Brand direct — AUDIO/ENTERTAINMENT
-  'samsung.com', 'sony.co.nz', 'lg.com', 'panasonic.com', 'philips.co.nz',
-  'tcl.com', 'hisense.co.nz', 'bose.co.nz', 'bose.com', 'sennheiser',
-  'jbl.co.nz', 'ultimateears.com', 'sonos.com', 'nz.yamaha.com',
-  'bang-olufsen.com', 'denon.com', 'marantz.com', 'klipsch.com', 'audio-technica.com',
+  'nzherald','stuff.co.nz','newshub','rnz.co.nz','tvnz',
+  // B2B / trade / commercial
+  'southernhospitality','temperature.co.nz','catering.co.nz',
+  'nzrestaurants','hirepool','tradetools','industrialtools',
+  // Wool / craft — not sports retailers
+  'woolcompany','thewoolcompany','cosytoes','merinoandmore',
+  // Brand direct — AUDIO
+  'samsung.com','sony.co.nz','lg.com','panasonic.com','philips.co.nz',
+  'tcl.com','hisense.co.nz','bose.co.nz','bose.com','sennheiser',
+  'jbl.co.nz','ultimateears.com','sonos.com','nz.yamaha.com',
+  'bang-olufsen.com','denon.com','marantz.com','klipsch.com','audio-technica.com',
+  // Brand direct — headphone/audio brands that slip through
+  'skullcandy','jabra','anker.com','soundcore','1more',
+  'beats','beatsbydre','marshall.com','shure.com','beyerdynamic',
   // Brand direct — COMPUTING
-  'apple.com', 'store.google.com', 'microsoft.com', 'hp.com', 'dell.com',
-  'lenovo.com', 'asus.com', 'acer.com', 'logitech.com', 'razer.com',
-  'nintendo.co.nz', 'playstation.com', 'xbox.com', 'garmin.com',
-  'fitbit.com', 'gopro.com', 'nikon.co.nz', 'canon.co.nz',
+  'apple.com','store.google.com','microsoft.com','hp.com','dell.com',
+  'lenovo.com','asus.com','acer.com','logitech.com','razer.com',
+  'nintendo.co.nz','playstation.com','xbox.com','garmin.com',
+  'fitbit.com','gopro.com','nikon.co.nz','canon.co.nz',
   // Brand direct — KITCHEN
-  'fisherpaykel.com', 'breville.com', 'delonghi.com', 'nespresso.com',
-  'kenwoodworld.com', 'kitchenaid.co.nz', 'sunbeam.co.nz', 'nutribullet.co.nz',
-  'ninjakitchen.co.nz', 'tefal.co.nz', 'cuisinart.co.nz', 'smeg.com',
-  'miele.co.nz', 'bosch-home.co.nz', 'haier.co.nz', 'westinghouse.co.nz',
-  'beko.com', 'asko.com', 'morphyrichards.co.nz', 'russellhobbs.co.nz',
-  'sodastream.co.nz', 'instantpot.co.nz',
+  'fisherpaykel.com','breville.com','delonghi.com','nespresso.com',
+  'kenwoodworld.com','kitchenaid.co.nz','sunbeam.co.nz','nutribullet.co.nz',
+  'ninjakitchen.co.nz','tefal.co.nz','cuisinart.co.nz','smeg.com',
+  'miele.co.nz','bosch-home.co.nz','haier.co.nz','westinghouse.co.nz',
+  'beko.com','asko.com','morphyrichards.co.nz','russellhobbs.co.nz',
+  'sodastream.co.nz','instantpot.co.nz',
   // Brand direct — CLEANING
-  'dyson.co.nz', 'dyson.com', 'sharkclean.co.nz', 'roborock.co.nz',
-  'ecovacs.com', 'irobot.co.nz', 'vax.co.nz', 'bissell.co.nz',
-  'blackanddecker.co.nz', 'mitsubishi-electric.co.nz', 'daikin.co.nz',
+  'dyson.co.nz','dyson.com','sharkclean.co.nz','roborock.co.nz',
+  'ecovacs.com','irobot.co.nz','vax.co.nz','bissell.co.nz',
+  'blackanddecker.co.nz','mitsubishi-electric.co.nz','daikin.co.nz',
   'fujitsugeneral.co.nz',
   // Brand direct — BEAUTY
-  'ghdhair.com', 'cloudninehair.co.nz', 'vssassoon.co.nz',
-  'remington.co.nz', 'braun.com', 'oralb.co.nz',
+  'ghdhair.com','cloudninehair.co.nz','vssassoon.co.nz',
+  'remington.co.nz','braun.com','oralb.co.nz',
   // Brand direct — SPORTS
-  'nike.com', 'adidas.co.nz', 'adidas.com', 'nike.co.nz', 'nz.puma.com',
-  'newbalance.co.nz', 'underarmour.co.nz', 'asics.com', 'lululemon.co.nz',
-  'kathmandu.co.nz', 'macpac.co.nz', 'icebreaker.com', 'allbirds.co.nz',
-  'converse.co.nz', 'vans.co.nz', 'timberland.co.nz', 'thenorthface.co.nz',
-  'salomon.co.nz', 'brooksrunning.co.nz', 'oakley.com', 'ray-ban.com',
+  'nike.com','adidas.co.nz','adidas.com','nike.co.nz','nz.puma.com',
+  'newbalance.co.nz','underarmour.co.nz','asics.com','lululemon.co.nz',
+  'kathmandu.co.nz','macpac.co.nz','icebreaker.com','allbirds.co.nz',
+  'converse.co.nz','vans.co.nz','timberland.co.nz','thenorthface.co.nz',
+  'salomon.co.nz','brooksrunning.co.nz','oakley.com','ray-ban.com',
   // Brand direct — TOOLS
-  'tesla.com', 'ryobi.co.nz', 'makita.co.nz', 'dewalt.co.nz', 'milwaukeetool.co.nz',
-  // Medical/health info
+  'tesla.com','ryobi.co.nz','makita.co.nz','dewalt.co.nz','milwaukeetool.co.nz',
+  // Medical / health info
   'bauerfeind',
+  // Water bottle brands direct
+  'hydroflask','hydro-flask','yeti.com','stanley1913','camelbak',
 ];
 
 // ── BLACKLISTED URL PATTERNS ──────────────────────────────────────────────────
-// Blocks content/blog/review pages — not product or category pages
+// Content/blog/review pages — not product or category pages
 const BLACKLISTED_URL_PATTERNS = [
-  '/blog/', '/guide/', '/guides/', '/news/', '/article/', '/articles/',
-  '/playbook/', '/editorial/', '/story/', '/stories/',
-  '/advice/', '/tips/', '/how-to/', '/learn/', '/education/',
-  // Expanded: review/comparison content patterns
-  '/best-', '/top-10', '/top-5', '/review/', '/reviews/',
-  '/buying-guide', '/buyers-guide', '/vs-', '/compared',
-  '/picks/', '/roundup/', '/tested/', '/ranked/',
+  '/blog/','/guide/','/guides/','/news/','/article/','/articles/',
+  '/playbook/','/editorial/','/story/','/stories/',
+  '/advice/','/tips/','/how-to/','/learn/','/education/',
+  '/best-','/top-10','/top-5','/review/','/reviews/',
+  '/buying-guide','/buyers-guide','/vs-','/compared',
+  '/picks/','/roundup/','/tested/','/ranked/',
+  '/forum/','/forums/','/thread/','/discussion/',
 ];
 
 function isBlacklisted(url) {
@@ -134,15 +143,15 @@ function isBlacklisted(url) {
 }
 
 // ── RETAILER SEARCH URL MAP ───────────────────────────────────────────────────
-// FIX: PB Tech uses /search?pg=1&stype=1&q= format for reliable results
+// PB Tech: use keyword search with stype=1 AND minimum 3 chars enforced
+// If searchTerm is short, pad with category hint
 const RETAILER_SEARCH_PATTERNS = {
   'thewarehouse':     (q) => `https://www.thewarehouse.co.nz/search?q=${encodeURIComponent(q)}`,
   'warehouse':        (q) => `https://www.thewarehouse.co.nz/search?q=${encodeURIComponent(q)}`,
   'farmers':          (q) => `https://www.farmers.co.nz/search?q=${encodeURIComponent(q)}`,
   'briscoes':         (q) => `https://www.briscoes.co.nz/search?q=${encodeURIComponent(q)}`,
   'noelleeming':      (q) => `https://www.noelleeming.co.nz/search?q=${encodeURIComponent(q)}`,
-  // FIX: PB Tech search URL format — stype=1 forces keyword search, avoids length errors
-  'pbtech':           (q) => `https://www.pbtech.co.nz/search?pg=1&stype=1&q=${encodeURIComponent(q)}`,
+  'pbtech':           (q) => `https://www.pbtech.co.nz/search?pg=1&stype=1&q=${encodeURIComponent(q.length < 4 ? q + ' nz' : q)}`,
   'mightyape':        (q) => `https://www.mightyape.co.nz/search?q=${encodeURIComponent(q)}`,
   'harveynorman':     (q) => `https://www.harveynorman.co.nz/search?q=${encodeURIComponent(q)}`,
   'jbhifi':           (q) => `https://www.jbhifi.co.nz/search?q=${encodeURIComponent(q)}`,
@@ -178,16 +187,8 @@ function getRetailerSearchUrl(domain, productName) {
 
 // ── RETAILER ROUTING ──────────────────────────────────────────────────────────
 const POWER_TOOL_RETAILERS = [
-  'mitre10', 'bunnings', 'toolshed', 'hammerhardware',
-  'repco', 'supercheap', 'stihlshop', 'riequip', 'tradetested',
-];
-
-// FIX: Sports retailers stay in pool for ALL products (they sell electronics too)
-// They only get PROMOTED (via site hints) for sports products
-// This stops them being blocked for earbuds/watches while still being found for socks/gear
-const SPORTS_RETAILER_DOMAINS = [
-  'stirlingsports', 'rebelsport', 'torpedo7', 'huntingandfishing',
-  'furtherfaster', 'runners', 'numberoneshoes',
+  'mitre10','bunnings','toolshed','hammerhardware',
+  'repco','supercheap','stihlshop','riequip','tradetested',
 ];
 
 function isPowerToolRetailer(url) {
@@ -286,7 +287,6 @@ export default async function handler(req, res) {
   const BREVO_KEY     = process.env.BREVO_API_KEY;
   if (!ANTHROPIC_KEY || !SERPER_KEY) return res.status(500).json({ error: 'Missing API keys' });
 
-  // Resolve budget tier
   const tier = getTier(budgetTier || 'medium');
   const { min: budgetMin, max: budgetMax, label: budgetLabel, hint: budgetHint } = tier;
   const budgetInstruction = budgetTier === 'lotto'
@@ -312,28 +312,28 @@ Recommend exactly 3 products available in NZ stores in 2025/2026.
 
 STRICT RULES:
 - Exactly 3 products, single items only — NO bundles or combo packs
-- GENERIC product names ONLY — use names customers actually type into retailer search bars
+- GENERIC product names ONLY — names customers actually type into retailer search bars
   GOOD: "Foam Roller", "Insulated Water Bottle", "Sports Bra", "RFID Wallet", "Wireless Earbuds"
-  BAD: "Compression Muscle Recovery Roller", "Advanced Hydration Vessel"
+  BAD: "Compression Muscle Recovery Roller", "Advanced Hydration Vessel", invented compound names
 - BUDGET HARD RULE: ${budgetInstruction} Non-negotiable.
 - VIBE RULE: Every recommendation must match the stated vibe
 - INTERESTS RULE: Every recommendation must be relevant to stated interests
 
-BRAND VARIETY RULE — if recommending similar products, vary the searchQuery brand angle:
-- Water bottles: hydro flask style / camelbak style / stanley style / budget insulated
-- Wallets: slim card holder / bifold leather / travel wallet / zip-around
-Never use the same brand angle twice
+BRAND VARIETY — if recommending similar products, vary the searchQuery brand angle each time:
+- Water bottles: vary between insulated water bottle / stainless water bottle / sports drink bottle
+- Wallets: vary between slim card holder / bifold leather wallet / travel wallet / zip wallet
+Never use the same angle twice in one set of 3
 
 RETAILER ROUTING:
 - Power tools, drills, compressors → Bunnings, Mitre 10, The Tool Shed only
 - Electronics, audio, tech → Noel Leeming, PB Tech, JB Hi-Fi, Harvey Norman
-- Sports apparel (socks, activewear, running shoes) → Stirling Sports, Rebel Sport
+- Sports apparel, running shoes → Stirling Sports, Rebel Sport, Torpedo7
 - General gifts → The Warehouse, Farmers, Briscoes, Kmart
 
 - Wallets: ALWAYS RFID-blocking
 - Fragrance: Chemist Warehouse only
 - NEVER recommend alcohol
-- searchQuery: exactly what a customer types into a retailer search (2-4 words, no brand names)
+- searchQuery: exactly what a customer types into a retailer search (2-4 real words, no brand names)
 - reviewQuery: "best [product] NZ 2025 ${budgetHint}"
 - Return ONLY valid JSON, no preamble, no markdown
 
@@ -360,7 +360,7 @@ OUTPUT FORMAT:
 ${refreshInstruction ? `\nVariety (same vibe/person/interests): ${refreshInstruction}` : ''}
 ${excludeProducts.length > 0 ? `\nDO NOT recommend: ${excludeProducts.join(', ')}. Pick completely different types.` : ''}
 
-Use REAL product names customers search for. Vibe is "${vibe}" — every product must match.`;
+Use REAL product names. Vibe is "${vibe}" — every product must match.`;
 
   let products;
   try {
@@ -384,7 +384,6 @@ Use REAL product names customers search for. Vibe is "${vibe}" — every product
     products = JSON.parse(clean).products;
     if (!Array.isArray(products) || products.length === 0) throw new Error('No products returned');
 
-    // Validate product names
     products = products.map(p => {
       if (!isValidProductName(p.name)) {
         p.name = p.searchQuery.split(' ')
@@ -398,10 +397,14 @@ Use REAL product names customers search for. Vibe is "${vibe}" — every product
   }
 
   // ── STEP 2: Serper enrichment ───────────────────────────────────────────────
+  // Always use retailer search URLs for ALL links — never raw organic URLs
+  // This ensures every link goes to a search results page, not a single product page
+
   const negatives = [
     '-site:nzherald.co.nz','-site:stuff.co.nz','-site:rnz.co.nz',
     '-site:temu.com','-site:aliexpress.com','-site:pricespy.co.nz',
-    '-site:archipro.co.nz','-site:red-equipment.co.nz'
+    '-site:archipro.co.nz','-site:red-equipment.co.nz',
+    '-site:geekzone.co.nz','-site:skullcandy.com','-site:reebelo.co.nz'
   ].join(' ');
 
   const enriched = await Promise.all(products.map(async (product) => {
@@ -411,10 +414,10 @@ Use REAL product names customers search for. Vibe is "${vibe}" — every product
       const isToolProd  = isHardwareTool(product.name, product.type);
       const isSportProd = isSportsProduct(product.name, product.type);
 
-      // Call A: Review search
+      // Call A: Review search — find best-rated specific model
       let specificProduct = null;
       try {
-        const reviewRes  = await fetch('https://google.serper.dev/search', {
+        const reviewRes = await fetch('https://google.serper.dev/search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
           body: JSON.stringify({ q: `${reviewQuery} ${negatives}`, gl: 'nz', hl: 'en', num: 5 })
@@ -428,14 +431,14 @@ Use REAL product names customers search for. Vibe is "${vibe}" — every product
 
       const buyTerm = specificProduct || searchTerm;
 
-      // Site hints — promote relevant retailer types without excluding others
+      // Site hints to promote relevant retailers
       const siteHints = isToolProd
         ? 'site:bunnings.co.nz OR site:mitre10.co.nz OR site:thetoolshed.co.nz'
         : isSportProd
           ? 'site:stirlingsports.co.nz OR site:rebelsport.co.nz OR site:torpedo7.co.nz'
           : '';
 
-      // Calls B (organic), C (shopping), D (images) — parallel
+      // Calls B, C, D in parallel
       const [organicRes, shoppingRes, imageRes] = await Promise.all([
         fetch('https://google.serper.dev/search', {
           method: 'POST',
@@ -466,20 +469,14 @@ Use REAL product names customers search for. Vibe is "${vibe}" — every product
       const shoppingData = shoppingRes.ok ? await shoppingRes.json() : {};
       const imageData    = imageRes.ok    ? await imageRes.json()    : {};
 
-      // Filter organic results
+      // Filter organic — NZ retailers only, no content pages
       function filterOrganic(items) {
         return (items || []).filter(item => {
           if (!item.link || isBlacklisted(item.link)) return false;
           const url = item.link.toLowerCase();
-
-          // Tools: hardware retailers only
           if (isToolProd) {
-            return isPowerToolRetailer(url) ||
-                   url.includes('bunnings') || url.includes('mitre10');
+            return isPowerToolRetailer(url) || url.includes('bunnings') || url.includes('mitre10');
           }
-
-          // General NZ retailer check — sports retailers included for ALL products
-          // (Rebel Sport sells electronics, watches etc — don't exclude them)
           const isNZRetailer =
             url.includes('.co.nz') ||
             url.includes('mightyape') ||
@@ -493,14 +490,11 @@ Use REAL product names customers search for. Vibe is "${vibe}" — every product
             url.includes('furtherfaster') ||
             url.includes('kmart.co') ||
             isPowerToolRetailer(url);
-
-          // Reject .nz-only (not .co.nz) — overseas domains with NZ TLD
           const isNZOnly = /\.nz(\/|$)/.test(url) && !url.includes('.co.nz');
           return isNZRetailer && !isNZOnly;
         });
       }
 
-      // Deduplicate — Warehouse last resort
       function dedup(items) {
         const seen = new Set(), main = [], wh = [];
         for (const item of filterOrganic(items)) {
@@ -520,7 +514,7 @@ Use REAL product names customers search for. Vibe is "${vibe}" — every product
       // Tier 2 fallback
       if (uniqueOrganic.length < 3) {
         try {
-          const t2Res  = await fetch('https://google.serper.dev/search', {
+          const t2Res = await fetch('https://google.serper.dev/search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
             body: JSON.stringify({ q: `${searchTerm} buy NZ`, gl: 'nz', hl: 'en', num: 15 })
@@ -533,7 +527,7 @@ Use REAL product names customers search for. Vibe is "${vibe}" — every product
       // Tier 3 fallback
       if (uniqueOrganic.length < 3) {
         try {
-          const t3Res  = await fetch('https://google.serper.dev/search', {
+          const t3Res = await fetch('https://google.serper.dev/search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
             body: JSON.stringify({ q: `${searchTerm} NZ`, gl: 'nz', hl: 'en', num: 15 })
@@ -543,32 +537,34 @@ Use REAL product names customers search for. Vibe is "${vibe}" — every product
         } catch(e) { /* continue */ }
       }
 
-      // Buy button = first clean result
+      // Buy button — ALWAYS use retailer search URL, never raw organic URL
+      // This guarantees a search results page, never a single product
       const best      = uniqueOrganic[0] || null;
-      const buyLink   = best?.link || null;
       const buyDomain = best?._domain || null;
-      const storeName = buyDomain
-        ? buyDomain.charAt(0).toUpperCase() + buyDomain.slice(1) : null;
+      const storeName = buyDomain ? buyDomain.charAt(0).toUpperCase() + buyDomain.slice(1) : null;
 
-      // Store chips — up to 5, retailer search URLs
-      // FIX: Use product.name (generic) for chip search URLs — not the review-found specific product
-      // This ensures PB Tech etc get a clean short search query
-      const stores = uniqueOrganic.slice(1, 6)
+      // Build buy link using retailer search URL map — falls back to organic link only if unknown domain
+      const buyLink = buyDomain
+        ? (getRetailerSearchUrl(buyDomain, searchTerm) || best?.link || null)
+        : null;
+
+      // Store chips — ALWAYS retailer search URLs, up to 4
+      const stores = uniqueOrganic.slice(1, 5)
         .map(item => {
           const name = item._domain
             ? item._domain.charAt(0).toUpperCase() + item._domain.slice(1) : null;
-          // Use searchTerm for chip URLs — shorter and more reliable than specificProduct
-          const link = getRetailerSearchUrl(item._domain || '', searchTerm) || item.link;
+          const link = getRetailerSearchUrl(item._domain || '', searchTerm) || null;
+          // Only include if we have a known search URL — skip unknown domains
           return name && link ? { name, link } : null;
         })
         .filter(Boolean)
-        .slice(0, 5);
+        .slice(0, 4);
 
-      // Image — 2-tier fallback
+      // Image fallback
       let imageUrl = imageData.images?.[0]?.imageUrl || null;
       if (!imageUrl) {
         try {
-          const imgFb   = await fetch('https://google.serper.dev/images', {
+          const imgFb = await fetch('https://google.serper.dev/images', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-API-KEY': SERPER_KEY },
             body: JSON.stringify({ q: `${searchTerm} product`, gl: 'nz', hl: 'en', num: 5 })
@@ -582,7 +578,7 @@ Use REAL product names customers search for. Vibe is "${vibe}" — every product
         name: product.name,
         type: product.type,
         reason: product.reason,
-        budgetLabel,    // tier label shown on card instead of price
+        budgetLabel,
         bestStoreName: storeName,
         buyLink,
         imageUrl,
