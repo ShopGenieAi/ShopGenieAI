@@ -146,14 +146,10 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.thewarehouse.co.nz/search?q=${q}&priceTo=${budgetMax}`, storeName: 'The Warehouse' };
   }
 
-  // Fitness & Sports gear — Google site-search per retailer
-  // Uses Google's index of each retailer (not their broken internal search)
+  // Fitness & Sports gear — Google Shopping NZ (reliable, shows prices, multiple retailers)
+  // site: operator doesn't work in tbm=shop mode — broad Google Shopping is the reliable option
   if (category === 'fitness') {
-    if (budgetTierKey === 'low')
-      return { url: `https://www.google.com/search?q=${q}+site:kmart.co.nz&tbm=shop&gl=nz`, storeName: 'Kmart' };
-    if (budgetTierKey === 'medium')
-      return { url: `https://www.google.com/search?q=${q}+site:rebelsport.co.nz&tbm=shop&gl=nz`, storeName: 'Rebel Sport' };
-    return { url: `https://www.google.com/search?q=${q}+site:torpedo7.co.nz&tbm=shop&gl=nz`, storeName: 'Torpedo7' };
+    return { url: `https://www.google.com/search?q=${q}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
   // Outdoor & Adventure — Torpedo7 all budgets, Warehouse for low
