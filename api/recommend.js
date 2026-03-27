@@ -22,11 +22,11 @@ function isRateLimited(ip) {
 
 // ── BUDGET TIER SYSTEM ────────────────────────────────────────────────────────
 const BUDGET_TIERS = {
-  'low':    { min: 0,   max: 50,   label: 'Low Budget 🤑',            hint: 'under $50'  },
-  'medium': { min: 50,  max: 150,  label: 'Medium Budget 💸',         hint: 'under $150' },
-  'high':   { min: 150, max: 300,  label: 'High Budget 🎯',           hint: 'under $300' },
-  'bigwed': { min: 300, max: 400,  label: 'Big Wednesday Spender 🎰', hint: 'under $400' },
-  'lotto':  { min: 500, max: 9999, label: 'OMG You Won Lotto 🎉',     hint: 'over $500'  },
+  'low':    { min: 0,   max: 50,   label: 'Low Budget 🤑',            hint: 'affordable, everyday essentials'              },
+  'medium': { min: 50,  max: 150,  label: 'Medium Budget 💸',         hint: 'mid-range quality brands'                     },
+  'high':   { min: 150, max: 300,  label: 'High Budget 🎯',           hint: 'premium, high-end, or designer versions'      },
+  'bigwed': { min: 300, max: 400,  label: 'Big Wednesday Spender 🎰', hint: 'luxury, tech-heavy, or top-tier models'       },
+  'lotto':  { min: 500, max: 9999, label: 'OMG You Won Lotto 🎉',     hint: 'ultra-premium, elite luxury items'            },
 };
 
 function getTier(tierKey) {
@@ -219,11 +219,37 @@ function normalizeQuery(rawQuery) {
 
 // ── LINK BUILDERS ─────────────────────────────────────────────────────────────
 
-// BUY BUTTON: The Warehouse — most reliable NZ search engine, broad stock
-// priceTo parameter narrows results to budget range
-function buildWarehouseUrl(searchTerm, budgetMax) {
+// BUY BUTTON ROUTING:
+// Low/Medium ($0-$150)  → The Warehouse (reliable, broad, cheap)
+// High/BigWed/Lotto ($150+) → Noel Leeming (premium, tech-heavy, trusted)
+// Note: Noel Leeming doesn't support priceFrom/priceTo reliably —
+// Claude's prompt already ensures products match the budget tier
+
+function buildWarehouseUrl(searchTerm, budgetMin, budgetMax) {
   const base = `https://www.thewarehouse.co.nz/search?q=${encodeURIComponent(searchTerm)}`;
-  return budgetMax && budgetMax < 9999 ? `${base}&priceTo=${budgetMax}` : base;
+  let url = base;
+  if (budgetMin > 0) url += `&priceFrom=${budgetMin}`;
+  if (budgetMax && budgetMax < 9999) url += `&priceTo=${budgetMax}`;
+  return url;
+}
+
+function buildNoelLeemingUrl(searchTerm) {
+  return `https://www.noelleeming.co.nz/search?q=${encodeURIComponent(searchTerm)}`;
+}
+
+// Pick the right buy button retailer based on budget tier
+function buildBuyLink(searchTerm, budgetTierKey, budgetMin, budgetMax) {
+  const premiumTiers = ['high', 'bigwed', 'lotto'];
+  if (premiumTiers.includes(budgetTierKey)) {
+    return {
+      url:       buildNoelLeemingUrl(searchTerm),
+      storeName: 'Noel Leeming',
+    };
+  }
+  return {
+    url:       buildWarehouseUrl(searchTerm, budgetMin, budgetMax),
+    storeName: 'The Warehouse',
+  };
 }
 
 // CHIPS: Google Shopping NZ — uses Google's index, shows prices + retailers
@@ -337,7 +363,8 @@ export default async function handler(req, res) {
     'Think EXPERIENTIAL or lifestyle products — same vibe and interests.',
   ];
   // On first load (seed=0), pick a random variety nudge so products vary between sessions
-  const firstLoadNudge = firstLoadVariations[Math.floor(Math.random() * firstLoadVariations.length)];
+  // True random nudge — timestamp-seeded so every fresh load is different
+  const firstLoadNudge = firstLoadVariations[Math.floor((Math.random() * 997 + Date.now()) % firstLoadVariations.length)];
   const refreshInstruction = refreshSeed > 0
     ? (refreshVariations[refreshSeed] || refreshVariations[refreshVariations.length - 1])
     : firstLoadNudge;
@@ -397,15 +424,31 @@ OUTPUT FORMAT:
   ]
 }`;
 
-  const userPrompt = `Find 3 gift recommendations:
+  const userPrompt = `
+*** CRITICAL MISSION: FIND 3 UNIQUE GIFTS ***
+
+CONTEXT:
 - Shopping for: ${shoppingFor}
 - Who: ${whoFor}
 - Vibe: ${vibe}
-- Budget: ${budgetLabel} (${budgetInstruction})
+- Budget Tier: ${budgetLabel}
+- PRICE RANGE: NZ$${budgetMin} to NZ$${budgetMax} (STRICT — this is non-negotiable)
 - Occasion: ${occasion}
-- Interests/hobbies: ${interests || 'Not specified'}
-${refreshInstruction ? `\nVariety: ${refreshInstruction}` : ''}
-${excludeProducts.length > 0 ? `\nDo NOT repeat: ${excludeProducts.join(', ')}` : ''}`;
+- Interests: ${interests || 'Not specified'}
+
+RULES FOR PRICING:
+1. DO NOT suggest cheap items for high budgets. If budget is $150+, do NOT suggest socks, candles, basic t-shirts or anything under $50.
+2. MATCH THE TIER: Pick categories that naturally retail between NZ$${budgetMin} and NZ$${budgetMax} in New Zealand.
+3. PREMIUM PIVOT: For High/Big Wednesday/Lotto budgets, suggest premium versions — "Noise Cancelling Headphones" not "Headphones", "Smart Watch" not "Watch", "Leather Boots" not "Boots".
+4. NZ REALITY CHECK: These must be available at The Warehouse, Farmers, Noel Leeming or Kmart for roughly NZ$${Math.round((budgetMin + budgetMax) / 2)} in 2026.
+
+RULES FOR VARIETY:
+${excludeProducts.length > 0 ? `🛑 ABSOLUTELY FORBIDDEN (already shown to user): ${excludeProducts.join(', ')}. You MUST suggest 3 ENTIRELY DIFFERENT product categories.` : ''}
+${refreshInstruction ? `
+STRATEGY: ${refreshInstruction}` : ''}
+
+FINAL CHECK: Are these 3 items available at a mainstream NZ retailer for roughly NZ$${Math.round((budgetMin + budgetMax) / 2)}? If yes, proceed.
+Session: ${Date.now().toString(36)}`;
 
   let products;
   try {
@@ -436,26 +479,29 @@ ${excludeProducts.length > 0 ? `\nDo NOT repeat: ${excludeProducts.join(', ')}` 
   // ── STEP 2: Normalise + build links + images ──────────────────────────────
   const enriched = await Promise.all(products.map(async (product) => {
 
-    // Normalise to NZ Known-Good search term
-    const searchTerm = normalizeQuery(product.searchQuery || product.name);
+    // CLEAN term: NZ terminology, no brands — for The Warehouse (avoids 404s)
+    const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
 
-    // Buy button: The Warehouse with budget price filter
-    const buyLink = buildWarehouseUrl(searchTerm, budgetMax);
+    // RICH term: keep brand + product name — for Google Shopping (brands help results)
+    const richSearchTerm = (product.name + ' ' + (product.searchQuery || '')).toLowerCase().trim();
 
-    // Chips: Google Shopping NZ — 3 discovery angles, never 404
-    const stores = buildShoppingChips(searchTerm, product.name, budgetHint);
+    // Buy button: routed by budget tier — Warehouse for low/medium, Noel Leeming for premium
+    const { url: buyLink, storeName: bestStoreName } = buildBuyLink(cleanSearchTerm, budgetTier, budgetMin, budgetMax);
 
-    // Brave image — parallel
-    const imageUrl = await getBraveImage(searchTerm, BRAVE_KEY);
+    // Chips: Google Shopping NZ using RICH term — brands improve results
+    const stores = buildShoppingChips(richSearchTerm, product.name, budgetHint);
 
-    console.log(`"${product.name}" → normalized: "${searchTerm}" → Warehouse + Google Shopping chips`);
+    // Brave image: use RICH term for best product photo match
+    const imageUrl = await getBraveImage(richSearchTerm, BRAVE_KEY);
+
+    console.log(`"${product.name}" | Buy→${bestStoreName}: "${cleanSearchTerm}" | Google: "${richSearchTerm}" | Tier: ${budgetTier}`);
 
     return {
       name:          product.name,
       type:          product.type,
       reason:        product.reason,
       budgetLabel,
-      bestStoreName: 'The Warehouse',
+      bestStoreName,
       buyLink,
       imageUrl,
       stores,
@@ -472,7 +518,7 @@ ${excludeProducts.length > 0 ? `\nDo NOT repeat: ${excludeProducts.join(', ')}` 
           <div style="font-size:14px;color:#7a6855;line-height:1.6;margin-bottom:12px;">${p.reason}</div>
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
             <div><div style="font-size:15px;font-weight:600;color:#c8922a;">${p.budgetLabel}</div></div>
-            <a href="${p.buyLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Shop at The Warehouse →</a>
+            <a href="${p.buyLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Shop This Gift →</a>
           </div>
           <div style="margin-top:10px;font-size:12px;color:#9a8878;">
             Also search: ${p.stores.map(s=>`<a href="${s.link}" style="color:#c8922a;">${s.name}</a>`).join(' · ')}
