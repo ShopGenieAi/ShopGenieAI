@@ -343,6 +343,26 @@ export default async function handler(req, res) {
     ? 'Products MUST be premium items priced NZ$500 or above.'
     : `Products MUST be priced between NZ$${budgetMin} and NZ$${budgetMax}.`;
 
+  // Vibe-specific category pools — forces Claude away from Watch/Bag/Buds defaults
+  const vibeCategoryPools = {
+    'Sporty':      ['massage gun','GPS running watch','hydration pack','resistance bands','foam roller','sports bag','protein shaker','swim goggles','bike helmet','yoga mat'],
+    'Techy':       ['noise cancelling headphones','smart watch','portable charger','bluetooth speaker','wireless earbuds','phone stand','smart home device','laptop stand','webcam','usb hub'],
+    'Outdoor':     ['binoculars','trekking poles','camping hammock','head torch','insulated drink bottle','waterproof jacket','sleeping bag liner','multi-tool','dry bag','portable water filter'],
+    'Luxe':        ['perfume gift set','leather wallet','cashmere throw','quality jewellery','luxury skincare set','silk pillowcase','scented candle set','wine accessories','quality sunglasses','leather journal'],
+    'Eco-friendly':['reusable drink bottle','beeswax wraps','bamboo toothbrush set','organic cotton tote','keep cup','compostable products','seed kit','natural soap set','recycled notebook','plant pot'],
+    'Practical':   ['quality backpack','leather boots','cookware set','cable organiser','quality umbrella','travel adapter','reusable shopping bag','tool kit','first aid kit','quality torch'],
+    'Fun':         ['board game','card game','novelty gadget','puzzle','adult colouring book','karaoke microphone','mini projector','photo booth kit','retro toy','cooking kit'],
+    'Sentimental': ['photo frame set','leather journal','quality jewellery','personalised mug','memory book','keepsake box','custom map print','birth stone jewellery','scrapbook kit','silk scarf'],
+    'Trendy':      ['quality sunglasses','premium sneakers','tote bag','hair accessories set','nail art kit','trendy backpack','fashion jewellery','bucket hat','scrunchie set','belt bag'],
+    'Quirky':      ['novelty socks','funny book','unusual kitchen gadget','quirky phone case','retro game','brain teaser puzzle','unusual plant','novelty mug','quirky stationery','mini arcade game'],
+    'Surprise me': ['massage gun','quality sunglasses','leather journal','board game','premium sneakers','noise cancelling headphones','perfume set','camping hammock','quality backpack','novelty gadget'],
+  };
+
+  // Pick 3 random category suggestions from the vibe pool to force variety
+  const vibePool = vibeCategoryPools[vibe] || vibeCategoryPools['Surprise me'];
+  const shuffled = vibePool.sort(() => Math.random() - 0.5);
+  const categorySuggestions = shuffled.slice(0, 3).join(', ');
+
   // First load variations — randomised so same quiz answers don't always return same 3 products
   const firstLoadVariations = [
     '',
@@ -370,84 +390,53 @@ export default async function handler(req, res) {
     : firstLoadNudge;
 
   // ── STEP 1: Claude Haiku ────────────────────────────────────────────────────
-  const systemPrompt = `You are ShopGenieAI, a gift recommendation engine for the New Zealand retail market.
-
-Recommend exactly 3 products available in NZ stores in 2025/2026.
-
-RULES:
-- Exactly 3 products, single items only — NO bundles, NO combo packs
-- GENERIC product names ONLY — what a Kiwi would actually say in a shop
-  GOOD: "Foam Roller", "Smart Watch", "Wireless Earbuds", "Sports Bag", "Drink Bottle"
-  BAD: "Advanced Recovery Device", "Recycled Plastic Sports Bag", "Bamboo Grooming Kit", invented compound names
-  NEVER include materials in product names (no "bamboo", "recycled", "organic cotton" in the NAME)
-  Materials belong in the reason field only, not the product name or searchQuery
-
-- STOCK REALITY: Products must be available at mainstream NZ retailers like The Warehouse, Farmers, Briscoes, Noel Leeming, Kmart
-  Do NOT recommend hyper-niche eco products that only specialist stores carry
-  Eco-friendly vibe = choose mainstream products with eco credentials, not obscure boutique items
-  GOOD eco picks: reusable drink bottle, bamboo toothbrush, cotton tote bag, beeswax wraps, keep cup
-  BAD eco picks: hand-poured soy candle set, artisan beeswax food wrap kit, hemp clothing set
-- BUDGET HARD RULE: ${budgetInstruction} Non-negotiable.
-- Every product MUST match the stated vibe
-- Every product MUST be relevant to stated interests
-- NEVER recommend alcohol, weapons, or adult products
-- NEVER repeat the same product category twice in one set of 3
-
-NZ TERMINOLOGY — always use these terms:
-- "drink bottle" not "water bottle"
-- "togs" not "swimwear" or "swimsuit"
-- "jandals" not "flip flops"
-- "jersey" not "sweater" or "pullover"
-- "smart watch" not "sport watch" or "fitness watch"
-- "sports bag" not "gym bag" or "duffel bag"
-- "wireless earbuds" not "earbuds" or "airpods"
-- "torch" not "flashlight"
-- "nappies" not "diapers"
-- "bum bag" not "fanny pack"
-- "rubbish bin" not "trash can"
-- "hoodie" not "sweatshirt"
-- "running shoes" not "sneakers" or "trainers"
-
-SEARCH QUERY: 2-4 NZ retail words, no brand names, no model numbers.
-
-Return ONLY valid JSON, no preamble, no markdown.
-
-OUTPUT FORMAT:
-{
-  "products": [
-    {
-      "name": "Smart Watch",
-      "type": "Electronics",
-      "reason": "1-2 sentences why this is perfect for this person",
-      "searchQuery": "smart watch"
-    }
-  ]
-}`;
+  const systemPrompt = `You are ShopGenieAI, a specialist gift engine for the NZ retail market. You are an expert personal shopper who knows NZ retail pricing in 2026.
+═══════════════════════════════════════
+RULE 1 — THE MIRROR RULE (TOTAL INTEGRITY)
+═══════════════════════════════════════
+Your 'searchQuery' MUST be a simplified version of the 'name'. 
+If you suggest a "Gym Jacket", the searchQuery MUST be "gym jacket".
+If you suggest "Massage Gun", the searchQuery MUST be "massage gun".
+NEVER suggest one product but search for another (e.g. Jacket -> Earbuds). THIS IS A FAILURE.
+═══════════════════════════════════════
+RULE 2 — THE ANTI-LOOP VARIETY RULE
+═══════════════════════════════════════
+"Smart Watch", "Wireless Earbuds", and "Sports Bag" are now 'Common' tier. 
+You are RESTRICTED from suggesting more than ONE 'Common' item per 3-pack. 
+You MUST explore 'Rare' and 'Epic' categories to provide value.
+Examples: Weight Vest, Recovery Slides, Technical Puffer, Marine Binoculars, Camping Hammock.
+═══════════════════════════════════════
+RULE 3 — THE NZ PRICE REALITY (2026)
+═══════════════════════════════════════
+- $0–$50: Basic gear (Foam roller, Drink bottle)
+- $50–$150: Mid-range (Basic earbuds, Gym bag)
+- $150–$300: PREMIUM GEAR (Massage gun, GPS watch, Technical apparel)
+If the budget is $150+, do NOT suggest a basic foam roller or cheap earbuds. Suggest the professional version.
+═══════════════════════════════════════
+RULE 4 — NZ TERMINOLOGY (STRICT)
+═══════════════════════════════════════
+Use: jandals, togs, jersey, hoodie, sports bag, torch, nappies, running shoes.
+OUTPUT — JSON ONLY, NO PREAMBLE.`;
 
   const userPrompt = `
-*** CRITICAL MISSION: FIND 3 UNIQUE GIFTS ***
-
-CONTEXT:
-- Shopping for: ${shoppingFor}
-- Who: ${whoFor}
-- Vibe: ${vibe}
-- Budget Tier: ${budgetLabel}
-- PRICE RANGE: NZ$${budgetMin} to NZ$${budgetMax} (STRICT — this is non-negotiable)
+*** GIFT MISSION: 3 FRESH IDEAS ***
+- Who: ${whoFor} | Vibe: ${vibe}
+- Budget: ${budgetLabel} (NZ$${budgetMin}–NZ$${budgetMax})
 - Occasion: ${occasion}
 - Interests: ${interests || 'Not specified'}
 
-RULES FOR PRICING:
-1. DO NOT suggest cheap items for high budgets. If budget is $150+, do NOT suggest socks, candles, basic t-shirts or anything under $50.
-2. MATCH THE TIER: Pick categories that naturally retail between NZ$${budgetMin} and NZ$${budgetMax} in New Zealand.
-3. PREMIUM PIVOT: For High/Big Wednesday/Lotto budgets, suggest premium versions — "Noise Cancelling Headphones" not "Headphones", "Smart Watch" not "Watch", "Leather Boots" not "Boots".
-4. NZ REALITY CHECK: These must be available at The Warehouse, Farmers, Noel Leeming or Kmart for roughly NZ$${Math.round((budgetMin + budgetMax) / 2)} in 2026.
+🛑 HARD CATEGORY BLOCK (Do NOT suggest these — already seen):
+${excludeProducts.length > 0 ? excludeProducts.join(', ') : 'None yet'}
 
-RULES FOR VARIETY:
-${excludeProducts.length > 0 ? `🛑 ABSOLUTELY FORBIDDEN (already shown to user): ${excludeProducts.join(', ')}. You MUST suggest 3 ENTIRELY DIFFERENT product categories.` : ''}
-${refreshInstruction ? `
-STRATEGY: ${refreshInstruction}` : ''}
+SUGGESTED STARTING POINTS (Pick at least 2 from this list to ensure variety):
+${categorySuggestions}
 
-FINAL CHECK: Are these 3 items available at a mainstream NZ retailer for roughly NZ$${Math.round((budgetMin + budgetMax) / 2)}? If yes, proceed.
+CRITICAL INSTRUCTIONS:
+1. Ensure 'name' and 'searchQuery' match perfectly (The Mirror Rule).
+2. If vibe is 'Sporty' and budget is $150+, suggest specialist recovery or tech gear, NOT just a generic sports bag.
+3. Every searchQuery must be 2-3 words max and contain NO brand names.
+4. Max ONE 'Common' tier item (Smart Watch / Wireless Earbuds / Sports Bag) in the 3-pack.
+${refreshInstruction ? 'STRATEGY: ' + refreshInstruction : ''}
 Session: ${Date.now().toString(36)}`;
 
   let products;
@@ -475,6 +464,21 @@ Session: ${Date.now().toString(36)}`;
     console.error('Claude error:', err);
     return res.status(500).json({ error: `AI recommendation failed: ${err.message}` });
   }
+
+  // ── MIRROR RULE ENFORCEMENT ───────────────────────────────────────────────
+  // If Claude mismatches name and searchQuery, force searchQuery to match name
+  // e.g. name="Gym Jacket" searchQuery="wireless earbuds" → searchQuery="gym jacket"
+  products = products.map(p => {
+    const nameWords = p.name.toLowerCase().split(' ').filter(w => w.length > 2);
+    const queryWords = (p.searchQuery || '').toLowerCase().split(' ').filter(w => w.length > 2);
+    // Check if at least one significant word from name appears in searchQuery
+    const hasMatch = nameWords.some(w => queryWords.includes(w));
+    if (!hasMatch) {
+      console.warn(`Mirror Rule fix: "${p.name}" searchQuery was "${p.searchQuery}" → forcing to "${p.name.toLowerCase()}"`);
+      p.searchQuery = p.name.toLowerCase();
+    }
+    return p;
+  });
 
   // ── STEP 2: Normalise + build links + images ──────────────────────────────
   const enriched = await Promise.all(products.map(async (product) => {
