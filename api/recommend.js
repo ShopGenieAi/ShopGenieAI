@@ -465,22 +465,8 @@ Session: ${Date.now().toString(36)}`;
     return res.status(500).json({ error: `AI recommendation failed: ${err.message}` });
   }
 
-  // ── MIRROR RULE ENFORCEMENT ───────────────────────────────────────────────
-  // If Claude mismatches name and searchQuery, force searchQuery to match name
-  // e.g. name="Gym Jacket" searchQuery="wireless earbuds" → searchQuery="gym jacket"
-  products = products.map(p => {
-    const nameWords = p.name.toLowerCase().split(' ').filter(w => w.length > 2);
-    const queryWords = (p.searchQuery || '').toLowerCase().split(' ').filter(w => w.length > 2);
-    // Check if at least one significant word from name appears in searchQuery
-    const hasMatch = nameWords.some(w => queryWords.includes(w));
-    if (!hasMatch) {
-      console.warn(`Mirror Rule fix: "${p.name}" searchQuery was "${p.searchQuery}" → forcing to "${p.name.toLowerCase()}"`);
-      p.searchQuery = p.name.toLowerCase();
-    }
-    return p;
-  });
 
-  // ── STEP 2: Normalise + build links + images ──────────────────────────────
+    // ── STEP 2: Normalise + build links + images ──────────────────────────────
   const enriched = await Promise.all(products.map(async (product) => {
 
     // CLEAN term: NZ terminology, no brands — for The Warehouse (avoids 404s)
