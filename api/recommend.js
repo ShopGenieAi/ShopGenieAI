@@ -337,8 +337,8 @@ export default async function handler(req, res) {
   };
 
   // Pick pool for vibe + budget tier
-  const vибePools = vibeCategoryPools[vibe] || vibeCategoryPools['Surprise me'];
-  const tierPool  = vибePools[budgetTier] || vибePools['medium'];
+  const vibePools = vibeCategoryPools[vibe] || vibeCategoryPools['Surprise me'];
+  const tierPool  = vibePools[budgetTier] || vibePools['medium'];
   const shuffled  = [...tierPool].sort(() => Math.random() - 0.5);
   const categorySuggestions = shuffled.slice(0, 3).join(', ');
 
@@ -366,17 +366,13 @@ export default async function handler(req, res) {
 RULE 1 — MIRROR RULE: searchQuery MUST be a simplified version of name.
 "Activity Tracker" → searchQuery "activity tracker". NEVER mismatch product and search.
 
-RULE 2 — BUDGET ANCHORS (STRICT NZ RETAIL REALITY 2026):
-- NZ$0–$50 (Low): Basic everyday items. Foam roller, drink bottle, card game, scented candle.
-- NZ$50–$150 (Medium): Mid-range. Wireless earbuds, sports bag, yoga mat, board game, bluetooth speaker.
-- NZ$150–$300 (High): FORBIDDEN: GPS Running Watch ($350+), Smart Watch ($400+), Dyson ($500+).
-  USE INSTEAD: Activity Tracker ($150-250), Massage Gun ($120-300), Technical Hoodie, Portable Speaker.
-- NZ$300–$400 (Big Wednesday): GPS Running Watch, Noise Cancelling Headphones, Air Fryer, Quality Luggage.
-- NZ$500+ (Lotto): Premium Smart Watch, Dyson Airwrap, Designer Handbag, High-end Headphones.
+RULE 2 — BUDGET REALITY (UNIVERSAL):
+Your recommendations MUST be products that genuinely exist at the user's budget in New Zealand in 2026. Every product category has options at every price point — cheap smartwatches exist (e.g. $80 Promate from PB Tech), expensive ones exist too ($800 Apple Watch Ultra). Match the product to the budget — do NOT ban any product category. If a category has budget-friendly options, recommend those. If you're unsure whether something exists at a price point in NZ, pick something safer.
+Do NOT recommend a premium version of a product when a budget version exists at the right price.
 
 RULE 3 — NZ TERMINOLOGY: jandals, togs, jersey, hoodie, sports bag, torch, nappies, running shoes, drink bottle.
 
-RULE 4 — ANTI-LOOP: Max ONE of (Smart Watch / Wireless Earbuds / Sports Bag) per 3-pack.
+RULE 4 — VARIETY: All 3 recommendations must be DIFFERENT product categories. Don't suggest 3 variations of the same thing.
 
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
@@ -384,7 +380,7 @@ OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
     {
       "name": "Activity Tracker",
       "type": "Fitness Tech",
-      "reason": "Tracks steps, heart rate and sleep without the $400+ price of a full smart watch.",
+      "reason": "Tracks steps, heart rate and sleep — budget-friendly options start from around $80 in NZ.",
       "searchQuery": "activity tracker"
     },
     {
@@ -410,10 +406,8 @@ HARD BLOCK — FORBIDDEN (already shown): ${excludeProducts.length > 0 ? exclude
 
 SUGGESTED STARTING POINTS (use at least 2 of these): ${categorySuggestions}
 
-CRITICAL: Do NOT suggest products that naturally cost MORE than NZ$${budgetMax} in New Zealand.
-If budget is High ($150-$300): Use "Activity Tracker" NOT "GPS Running Watch". Use "Massage Gun" NOT "Smart Watch".
+CRITICAL: Do NOT suggest products that naturally cost MORE than NZ$${budgetMax} in New Zealand. Match products to the budget — if cheap versions exist in NZ at this price point, recommend those.
 Mirror Rule: name and searchQuery must match. searchQuery max 4 words, no brand names.
-Max 1 Common tier item per set.
 ${refreshInstruction ? `STRATEGY: ${refreshInstruction}` : ''}
 Session: ${Date.now().toString(36)}`;
 
