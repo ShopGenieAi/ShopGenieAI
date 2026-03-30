@@ -116,7 +116,7 @@ function normalizeQuery(rawQuery) {
 
 // ── SMART RETAILER ROUTING ────────────────────────────────────────────────────
 // Matches product TYPE to the right NZ retailer
-// Noel Leeming is NOT right for everything — weight vests, sports gear, tools need different stores
+// PB Tech is the primary tech retailer — Google Shopping chips act as fallback
 
 function detectProductCategory(name, type) {
   const s = (name + ' ' + type).toLowerCase();
@@ -136,14 +136,9 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
   const q = encodeURIComponent(cleanSearchTerm);
 
   // ── COMPLETE RETAILER ROUTING — all budgets, all categories ──────────────
-  // Tech & Electronics
+  // Tech & Electronics — PB Tech for all budgets (Google Shopping chips act as fallback)
   if (category === 'tech') {
-    if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.noelleeming.co.nz/search?q=${q}`, storeName: 'Noel Leeming' };
-    if (budgetTierKey === 'medium')
-      return { url: `https://www.jbhifi.co.nz/search?q=${q}`, storeName: 'JB Hi-Fi' };
-    // low — The Warehouse is fine for cheap tech
-    return { url: `https://www.thewarehouse.co.nz/search?q=${q}&priceTo=${budgetMax}`, storeName: 'The Warehouse' };
+    return { url: `https://www.pbtech.co.nz/search?sf=${q}`, storeName: 'PB Tech' };
   }
 
   // Fitness & Sports gear — Google Shopping NZ (reliable, shows prices, multiple retailers)
@@ -260,9 +255,7 @@ export default async function handler(req, res) {
   const tier = getTier(budgetTier || 'medium');
   const { label: budgetLabel, hint: budgetHint, min: budgetMin, max: budgetMax } = tier;
 
-  // ── PRICE-CORRECTED VIBE POOLS (NZ 2026) ─────────────────────────────────
-  // GPS Running Watch removed from High tier — costs $350+ in NZ
-  // Smart Watch moved to BigWed/Lotto only
+  // ── VIBE POOLS (NZ 2026) ──────────────────────────────────────────────────
   const vibeCategoryPools = {
     'Sporty': {
       low:    ['foam roller','resistance bands','skipping rope','sports socks','swim goggles','volleyball','football','frisbee','headband','sports water bottle'],
@@ -373,6 +366,11 @@ Do NOT recommend a premium version of a product when a budget version exists at 
 RULE 3 — NZ TERMINOLOGY: jandals, togs, jersey, hoodie, sports bag, torch, nappies, running shoes, drink bottle.
 
 RULE 4 — VARIETY: All 3 recommendations must be DIFFERENT product categories. Don't suggest 3 variations of the same thing.
+
+RULE 5 — RECIPIENT AWARENESS: Think about WHO the gift is for.
+- Children/kids/babies: recommend fun, interactive, age-appropriate products. NOT home improvement, smart home devices, or adult lifestyle items. A "techy" gift for a child means kid-friendly gadgets, kids' smartwatches, tablets, coding toys — not LED strips or smart plugs.
+- Elderly/grandparents: recommend practical, easy-to-use products. Not extreme sports gear or complex tech.
+- Always match the product to the recipient's age, lifestyle and interests.
 
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
