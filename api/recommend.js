@@ -116,7 +116,7 @@ function normalizeQuery(rawQuery) {
 
 // ── CHILD/KIDS DETECTION ──────────────────────────────────────────────────────
 // If whoFor contains child/kid/baby, we prepend "kids" to all search queries
-// This forces retailer search results to return child-appropriate products
+// and use kids-specific vibe pools instead of adult ones
 function isChildRecipient(whoFor) {
   if (!whoFor) return false;
   const lower = whoFor.toLowerCase();
@@ -125,10 +125,85 @@ function isChildRecipient(whoFor) {
 
 function prefixKids(searchQuery) {
   const lower = searchQuery.toLowerCase();
-  // Don't double-prefix if already has kids/child
   if (/\b(kids|kid|child|children|baby)\b/.test(lower)) return searchQuery;
   return 'kids ' + searchQuery;
 }
+
+// ── KIDS VIBE POOLS ───────────────────────────────────────────────────────────
+// Completely replaces adult vibe pools when shopping for a child
+// Every item here is genuinely kid-appropriate
+const KIDS_VIBE_POOLS = {
+  'Sporty': {
+    low:    ['kids football','kids frisbee','skipping rope','kids swim goggles','kids sports socks','kids drink bottle','kids headband','kids volleyball'],
+    medium: ['kids bike helmet','kids football boots','kids shin pads','kids sports bag','kids running shoes','kids sports watch','kids swimming goggles','kids cricket set'],
+    high:   ['kids smartwatch','kids activity tracker','kids bike','kids scooter','kids sports sunglasses','kids wetsuit','kids tennis racket','kids skateboard'],
+    bigwed: ['kids GPS watch','kids electric scooter','kids trampoline','kids mountain bike','kids surfboard'],
+    lotto:  ['premium kids bike','kids golf set','kids horse riding gear','premium kids trampoline'],
+  },
+  'Techy': {
+    low:    ['kids LED torch','kids digital watch','kids walkie talkies','kids magnifying glass','kids science kit','kids calculator'],
+    medium: ['kids headphones','kids coding toy','kids smartwatch','kids digital camera','kids science experiment kit','kids robotics kit','kids bluetooth speaker'],
+    high:   ['kids tablet','kids smart watch','kids drone','kids microscope','kids telescope','kids electronic keyboard','kids VR headset'],
+    bigwed: ['kids iPad','kids laptop','kids 3D printer pen','premium kids drone','kids programmable robot'],
+    lotto:  ['premium kids tablet','kids gaming console','kids high-end headphones','premium kids laptop'],
+  },
+  'Eco-friendly': {
+    low:    ['kids reusable drink bottle','kids beeswax wrap kit','kids seed growing kit','kids bamboo lunch box','kids recycled colouring book'],
+    medium: ['kids nature explorer kit','kids bird watching set','kids garden tool set','kids compost kit','kids eco craft set','kids reusable snack bags'],
+    high:   ['kids quality bike','kids nature photography kit','kids camping set','kids quality drink bottle set','kids eco art supplies'],
+    bigwed: ['kids premium camping gear','kids quality telescope','kids nature adventure set'],
+    lotto:  ['kids premium outdoor adventure set','kids quality nature kit'],
+  },
+  'Luxe': {
+    low:    ['kids quality colouring book','kids plush toy','kids bath bomb set','kids fancy dress costume'],
+    medium: ['kids jewellery making kit','kids quality art set','kids designer stationery','kids quality soft toy','kids charm bracelet'],
+    high:   ['kids quality watch','kids designer backpack','kids quality jewellery','kids premium art set','kids designer clothing'],
+    bigwed: ['kids designer outfit','kids premium watch','kids quality luggage','kids designer accessories'],
+    lotto:  ['kids luxury watch','kids designer wardrobe','kids premium jewellery'],
+  },
+  'Practical': {
+    low:    ['kids lunch box','kids drink bottle','kids umbrella','kids torch','kids backpack'],
+    medium: ['kids quality backpack','kids rain jacket','kids quality lunch box','kids school supplies set','kids quality umbrella'],
+    high:   ['kids quality school bag','kids quality rain gear','kids desk organiser','kids reading lamp','kids quality shoes'],
+    bigwed: ['kids quality luggage','kids premium school set','kids quality desk'],
+    lotto:  ['kids premium luggage set','kids quality bedroom set'],
+  },
+  'Fun': {
+    low:    ['kids card game','kids novelty socks','kids joke book','kids sticker set','kids bubbles set','kids silly putty'],
+    medium: ['kids board game','kids puzzle','kids magic set','kids craft kit','kids slime kit','kids LEGO set','kids Nerf blaster'],
+    high:   ['kids karaoke microphone','kids mini projector','kids premium board game','kids remote control car','kids chemistry set','kids magic kit'],
+    bigwed: ['kids gaming console game','kids premium LEGO set','kids quality karaoke system','kids electric go kart'],
+    lotto:  ['kids premium gaming setup','kids quality play equipment','kids premium experience voucher'],
+  },
+  'Sentimental': {
+    low:    ['kids photo frame','kids memory book','kids scrapbook kit','kids friendship bracelet kit'],
+    medium: ['kids personalised story book','kids keepsake box','kids quality photo album','kids name necklace','kids personalised backpack'],
+    high:   ['kids birthstone jewellery','kids quality keepsake','kids personalised artwork','kids quality memory book'],
+    bigwed: ['kids premium keepsake jewellery','kids custom portrait','kids quality personalised gift'],
+    lotto:  ['kids luxury keepsake','kids premium personalised item'],
+  },
+  'Trendy': {
+    low:    ['kids bucket hat','kids scrunchie set','kids hair accessories','kids fun socks','kids temporary tattoos'],
+    medium: ['kids quality sunglasses','kids trendy backpack','kids fashion watch','kids belt bag','kids quality hat'],
+    high:   ['kids designer sunglasses','kids quality sneakers','kids trendy clothing set','kids quality accessories'],
+    bigwed: ['kids premium sneakers','kids designer backpack','kids quality fashion set'],
+    lotto:  ['kids designer outfit','kids premium sneakers','kids luxury accessories'],
+  },
+  'Quirky': {
+    low:    ['kids novelty mug','kids funny socks','kids brain teaser puzzle','kids whoopee cushion','kids joke book'],
+    medium: ['kids unusual science kit','kids quirky stationery','kids mini arcade game','kids unusual toy','kids magic trick set'],
+    high:   ['kids retro game console','kids unusual gadget','kids quality novelty item','kids premium puzzle set'],
+    bigwed: ['kids mini arcade cabinet','kids premium quirky gadget','kids unusual experience'],
+    lotto:  ['kids premium gaming setup','kids luxury unusual experience'],
+  },
+  'Surprise me': {
+    low:    ['kids card game','kids novelty socks','kids fun book','kids sticker set','kids bubbles'],
+    medium: ['kids board game','kids headphones','kids craft kit','kids science kit','kids LEGO set'],
+    high:   ['kids smartwatch','kids tablet','kids scooter','kids quality headphones','kids drone'],
+    bigwed: ['kids gaming console','kids premium tablet','kids electric scooter','kids quality watch'],
+    lotto:  ['kids premium gaming setup','kids quality tablet','kids premium experience'],
+  },
+};
 
 // ── SMART RETAILER ROUTING ────────────────────────────────────────────────────
 // Matches product TYPE to the right NZ retailer
@@ -158,7 +233,6 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
   }
 
   // Fitness & Sports gear — Google Shopping NZ (reliable, shows prices, multiple retailers)
-  // site: operator doesn't work in tbm=shop mode — broad Google Shopping is the reliable option
   if (category === 'fitness') {
     return { url: `https://www.google.com/search?q=${q}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
@@ -176,7 +250,6 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
       return { url: `https://www.farmers.co.nz/search?q=${q}`, storeName: 'Farmers' };
     if (budgetTierKey === 'medium')
       return { url: `https://www.glassons.com/search?q=${q}`, storeName: 'Glassons' };
-    // low
     return { url: `https://www.thewarehouse.co.nz/search?q=${q}&priceTo=${budgetMax}`, storeName: 'The Warehouse' };
   }
 
@@ -274,7 +347,7 @@ export default async function handler(req, res) {
   // ── Detect if shopping for a child ──────────────────────────────────────────
   const isForChild = isChildRecipient(whoFor);
 
-  // ── VIBE POOLS (NZ 2026) ──────────────────────────────────────────────────
+  // ── ADULT VIBE POOLS (NZ 2026) ────────────────────────────────────────────
   const vibeCategoryPools = {
     'Sporty': {
       low:    ['foam roller','resistance bands','skipping rope','sports socks','swim goggles','volleyball','football','frisbee','headband','sports water bottle'],
@@ -348,9 +421,11 @@ export default async function handler(req, res) {
     },
   };
 
-  // Pick pool for vibe + budget tier
-  const vibePools = vibeCategoryPools[vibe] || vibeCategoryPools['Surprise me'];
-  const tierPool  = vibePools[budgetTier] || vibePools['medium'];
+  // ── SELECT POOL: kids pools override adult pools when isForChild ───────────
+  const activePools = isForChild
+    ? (KIDS_VIBE_POOLS[vibe] || KIDS_VIBE_POOLS['Surprise me'])
+    : (vibeCategoryPools[vibe] || vibeCategoryPools['Surprise me']);
+  const tierPool  = activePools[budgetTier] || activePools['medium'];
   const shuffled  = [...tierPool].sort(() => Math.random() - 0.5);
   const categorySuggestions = shuffled.slice(0, 3).join(', ');
 
@@ -387,7 +462,7 @@ RULE 3 — NZ TERMINOLOGY: jandals, togs, jersey, hoodie, sports bag, torch, nap
 RULE 4 — VARIETY: All 3 recommendations must be DIFFERENT product categories. Don't suggest 3 variations of the same thing.
 
 RULE 5 — RECIPIENT AWARENESS: Think about WHO the gift is for.
-- Children/kids/babies: recommend fun, interactive, age-appropriate products ONLY. Toys, books, games, art supplies, kids sports gear, kids tech. NEVER suggest adult fitness gear (massage guns, weight vests, protein shakers, yoga mats), sharp tools, smart home devices, or adult lifestyle items. A "techy" gift for a child means kids' smartwatch, tablet, coding toy, kids headphones — not LED strips or smart plugs.
+- Children/kids/babies: recommend fun, interactive, age-appropriate products ONLY. Toys, books, games, art supplies, kids sports gear, kids tech. NEVER suggest adult fitness gear (massage guns, weight vests, protein shakers, yoga mats), phone accessories (phone stands, phone cases, cable organisers, USB hubs), PC/laptop accessories (networking gear, PC parts, cables, webcams, laptop stands), sharp tools, smart home devices, or adult lifestyle items. A "techy" gift for a child means kids' smartwatch, tablet, coding toy, kids headphones, kids digital camera — not USB hubs or cable organisers.
 - Elderly/grandparents: recommend practical, easy-to-use products. Not extreme sports gear or complex tech.
 - Always match the product to the recipient's age, lifestyle and interests.
 
@@ -425,7 +500,7 @@ SUGGESTED STARTING POINTS (use at least 2 of these): ${categorySuggestions}
 
 CRITICAL: Do NOT suggest products that naturally cost MORE than NZ$${budgetMax} in New Zealand. Match products to the budget — if cheap versions exist in NZ at this price point, recommend those.
 Mirror Rule: name and searchQuery must match. searchQuery max 4 words, no brand names.
-${isForChild ? 'CHILD GIFT: This is for a CHILD. Only suggest age-appropriate kids products. No adult fitness, lifestyle or home improvement items.' : ''}
+${isForChild ? 'CHILD GIFT: This is for a CHILD. Only suggest age-appropriate kids products from the suggested starting points. No adult fitness, phone accessories, PC accessories, or home improvement items.' : ''}
 ${refreshInstruction ? `STRATEGY: ${refreshInstruction}` : ''}
 Session: ${Date.now().toString(36)}`;
 
@@ -458,7 +533,7 @@ Session: ${Date.now().toString(36)}`;
     products = products.map(p => ({
       ...p,
       searchQuery: prefixKids(p.searchQuery || p.name),
-      name: p.name // keep display name as-is
+      name: p.name
     }));
     console.log('🧒 Child detected — prefixed all searchQuery with "kids"');
   }
