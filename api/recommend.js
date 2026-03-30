@@ -114,6 +114,22 @@ function normalizeQuery(rawQuery) {
     .trim() || rawQuery;
 }
 
+// ── CHILD/KIDS DETECTION ──────────────────────────────────────────────────────
+// If whoFor contains child/kid/baby, we prepend "kids" to all search queries
+// This forces retailer search results to return child-appropriate products
+function isChildRecipient(whoFor) {
+  if (!whoFor) return false;
+  const lower = whoFor.toLowerCase();
+  return /\b(child|children|kid|kids|baby|toddler|infant|son|daughter|boy|girl)\b/.test(lower);
+}
+
+function prefixKids(searchQuery) {
+  const lower = searchQuery.toLowerCase();
+  // Don't double-prefix if already has kids/child
+  if (/\b(kids|kid|child|children|baby)\b/.test(lower)) return searchQuery;
+  return 'kids ' + searchQuery;
+}
+
 // ── SMART RETAILER ROUTING ────────────────────────────────────────────────────
 // Matches product TYPE to the right NZ retailer
 // PB Tech is the primary tech retailer — Google Shopping chips act as fallback
@@ -255,6 +271,9 @@ export default async function handler(req, res) {
   const tier = getTier(budgetTier || 'medium');
   const { label: budgetLabel, hint: budgetHint, min: budgetMin, max: budgetMax } = tier;
 
+  // ── Detect if shopping for a child ──────────────────────────────────────────
+  const isForChild = isChildRecipient(whoFor);
+
   // ── VIBE POOLS (NZ 2026) ──────────────────────────────────────────────────
   const vibeCategoryPools = {
     'Sporty': {
@@ -368,7 +387,7 @@ RULE 3 — NZ TERMINOLOGY: jandals, togs, jersey, hoodie, sports bag, torch, nap
 RULE 4 — VARIETY: All 3 recommendations must be DIFFERENT product categories. Don't suggest 3 variations of the same thing.
 
 RULE 5 — RECIPIENT AWARENESS: Think about WHO the gift is for.
-- Children/kids/babies: recommend fun, interactive, age-appropriate products. NOT home improvement, smart home devices, or adult lifestyle items. A "techy" gift for a child means kid-friendly gadgets, kids' smartwatches, tablets, coding toys — not LED strips or smart plugs.
+- Children/kids/babies: recommend fun, interactive, age-appropriate products ONLY. Toys, books, games, art supplies, kids sports gear, kids tech. NEVER suggest adult fitness gear (massage guns, weight vests, protein shakers, yoga mats), sharp tools, smart home devices, or adult lifestyle items. A "techy" gift for a child means kids' smartwatch, tablet, coding toy, kids headphones — not LED strips or smart plugs.
 - Elderly/grandparents: recommend practical, easy-to-use products. Not extreme sports gear or complex tech.
 - Always match the product to the recipient's age, lifestyle and interests.
 
@@ -406,6 +425,7 @@ SUGGESTED STARTING POINTS (use at least 2 of these): ${categorySuggestions}
 
 CRITICAL: Do NOT suggest products that naturally cost MORE than NZ$${budgetMax} in New Zealand. Match products to the budget — if cheap versions exist in NZ at this price point, recommend those.
 Mirror Rule: name and searchQuery must match. searchQuery max 4 words, no brand names.
+${isForChild ? 'CHILD GIFT: This is for a CHILD. Only suggest age-appropriate kids products. No adult fitness, lifestyle or home improvement items.' : ''}
 ${refreshInstruction ? `STRATEGY: ${refreshInstruction}` : ''}
 Session: ${Date.now().toString(36)}`;
 
@@ -431,6 +451,18 @@ Session: ${Date.now().toString(36)}`;
     return res.status(500).json({ error: `AI recommendation failed: ${err.message}` });
   }
 
+  // ── STEP 1.5: Kids prefix — force child-appropriate search results ────────
+  // If whoFor is a child/kid/baby, prepend "kids" to every searchQuery
+  // This ensures retailer searches return children's products, not adult ones
+  if (isForChild) {
+    products = products.map(p => ({
+      ...p,
+      searchQuery: prefixKids(p.searchQuery || p.name),
+      name: p.name // keep display name as-is
+    }));
+    console.log('🧒 Child detected — prefixed all searchQuery with "kids"');
+  }
+
   // ── STEP 2: Normalise + build links + images ──────────────────────────────
   const enriched = await Promise.all(products.map(async (product) => {
     const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
@@ -444,7 +476,7 @@ Session: ${Date.now().toString(36)}`;
     const stores   = buildShoppingChips(richSearchTerm, budgetHint);
     const imageUrl = await getBraveImage(richSearchTerm, BRAVE_KEY);
 
-    console.log(`"${product.name}" | ${bestStoreName}: "${cleanSearchTerm}" | Tier: ${budgetTier}`);
+    console.log(`"${product.name}" | ${bestStoreName}: "${cleanSearchTerm}" | Tier: ${budgetTier} | Child: ${isForChild}`);
 
     return { name: product.name, type: product.type, reason: product.reason, budgetLabel, bestStoreName, buyLink, imageUrl, stores };
   }));
