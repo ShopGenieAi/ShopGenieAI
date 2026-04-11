@@ -247,9 +247,10 @@ const TASKS = [
   {id:'v2-18',phase:'v2',title:'Refresh counter set to 2 for friend testing phase',tag:'ui',note:'Change MAX_REFRESHES back to 5 for public launch'},
   {id:'v2-20',phase:'v2',title:'Same 3 products on fresh start — add randomisation seed',tag:'api',note:'Claude returning identical Smart Watch/Earbuds/Sports Bag on every fresh load. Need random seed on first submission.'},
   {id:'v2-21',phase:'v2',title:'Loading screen — slow down to allow useless facts reading time',tag:'ui',note:'Add minimum display time so facts are readable before results show. Currently too fast.'},
+  {id:'v2-22',phase:'v2',title:'WHO awareness — child/baby safe product filtering',tag:'api',note:'Claude prompt missing whoFor context. Child/Baby selecting Sporty vibe returns weighted vest, massage gun, smart watch. Fix: add WHO AWARENESS rules to systemPrompt so child/baby get age-appropriate products only (toys, books, games, art supplies, kids sports gear). Never suggest adult fitness gear, sharp tools or high-value tech for children.'},
   {id:'v2-23',phase:'v2',title:'Fashion/accessories routing — premium items must NOT go to Warehouse or Kmart',tag:'api',note:'Sports sunglasses at High Budget ($150-300) routing to The Warehouse — WRONG. Premium sunglasses, fashion accessories and sports apparel at High/BigWed/Lotto must route to Sunglass Hutt, Rebel Sport or Torpedo7. Warehouse and Kmart are budget-only retailers for fashion. detectProductCategory needs sunglasses/eyewear as a separate category or fashion routing needs tightening for accessories.'},
   {id:'v2-24',phase:'v2',title:'Budget constraint enforcement — Claude still recommending wrong price tier products',tag:'api',note:'High Budget ($150-300) still returning items that belong in Low/Medium tier despite budget anchor rules in prompt. Needs stronger enforcement — either tighter vibe pool filtering by budget OR a post-Claude validation step that rejects products obviously outside the budget tier. Example: sports sunglasses at High Budget going to The Warehouse suggests Claude is ignoring price floor.'},
-  {id:'v2-22',phase:'v2',title:'WHO awareness — child/baby safe product filtering',tag:'api',note:'Claude prompt missing whoFor context. Child/Baby selecting Sporty vibe returns weighted vest, massage gun, smart watch. Fix: add WHO AWARENESS rules to systemPrompt so child/baby get age-appropriate products only (toys, books, games, art supplies, kids sports gear). Never suggest adult fitness gear, sharp tools or high-value tech for children.'},
+  {id:'v2-25',phase:'v2',title:'Sentimental vibe — custom/personalised products routing to wrong retailer',tag:'api',note:'BUG (confirmed 11 Apr 2026): Personalised Constellation Star Map Print routed to The Warehouse — returned fridges instead of the product. Custom/personalised products in sentimental vibe must route to Google Shopping NZ, not The Warehouse general fallback. Etsy was previously blacklisted for over-recommending but is actually the correct destination for custom prints — consider reinstating Etsy for sentimental vibe only.'},
   {id:'v2-19',phase:'v2',title:'www.shopgenieai.com redirect set up in Affordable Domains',tag:'infra',note:'DNS redirect still pending — needs manual setup in domain registrar'},
 
   {id:'v3-1',phase:'v3',title:'Supabase search logging — capture every quiz submission',tag:'data',note:'Log: timestamp, quiz answers, products returned, retailers found, prices, click events'},
@@ -371,7 +372,6 @@ function render(){
 function clickTask(id, title){
   const ts = getTaskState(id);
   if(ts.status==='done'){
-    // Undo sign-off
     if(confirm('Undo sign-off for this task?')){
       state[id] = {status:'pending',signer:'',note:'',ts:''};
       saveState(); render();
