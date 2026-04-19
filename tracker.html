@@ -123,6 +123,10 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
 /* MARK BLOCKED */
 .btn-block{font-size:.72rem;color:#d4a017;background:none;border:none;
   cursor:pointer;text-decoration:underline;padding:0;font-family:'DM Sans',sans-serif}
+.task-num{font-size:.72rem;font-weight:700;color:#c4b09a;min-width:22px;margin-top:3px;flex-shrink:0;text-align:right}
+.task.done .task-num{color:#b5cdb5}
+.done-divider{border:none;border-top:1px dashed var(--border);margin:8px 0 4px}
+.done-divider-label{font-size:.68rem;color:#b5a190;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;padding-left:2px}
 
 /* PROGRESS BAR */
 .prog-section{background:var(--white);border-radius:14px;border:1px solid var(--border);
@@ -331,26 +335,32 @@ function render(){
       </div>
       <div class="tasks">`;
 
-    tasks.forEach(t => {
-      const ts = getTaskState(t.id);
-      const isDone = ts.status==='done';
-      const isBlocked = ts.status==='blocked';
-      const cls = isDone?'done':isBlocked?'blocked':'';
-      const sigHtml = isDone
-        ? `<div class="task-sig signed-off">✅ Signed off by ${ts.signer}${ts.ts?' · '+ts.ts:''}</div>`
-        : '';
-      const noteHtml = ts.note && isDone
-        ? `<div class="task-note">💬 "${ts.note}"</div>` : '';
-      const blockBtn = !isDone && !isBlocked
-        ? `<button class="btn-block" onclick="event.stopPropagation();markBlocked('${t.id}')">Mark blocked</button>` : '';
-      const unblockBtn = isBlocked
-        ? `<button class="btn-block" onclick="event.stopPropagation();unblock('${t.id}')">Unblock</button>` : '';
+    // Sink done to bottom, pending on top
+    const pending = tasks.filter(t => getTaskState(t.id).status !== 'done');
+    const done    = tasks.filter(t => getTaskState(t.id).status === 'done');
+    const sorted  = [...pending, ...done];
+    let displayNum = 1;
+    let dividerShown = false;
 
-      html += `<div class="task ${cls}" onclick="clickTask('${t.id}','${t.title.replace(/'/g,"\\'")}')">
-        <div class="check">
-          <span class="check-tick">✓</span>
-          <span class="check-block">!</span>
-        </div>
+    sorted.forEach(t => {
+      const ts = getTaskState(t.id);
+      const isDone    = ts.status === 'done';
+      const isBlocked = ts.status === 'blocked';
+      const cls = isDone ? 'done' : isBlocked ? 'blocked' : '';
+
+      if(isDone && !dividerShown && pending.length > 0){
+        html += `<hr class="done-divider"/><div class="done-divider-label">✅ Signed off</div>`;
+        dividerShown = true;
+      }
+
+      const sigHtml  = isDone ? `<div class="task-sig signed-off">✅ Signed off by ${ts.signer}${ts.ts?' · '+ts.ts:''}</div>` : '';
+      const noteHtml = ts.note && isDone ? `<div class="task-note">💬 "${ts.note}"</div>` : '';
+      const blockBtn   = !isDone && !isBlocked ? `<button class="btn-block" onclick="event.stopPropagation();markBlocked('${t.id}')">Mark blocked</button>` : '';
+      const unblockBtn = isBlocked ? `<button class="btn-block" onclick="event.stopPropagation();unblock('${t.id}')">Unblock</button>` : '';
+
+      html += `<div class="task ${cls}" onclick="clickTask('${t.id}','${t.title.replace(/'/g,"\'")}')">
+        <div class="check"><span class="check-tick">✓</span><span class="check-block">!</span></div>
+        <div class="task-num">${displayNum}</div>
         <div class="task-body">
           <div class="task-title">${t.title}</div>
           <div class="task-meta">
@@ -361,6 +371,7 @@ function render(){
           ${sigHtml}${noteHtml}
         </div>
       </div>`;
+      displayNum++;
     });
     html += '</div></div>';
   });
