@@ -472,6 +472,17 @@ export default async function handler(req, res) {
     ? 'GENDER: This is for a FEMALE. Suggest feminine or gender-neutral products.'
     : '';
 
+  // Parse structured interests from pills e.g. "Hockey, Nike, Leather, Cooking"
+  const interestParts = (interests||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const structuredHint = interestParts.length > 0 ? `
+STRUCTURED INTERESTS: The user selected these specific interests: ${interestParts.join(', ')}.
+- If a SPORT is listed (e.g. Hockey, Football, Swimming): at least 2 of the 3 products MUST be specific to that sport. Hockey → hockey stick, shin pads, hockey bag. Football → football boots, shin pads, football. Swimming → goggles, swim cap, kickboard.
+- If a BRAND is listed (e.g. Nike, Adidas, Garmin): try to recommend products from or compatible with that brand.
+- If a STYLE is listed (e.g. Leather, Personalised, Gold jewellery): at least 1 product must reflect that style/material.
+- If a HOBBY is listed (e.g. Cooking, Gaming, Photography): at least 1 product must relate to that hobby.
+- NEVER suggest drink bottles, water bottles, or towels based on sport interests alone.
+- These are MANDATORY signals — do not ignore them in favour of generic vibe pool suggestions.` : '';
+
   const sportHint = sport
     ? `SPORT INTEREST DETECTED: The recipient is into ${sport.toUpperCase()}. At least TWO of the 3 products MUST be directly related to ${sport} — specific ${sport} gear, ${sport} equipment, or ${sport} accessories. Do NOT suggest unrelated products like hydration packs, generic sports bags, or generic fitness gear when a specific sport has been identified. Serve the sport.`
     : '';
