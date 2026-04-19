@@ -42,6 +42,14 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 .prog-labels{display:flex;justify-content:space-between;font-size:.73rem;font-weight:500;color:#a89480;margin-bottom:6px}
 .prog-bg{height:4px;background:var(--border);border-radius:10px;overflow:hidden}
 .prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--terra));border-radius:10px;transition:width .4s cubic-bezier(.4,0,.2,1)}
+
+/* ── NAME STEP ──────────────────────────────────────────────────────────────── */
+.step0{display:none;animation:fadeUp .4s ease both}
+.step0.active{display:block}
+.name-input-wrap input{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:12px;font-family:var(--fb);font-size:1.1rem;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;text-align:center;font-weight:600}
+.name-input-wrap input:focus{border-color:var(--gold)}
+.name-input-wrap input::placeholder{color:#c4b09a;font-weight:400}
+
 .step{display:none}
 .step.active{display:block;animation:fadeUp .4s ease both}
 .step-lbl{font-size:.7rem;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
@@ -116,7 +124,6 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 .swipe-dots{display:flex;gap:7px}
 .sdot{width:8px;height:8px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .2s}
 .sdot.on{background:var(--gold);transform:scale(1.35)}
-/* ── Email prompt on results page ──────────────────────────────────────────── */
 .email-prompt{background:var(--white);border-radius:var(--r);padding:24px 20px;box-shadow:0 4px 24px rgba(61,43,26,.10);border:1px solid var(--border);text-align:center;margin-bottom:20px;animation:fadeUp .5s ease both}
 .email-prompt-q{font-family:var(--fd);font-size:1.1rem;font-weight:700;color:var(--brown);margin-bottom:6px}
 .email-prompt-sub{font-size:.82rem;color:#9a8878;margin-bottom:16px}
@@ -193,10 +200,27 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 <section id="quiz">
   <div class="qcard">
     <div class="prog-wrap">
-      <div class="prog-labels"><span id="progLbl">Question 1 of 5</span><span id="progPct">0%</span></div>
+      <div class="prog-labels"><span id="progLbl">Welcome!</span><span id="progPct">0%</span></div>
       <div class="prog-bg"><div class="prog-fill" id="progBar" style="width:0%"></div></div>
     </div>
-    <div class="step active" id="step1">
+
+    <!-- ── NAME STEP ── -->
+    <div class="step0 active" id="step0">
+      <div class="step-lbl">Welcome!</div>
+      <div class="step-q">What's your first name? 👋</div>
+      <div class="name-input-wrap">
+        <input type="text" id="firstName" placeholder="e.g. Mark" maxlength="30"
+          oninput="checkName()"
+          onkeydown="if(event.key==='Enter'&&this.value.trim())fromName()"/>
+      </div>
+      <div style="font-size:.73rem;color:#b5a190;margin-top:8px">So the Genie can personalise your picks 🧞</div>
+      <div class="step-nav">
+        <span></span>
+        <button id="n0" onclick="fromName()" disabled class="btn-next hide">Let's go →</button>
+      </div>
+    </div>
+
+    <div class="step" id="step1">
       <div class="step-lbl">Step 1 — The Gift</div>
       <div class="step-q">What are you shopping for?</div>
       <div class="opts">
@@ -306,7 +330,7 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 
 <section id="loading">
   <img class="ld-logo" src="https://raw.githubusercontent.com/ShopGenieAi/ShopGenieAI/main/logo.png" alt="ShopGenieAI"/>
-  <div class="ld-title">Your Genie is thinking…</div>
+  <div class="ld-title" id="ldTitle">Your Genie is thinking…</div>
   <div class="ld-sub">Searching NZ stores for the perfect picks</div>
   <div class="dots"><span></span><span></span><span></span></div>
   <div class="fact-card" id="factCard">
@@ -318,7 +342,7 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 <section id="results">
   <div class="res-hd">
     <div class="res-eye">✨ Your personalised picks</div>
-    <h2 class="res-title">Here are your <em>3 gifts</em></h2>
+    <h2 class="res-title" id="resTitle">Here are your <em>3 gifts</em></h2>
   </div>
   <div class="res-note">
     <strong>📋 ShopGenieAI:</strong> 'Shop This Gift' opens the best matched NZ retailer search page in a new tab — browse, compare and buy at your convenience!
@@ -331,7 +355,6 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
       <button class="nav-btn" id="btnNext2" onclick="goCard(curCard+1)">→</button>
     </div>
   </div>
-  <!-- Email prompt — appears on results page -->
   <div class="email-prompt" id="emailPrompt">
     <div class="email-prompt-q">📬 Would you like your results emailed to you?</div>
     <div class="email-prompt-sub">We'll send these 3 picks so you don't lose them!</div>
@@ -406,15 +429,55 @@ function startFacts(){factIdx=Math.floor(Math.random()*FACTS.length);rotateFact(
 function rotateFact(){const el=document.getElementById('factText');if(!el)return;el.style.animation='none';el.offsetHeight;el.style.animation='factSlide .4s ease both';el.textContent=FACTS[factIdx++%FACTS.length];}
 function stopFacts(){if(factTimer){clearInterval(factTimer);factTimer=null;}}
 
-const A={q1:'',q2:'',q3:'',budgetTier:'',occ:'',interests:'',email:''};
+const A={firstName:'',q1:'',q2:'',q3:'',budgetTier:'',occ:'',interests:'',email:''};
 let step=1,refCount=0,curCard=0,totalCards=0,cards=[],seenProducts=[],lastProducts=[];
 const $=id=>document.getElementById(id);
 const sh=id=>$(id).style.display='block';
 const hi=id=>$(id).style.display='none';
 
-function showQuiz(){hi('hero');sh('quiz');setProgress(1);}
-function goTo(s){$('step'+step).classList.remove('active');$('step'+s).classList.add('active');step=s;setProgress(s);}
-function setProgress(s){const pct=Math.round(((s-1)/5)*100);$('progBar').style.width=pct+'%';$('progLbl').textContent=`Question ${s} of 5`;$('progPct').textContent=pct+'%';}
+// ── NAME STEP ──────────────────────────────────────────────────────────────────
+function showQuiz(){hi('hero');sh('quiz');goToName();}
+
+function goToName(){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  const s0=$('step0');
+  if(s0){s0.classList.remove('active');void s0.offsetWidth;s0.classList.add('active');}
+  setProgress(0);
+  setTimeout(()=>{ const inp=$('firstName'); if(inp) inp.focus(); },200);
+}
+
+function checkName(){
+  const val=$('firstName').value.trim();
+  const btn=$('n0');
+  if(btn){ btn.disabled=!val; val?btn.classList.remove('hide'):btn.classList.add('hide'); }
+}
+
+function fromName(){
+  const val=$('firstName').value.trim();
+  A.firstName = val || 'Friend';
+  // Update loading screen with name
+  const ldTitle=$('ldTitle');
+  if(ldTitle) ldTitle.textContent=`Hold tight ${A.firstName}! 🧞`;
+  $('step0').classList.remove('active');
+  goTo(1);
+}
+
+function goTo(s){
+  $('step0').classList.remove('active');
+  document.querySelectorAll('.step').forEach(st=>st.classList.remove('active'));
+  $('step'+s).classList.add('active');
+  step=s;
+  setProgress(s);
+}
+
+function setProgress(s){
+  if(s===0){$('progBar').style.width='0%';$('progLbl').textContent='Welcome!';$('progPct').textContent='0%';return;}
+  const pct=Math.round(((s-1)/5)*100);
+  $('progBar').style.width=pct+'%';
+  $('progLbl').textContent=`Question ${s} of 5`;
+  $('progPct').textContent=pct+'%';
+}
+
 function pickPill(el,key){
   el.parentElement.querySelectorAll('.pill').forEach(p=>p.classList.remove('sel'));
   el.classList.add('sel');A[key]=el.textContent.trim();
@@ -433,10 +496,9 @@ function pickBudget(el,tier){
 }
 function checkStep4(){const ok=A.budgetTier!==''&&A.occ!=='';$('n4').disabled=!ok;ok?$('n4').classList.remove('hide'):$('n4').classList.add('hide');}
 
-// ── Submit quiz — go straight to results (no email gate) ──────────────────
 async function submitQuiz(){
   A.interests=$('q5').value.trim();
-  A.email=''; // no email collected upfront
+  A.email='';
   hi('quiz');refCount=0;seenProducts=[];
   await fetchRecs(0);
 }
@@ -457,7 +519,18 @@ async function fetchRecs(seed){
     const resp=await fetch(`${location.origin}/api/recommend`,{
       signal:ctrl.signal,method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:'',shoppingFor:A.q1,whoFor:A.q2,vibe:A.q3,budgetTier:A.budgetTier,occasion:A.occ,interests:A.interests,refreshSeed:seed,excludeProducts:seenProducts})
+      body:JSON.stringify({
+        email:'',
+        firstName:A.firstName,
+        shoppingFor:A.q1,
+        whoFor:A.q2,
+        vibe:A.q3,
+        budgetTier:A.budgetTier,
+        occasion:A.occ,
+        interests:A.interests,
+        refreshSeed:seed,
+        excludeProducts:seenProducts
+      })
     });
     clearTimeout(tid);
     const elapsed=Date.now()-fetchStart;
@@ -476,29 +549,23 @@ async function fetchRecs(seed){
   }
 }
 
-// ── Email prompt functions (on results page) ──────────────────────────────
 function showEmailInput(){
   $('emailBtns').style.display='none';
   $('emailInputRow').classList.add('show');
   $('emailIn').focus();
 }
-function dismissEmail(){
-  $('emailPrompt').style.display='none';
-}
-function checkEmailSend(){
-  $('btnSendEmail').disabled=!/\S+@\S+\.\S+/.test($('emailIn').value.trim());
-}
+function dismissEmail(){$('emailPrompt').style.display='none';}
+function checkEmailSend(){$('btnSendEmail').disabled=!/\S+@\S+\.\S+/.test($('emailIn').value.trim());}
 async function sendEmail(){
   const email=$('emailIn').value.trim();
   if(!email)return;
   $('btnSendEmail').disabled=true;
   $('btnSendEmail').textContent='Sending…';
   try{
-    // Re-call the API with the email so Brevo sends it
     await fetch(`${location.origin}/api/recommend`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:email,shoppingFor:A.q1,whoFor:A.q2,vibe:A.q3,budgetTier:A.budgetTier,occasion:A.occ,interests:A.interests,refreshSeed:refCount,excludeProducts:[]})
+      body:JSON.stringify({email,firstName:A.firstName,shoppingFor:A.q1,whoFor:A.q2,vibe:A.q3,budgetTier:A.budgetTier,occasion:A.occ,interests:A.interests,refreshSeed:refCount,excludeProducts:[]})
     });
     $('emailInputRow').classList.remove('show');
     $('emailSentMsg').style.display='block';
@@ -533,6 +600,11 @@ function applyPositions(){
 function goCard(idx){if(idx<0||idx>=totalCards)return;curCard=idx;applyPositions();}
 
 function renderCards(products){
+  // Personalise results heading with first name
+  const nameStr = A.firstName && A.firstName!=='Friend' ? `, ${A.firstName}` : '';
+  const titleEl=$('resTitle');
+  if(titleEl) titleEl.innerHTML=`Here are your <em>3 picks${nameStr}</em> 🧞`;
+
   const oldStack=$('stack');
   const newStack=document.createElement('div');
   newStack.className='swipe-stack';newStack.id='stack';
@@ -545,11 +617,7 @@ function renderCards(products){
       :`<div class="pno-result">🔍 Try "${p.name}" at PB Tech, Farmers or Google Shopping</div>`;
     const badgeHtml=p.budgetLabel?`<div class="budget-badge">${p.budgetLabel}</div>`:'';
     const chipHtml=(p.stores||[]).map(s=>`<a class="chip" href="${s.link}" target="_blank" rel="noopener noreferrer">${s.name}</a>`).join('');
-
-    const imgHtml = p.imageUrl
-      ? `<img src="${p.imageUrl}" alt="${p.name}" onerror="this.parentElement.classList.add('no-image')"/>`
-      : '';
-
+    const imgHtml=p.imageUrl?`<img src="${p.imageUrl}" alt="${p.name}" onerror="this.parentElement.classList.add('no-image')"/>`:'';
     const card=document.createElement('div');
     card.className='pcard';
     card.innerHTML=`
@@ -561,10 +629,8 @@ function renderCards(products){
         <div class="pfoot">${badgeHtml}${buyHtml}</div>
         ${chipHtml?`<div class="chips">${chipHtml}</div>`:''}
       </div>`;
-
     card.addEventListener('click',()=>{if(i!==curCard)goCard(i);});
     newStack.appendChild(card);cards.push(card);
-
     const dot=document.createElement('div');
     dot.className='sdot'+(i===0?' on':'');
     dot.addEventListener('click',()=>goCard(i));
@@ -581,9 +647,7 @@ function renderCards(products){
   requestAnimationFrame(()=>{requestAnimationFrame(()=>{cards.forEach(c=>{c.style.transition='transform .4s cubic-bezier(.4,0,.2,1),box-shadow .4s ease,opacity .4s ease';});});});
   requestAnimationFrame(()=>{if(cards[0])newStack.style.height=(cards[0].offsetHeight+24)+'px';});
 
-  // Reset email prompt for each new set of results
   resetEmailPrompt();
-
   sh('results');
   $('results').scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -591,13 +655,14 @@ function renderCards(products){
 function restart(){
   ['error','results','loading','quiz','lockout'].forEach(id=>hi(id));
   stopFacts();
-  A.q1='';A.q2='';A.q3='';A.budgetTier='';A.occ='';A.interests='';A.email='';
+  A.firstName='';A.q1='';A.q2='';A.q3='';A.budgetTier='';A.occ='';A.interests='';A.email='';
   document.querySelectorAll('.pill,.budget-pill').forEach(p=>p.classList.remove('sel'));
   $('q5').value='';
+  if($('firstName'))$('firstName').value='';
   ['n1','n2','n3','n4'].forEach(id=>{const el=$(id);if(el){el.disabled=true;el.classList.add('hide');}});
+  $('n0').disabled=true;$('n0').classList.add('hide');
   $('n5').disabled=false;
   document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
-  $('step1').classList.add('active');
   step=1;refCount=0;curCard=0;cards=[];seenProducts=[];lastProducts=[];
   sh('hero');
 }
