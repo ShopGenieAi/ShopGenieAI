@@ -51,6 +51,8 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 .int-pills{display:flex;flex-wrap:wrap;gap:6px}
 .int-pill{padding:6px 13px;border-radius:50px;border:2px solid var(--border);background:var(--warm);font-family:var(--fb);font-size:.82rem;font-weight:500;color:#6b5a47;cursor:pointer;transition:all .18s;user-select:none}
 .int-pill:hover{border-color:var(--gold-l);background:rgba(200,146,42,.06);color:var(--brown)}
+.int-pill-none.sel{border-color:var(--border);background:var(--warm);color:#9a8878;font-weight:400}
+.int-pill-none.sel:hover{border-color:var(--gold-l)}
 .int-pill.sel{border-color:var(--gold);background:linear-gradient(135deg,rgba(200,146,42,.14),rgba(196,98,58,.08));color:var(--brown);font-weight:600}
 .int-skip{font-size:.72rem;color:#b5a190;margin-top:10px;margin-bottom:4px}
 .int-selected-summary{font-size:.75rem;color:var(--sage);font-weight:600;margin-top:8px;min-height:18px;transition:opacity .2s}
@@ -324,11 +326,12 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
     </div>
     <div class="step" id="step5">
       <div class="step-lbl">Step 5 — Personal Touch</div>
-      <div class="step-q">Tell the Genie more <em style="font-style:normal;color:var(--muted,#9a8878);font-size:.85rem;font-weight:400">(pick any that apply)</em></div>
+      <div class="step-q">Help the Genie nail it 🧞</div>
 
       <div class="int-section">
-        <div class="int-label">🏆 Sport</div>
+        <div class="int-label">🏆 Are they into a sport?</div>
         <div class="int-pills">
+          <div class="int-pill int-pill-none sel" onclick="toggleInt(this,'sport','')">Not sporty</div>
           <div class="int-pill" onclick="toggleInt(this,'sport','Football')">Football ⚽</div>
           <div class="int-pill" onclick="toggleInt(this,'sport','Hockey')">Hockey 🏑</div>
           <div class="int-pill" onclick="toggleInt(this,'sport','Rugby')">Rugby 🏉</div>
@@ -345,25 +348,9 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
       </div>
 
       <div class="int-section">
-        <div class="int-label">👟 Brand</div>
+        <div class="int-label">✨ Any style preferences?</div>
         <div class="int-pills">
-          <div class="int-pill" onclick="toggleInt(this,'brand','Nike')">Nike</div>
-          <div class="int-pill" onclick="toggleInt(this,'brand','Adidas')">Adidas</div>
-          <div class="int-pill" onclick="toggleInt(this,'brand','Kathmandu')">Kathmandu</div>
-          <div class="int-pill" onclick="toggleInt(this,'brand','Apple')">Apple</div>
-          <div class="int-pill" onclick="toggleInt(this,'brand','Samsung')">Samsung</div>
-          <div class="int-pill" onclick="toggleInt(this,'brand','Lego')">Lego</div>
-          <div class="int-pill" onclick="toggleInt(this,'brand','Puma')">Puma</div>
-          <div class="int-pill" onclick="toggleInt(this,'brand','Under Armour')">Under Armour</div>
-          <div class="int-pill" onclick="toggleInt(this,'brand','Garmin')">Garmin</div>
-          <div class="int-pill" onclick="toggleInt(this,'brand','Dyson')">Dyson</div>
-          <div class="int-pill" onclick="toggleInt(this,'brand','Breville')">Breville</div>
-        </div>
-      </div>
-
-      <div class="int-section">
-        <div class="int-label">✨ Style</div>
-        <div class="int-pills">
+          <div class="int-pill int-pill-none sel" onclick="toggleInt(this,'style','')">No preference</div>
           <div class="int-pill" onclick="toggleInt(this,'style','Leather')">Leather 👜</div>
           <div class="int-pill" onclick="toggleInt(this,'style','Gold jewellery')">Gold 💛</div>
           <div class="int-pill" onclick="toggleInt(this,'style','Silver jewellery')">Silver 🩶</div>
@@ -375,8 +362,9 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
       </div>
 
       <div class="int-section">
-        <div class="int-label">🎯 Hobby</div>
+        <div class="int-label">🎯 Got a hobby or passion?</div>
         <div class="int-pills">
+          <div class="int-pill int-pill-none sel" onclick="toggleInt(this,'hobby','')">Not sure</div>
           <div class="int-pill" onclick="toggleInt(this,'hobby','Cooking')">Cooking 🍳</div>
           <div class="int-pill" onclick="toggleInt(this,'hobby','Gaming')">Gaming 🎮</div>
           <div class="int-pill" onclick="toggleInt(this,'hobby','Photography')">Photography 📷</div>
@@ -390,9 +378,14 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
         </div>
       </div>
 
-      <div class="int-selected-summary" id="intSummary">Nothing selected yet — or just skip!</div>
+      <div class="int-section">
+        <div class="int-label">💬 Anything else? <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#b5a190;font-size:.68rem">favourite brand, specific item, extra info</span></div>
+        <textarea class="qinput" id="q5extra" rows="2" placeholder="e.g. loves Nike, fan of Kathmandu, wants something for the garden..." style="resize:none;line-height:1.5;font-size:.86rem"></textarea>
+      </div>
 
-      <div class="disclaimer" style="margin-top:12px">
+      <div class="int-selected-summary" id="intSummary"></div>
+
+      <div class="disclaimer" style="margin-top:10px">
         <strong>📋 Quick note:</strong> ShopGenieAI searches NZ retailers in real-time. Links take you directly to retailer search pages — browse and confirm pricing before buying. Results are AI-generated.
       </div>
       <div class="step-nav">
@@ -734,6 +727,7 @@ function restart(){
   document.querySelectorAll('.pill,.budget-pill').forEach(p=>p.classList.remove('sel'));
   resetInterests();
   if($('firstName'))$('firstName').value='';
+  if($('q5extra'))$('q5extra').value='';
   ['n1','n2','n3','n4'].forEach(id=>{const el=$(id);if(el){el.disabled=true;el.classList.add('hide');}});
   $('n0').disabled=true;$('n0').classList.add('hide');
   $('n5').disabled=false;
@@ -742,41 +736,44 @@ function restart(){
   sh('hero');
 }
 // ── INTEREST PILLS ───────────────────────────────────────────────────────────
-const intSelections = {sport:'',brand:'',style:'',hobby:''};
+const intSelections = {sport:'',style:'',hobby:''};
 
 function toggleInt(el, category, value){
-  const wasSelected = el.classList.contains('sel');
-  // Only one selection per category
+  // Deselect all in this category
   el.closest('.int-pills').querySelectorAll('.int-pill').forEach(p=>p.classList.remove('sel'));
-  if(!wasSelected){ el.classList.add('sel'); intSelections[category]=value; }
-  else { intSelections[category]=''; }
+  // Select this one
+  el.classList.add('sel');
+  intSelections[category] = value; // '' for "none" pills is fine
   updateIntSummary();
 }
 
 function updateIntSummary(){
   const parts = [];
-  if(intSelections.sport)  parts.push('Sport: '+intSelections.sport);
-  if(intSelections.brand)  parts.push('Brand: '+intSelections.brand);
-  if(intSelections.style)  parts.push('Style: '+intSelections.style);
-  if(intSelections.hobby)  parts.push('Hobby: '+intSelections.hobby);
+  if(intSelections.sport)  parts.push('⚽ '+intSelections.sport);
+  if(intSelections.style)  parts.push('✨ '+intSelections.style);
+  if(intSelections.hobby)  parts.push('🎯 '+intSelections.hobby);
   const el=$('intSummary');
-  if(el) el.textContent = parts.length ? '✅ '+parts.join(' · ') : 'Nothing selected yet — or just skip!';
+  if(el) el.textContent = parts.length ? '✅ ' + parts.join(' · ') : '';
 }
 
 function buildInterestsString(){
   const parts = [];
   if(intSelections.sport)  parts.push(intSelections.sport);
-  if(intSelections.brand)  parts.push(intSelections.brand);
   if(intSelections.style)  parts.push(intSelections.style);
   if(intSelections.hobby)  parts.push(intSelections.hobby);
+  const extra = ($('q5extra')||{}).value ? $('q5extra').value.trim() : '';
+  if(extra) parts.push(extra);
   return parts.join(', ');
 }
 
 function resetInterests(){
   Object.keys(intSelections).forEach(k=>intSelections[k]='');
   document.querySelectorAll('.int-pill').forEach(p=>p.classList.remove('sel'));
+  // Re-select the default "none" pills
+  document.querySelectorAll('.int-pill-none').forEach(p=>p.classList.add('sel'));
+  if($('q5extra')) $('q5extra').value='';
   const el=$('intSummary');
-  if(el) el.textContent='Nothing selected yet — or just skip!';
+  if(el) el.textContent='';
 }
 
 function comingSoon(){$('csMsg').style.display='block';setTimeout(()=>$('csMsg').style.display='none',3000);}
