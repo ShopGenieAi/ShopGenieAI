@@ -444,7 +444,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Too many requests — please try again in an hour!' });
   }
 
-  const { email, shoppingFor, whoFor, vibe, budgetTier, occasion, interests, refreshSeed = 0, excludeProducts = [] } = req.body;
+  const { email, firstName = '', shoppingFor, whoFor, vibe, budgetTier, occasion, interests, refreshSeed = 0, excludeProducts = [] } = req.body;
 
   const allInputs = `${shoppingFor} ${whoFor} ${vibe} ${occasion} ${interests}`.toLowerCase();
   if (INAPPROPRIATE_TERMS.some(t => allInputs.includes(t))) {
@@ -627,7 +627,37 @@ Session: ${Date.now().toString(36)}`;
     return { name: product.name, type: product.type, reason: product.reason, budgetLabel, bestStoreName, buyLink, imageUrl, stores };
   }));
 
-  // ── STEP 3: Brevo email ───────────────────────────────────────────────────
+  // ── STEP 3a: Brevo contact logging — always log tester/user ────────────────
+  // Logs every submission to Brevo contacts so Mark can track who used the app
+  if (BREVO_KEY) {
+    try {
+      const contactEmail = email || `${Date.now()}@shopgenie.noreply`;
+      const contactPayload = {
+        email: contactEmail,
+        attributes: {
+          FIRSTNAME:   firstName || 'Anonymous',
+          WHYFOR:      whoFor,
+          VIBE:        vibe,
+          BUDGET:      budgetLabel,
+          OCCASION:    occasion,
+          INTERESTS:   interests || '',
+          PRODUCTS:    enriched.map(p => p.name).join(', '),
+          LAST_SEEN:   new Date().toISOString(),
+          SOURCE:      'ShopGenieAI Quiz',
+        },
+        listIds: [3], // Brevo list ID 3 — "ShopGenieAI Testers"
+        updateEnabled: true,
+      };
+      await fetch('https://api.brevo.com/v3/contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'api-key': BREVO_KEY },
+        body: JSON.stringify(contactPayload),
+      });
+      console.log(`📋 Brevo contact logged: ${firstName || 'Anonymous'} | ${whoFor} | ${vibe} | ${budgetLabel}`);
+    } catch(e) { console.error('Brevo contact error:', e); }
+  }
+
+  // ── STEP 3b: Brevo email ──────────────────────────────────────────────────
   if (BREVO_KEY && email) {
     try {
       const rows = enriched.map((p, i) => `
