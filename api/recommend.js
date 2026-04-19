@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // ShopGenieAI — recommend.js
-// Architecture: Claude → NormalizeQuery → Smart Retailer Routing + Google Shopping chips
+// Fixes: v2-22 child filtering | v2-23 eyewear routing | v2-24 budget enforcement | v2-25 sentimental routing
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── RATE LIMITER ──────────────────────────────────────────────────────────────
@@ -115,8 +115,6 @@ function normalizeQuery(rawQuery) {
 }
 
 // ── CHILD/KIDS DETECTION ──────────────────────────────────────────────────────
-// If whoFor contains child/kid/baby, we prepend "kids" to all search queries
-// and use kids-specific vibe pools instead of adult ones
 function isChildRecipient(whoFor) {
   if (!whoFor) return false;
   const lower = whoFor.toLowerCase();
@@ -130,8 +128,6 @@ function prefixKids(searchQuery) {
 }
 
 // ── KIDS VIBE POOLS ───────────────────────────────────────────────────────────
-// Completely replaces adult vibe pools when shopping for a child
-// Every item here is genuinely kid-appropriate
 const KIDS_VIBE_POOLS = {
   'Sporty': {
     low:    ['kids football','kids frisbee','skipping rope','kids swim goggles','kids sports socks','kids drink bottle','kids headband','kids volleyball'],
@@ -206,11 +202,20 @@ const KIDS_VIBE_POOLS = {
 };
 
 // ── SMART RETAILER ROUTING ────────────────────────────────────────────────────
-// Matches product TYPE to the right NZ retailer
-// PB Tech is the primary tech retailer — Google Shopping chips act as fallback
+// FIX v2-23: Added 'eyewear' category — sunglasses always → Google Shopping NZ
+// FIX v2-25: Added 'custom' category — personalised/sentimental products → Google Shopping NZ
 
 function detectProductCategory(name, type) {
   const s = (name + ' ' + type).toLowerCase();
+
+  // FIX v2-25 — Custom/personalised products → Google Shopping NZ (not Warehouse)
+  // These products don't exist on shelf retailers — they're made-to-order
+  if (/personalised|personalized|custom|constellation|star map|custom print|custom portrait|engraved|monogram|bespoke|name necklace|birthstone|keepsake|memorial/.test(s)) return 'custom';
+
+  // FIX v2-23 — Eyewear as its own category → Google Shopping NZ at all budgets
+  // Warehouse/Kmart do NOT stock premium sunglasses — Sunglass Hut/Rebel Sport do
+  if (/sunglass|sunglasses|eyewear|optical|reading glasses|sports glasses|aviator|polarised|polarized/.test(s)) return 'eyewear';
+
   if (/headphone|earbud|speaker|audio|bluetooth|tv|television|laptop|tablet|phone|camera|projector|smart watch|smartwatch|gaming/.test(s)) return 'tech';
   if (/massage gun|weight vest|foam roller|resistance|yoga|protein|hydration|activity tracker|fitness tracker|swim goggle|bike helmet/.test(s)) return 'fitness';
   if (/hiking|camping|hammock|tent|trekking|kayak|fishing|hunting|waterproof jacket|head torch|sleeping bag|multi-tool|dry bag|binoculars/.test(s)) return 'outdoor';
@@ -226,18 +231,28 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
   const category = detectProductCategory(productName, productType);
   const q = encodeURIComponent(cleanSearchTerm);
 
-  // ── COMPLETE RETAILER ROUTING — all budgets, all categories ──────────────
-  // Tech & Electronics — PB Tech for all budgets (Google Shopping chips act as fallback)
+  // FIX v2-25 — Custom/personalised → Google Shopping NZ (Etsy, Notonthehighstreet etc surface here)
+  if (category === 'custom') {
+    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
+  }
+
+  // FIX v2-23 — Eyewear → Google Shopping NZ at ALL budgets
+  // Surfaces Sunglass Hut, Rebel Sport, Torpedo7, Specsavers etc correctly
+  if (category === 'eyewear') {
+    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
+  }
+
+  // Tech & Electronics — PB Tech for all budgets
   if (category === 'tech') {
     return { url: `https://www.pbtech.co.nz/search?sf=${q}`, storeName: 'PB Tech' };
   }
 
-  // Fitness & Sports gear — Google Shopping NZ (reliable, shows prices, multiple retailers)
+  // Fitness & Sports gear — Google Shopping NZ
   if (category === 'fitness') {
     return { url: `https://www.google.com/search?q=${q}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
-  // Outdoor & Adventure — Torpedo7 all budgets, Warehouse for low
+  // Outdoor & Adventure
   if (category === 'outdoor') {
     if (budgetTierKey === 'low')
       return { url: `https://www.thewarehouse.co.nz/search?q=${q}&priceTo=${budgetMax}`, storeName: 'The Warehouse' };
@@ -253,7 +268,7 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.thewarehouse.co.nz/search?q=${q}&priceTo=${budgetMax}`, storeName: 'The Warehouse' };
   }
 
-  // Beauty & Health — tiered by budget
+  // Beauty & Health
   if (category === 'beauty') {
     if (['high', 'bigwed', 'lotto'].includes(budgetTierKey))
       return { url: `https://www.mecca.com/en-nz/search/?q=${q}`, storeName: 'Mecca' };
@@ -262,19 +277,19 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.chemistwarehouse.co.nz/search?q=${q}`, storeName: 'Chemist Warehouse' };
   }
 
-  // Books & Stationery — Whitcoulls across all budgets
+  // Books & Stationery
   if (category === 'books') {
     return { url: `https://www.whitcoulls.co.nz/search?q=${q}`, storeName: 'Whitcoulls' };
   }
 
-  // Home & Kitchen — Briscoes for medium+, Kmart for low
+  // Home & Kitchen
   if (category === 'home') {
     if (budgetTierKey === 'low')
       return { url: `https://www.kmart.co.nz/search?q=${q}`, storeName: 'Kmart' };
     return { url: `https://www.briscoes.co.nz/search?q=${q}`, storeName: 'Briscoes' };
   }
 
-  // Tools & Hardware — Bunnings across all budgets
+  // Tools & Hardware
   if (category === 'tools') {
     return { url: `https://www.bunnings.co.nz/search/products?q=${q}`, storeName: 'Bunnings' };
   }
@@ -344,10 +359,9 @@ export default async function handler(req, res) {
   const tier = getTier(budgetTier || 'medium');
   const { label: budgetLabel, hint: budgetHint, min: budgetMin, max: budgetMax } = tier;
 
-  // ── Detect if shopping for a child ──────────────────────────────────────────
   const isForChild = isChildRecipient(whoFor);
 
-  // ── ADULT VIBE POOLS (NZ 2026) ────────────────────────────────────────────
+  // ── ADULT VIBE POOLS ───────────────────────────────────────────────────────
   const vibeCategoryPools = {
     'Sporty': {
       low:    ['foam roller','resistance bands','skipping rope','sports socks','swim goggles','volleyball','football','frisbee','headband','sports water bottle'],
@@ -421,7 +435,6 @@ export default async function handler(req, res) {
     },
   };
 
-  // ── SELECT POOL: kids pools override adult pools when isForChild ───────────
   const activePools = isForChild
     ? (KIDS_VIBE_POOLS[vibe] || KIDS_VIBE_POOLS['Surprise me'])
     : (vibeCategoryPools[vibe] || vibeCategoryPools['Surprise me']);
@@ -447,24 +460,32 @@ export default async function handler(req, res) {
     ? (refreshVariations[refreshSeed] || refreshVariations[refreshVariations.length - 1])
     : firstLoadNudge;
 
-  // ── STEP 1: Claude Haiku ────────────────────────────────────────────────────
+  // ── STEP 1: Claude Haiku ──────────────────────────────────────────────────
   const systemPrompt = `You are ShopGenieAI, an expert NZ personal shopper in 2026.
 
 RULE 1 — MIRROR RULE: searchQuery MUST be a simplified version of name.
 "Activity Tracker" → searchQuery "activity tracker". NEVER mismatch product and search.
 
-RULE 2 — BUDGET REALITY (UNIVERSAL):
-Your recommendations MUST be products that genuinely exist at the user's budget in New Zealand in 2026. Every product category has options at every price point — cheap smartwatches exist (e.g. $80 Promate from PB Tech), expensive ones exist too ($800 Apple Watch Ultra). Match the product to the budget — do NOT ban any product category. If a category has budget-friendly options, recommend those. If you're unsure whether something exists at a price point in NZ, pick something safer.
-Do NOT recommend a premium version of a product when a budget version exists at the right price.
+RULE 2 — BUDGET REALITY (UNIVERSAL & STRICTLY ENFORCED):
+Every product you recommend MUST be genuinely available in New Zealand at the user's exact budget in 2026.
+- Do NOT recommend products that naturally cost MORE than NZ$${budgetMax} in New Zealand.
+- Do NOT recommend products that naturally cost LESS than NZ$${budgetMin} — this wastes the user's budget.
+- If a product category has budget-friendly AND premium versions, pick the version that fits NZ$${budgetMin}–$${budgetMax}.
+- Examples: Budget smartwatch (Promate/Xiaomi ~$80 at PB Tech) fits Low/Medium. Apple Watch (~$600+) fits Lotto only.
+- If you are unsure whether a product exists at this exact price point in NZ, choose something safer that clearly does.
+- HARD CEILING: Never recommend something that costs over NZ$${budgetMax}. No exceptions.
+- HARD FLOOR: Never recommend something that costs under NZ$${budgetMin} when a better option exists.
 
 RULE 3 — NZ TERMINOLOGY: jandals, togs, jersey, hoodie, sports bag, torch, nappies, running shoes, drink bottle.
 
 RULE 4 — VARIETY: All 3 recommendations must be DIFFERENT product categories. Don't suggest 3 variations of the same thing.
 
-RULE 5 — RECIPIENT AWARENESS: Think about WHO the gift is for.
-- Children/kids/babies: recommend fun, interactive, age-appropriate products ONLY. Toys, books, games, art supplies, kids sports gear, kids tech. NEVER suggest adult fitness gear (massage guns, weight vests, protein shakers, yoga mats), phone accessories (phone stands, phone cases, cable organisers, USB hubs), PC/laptop accessories (networking gear, PC parts, cables, webcams, laptop stands), sharp tools, smart home devices, or adult lifestyle items. A "techy" gift for a child means kids' smartwatch, tablet, coding toy, kids headphones, kids digital camera — not USB hubs or cable organisers.
-- Elderly/grandparents: recommend practical, easy-to-use products. Not extreme sports gear or complex tech.
-- Always match the product to the recipient's age, lifestyle and interests.
+RULE 5 — RECIPIENT AWARENESS: Think carefully about WHO the gift is for.
+- Children/kids/babies: ONLY suggest age-appropriate products — toys, books, games, art supplies, kids sports gear, kids tech (tablets, kids smartwatch, kids headphones, kids camera). NEVER suggest adult fitness gear (massage guns, weight vests, foam rollers, protein shakers, yoga mats), adult phone/PC accessories (USB hubs, cable organisers, webcams, laptop stands, phone cases), smart home devices, sharp tools, or any adult lifestyle items. A "techy" gift for a child = kids tablet, coding toy, kids drone, kids smartwatch — NOT USB hubs.
+- Elderly/grandparents: practical, easy-to-use products. Not extreme sports or complex tech.
+- Always match product to recipient's age, lifestyle and interests.
+
+RULE 6 — CUSTOM/PERSONALISED PRODUCTS: If suggesting personalised, custom-made, engraved, or print-on-demand products (e.g. star maps, custom portraits, name jewellery), use a generic search term like "personalised star map print" — these are found via Google Shopping, not shelf retailers.
 
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
@@ -498,9 +519,12 @@ HARD BLOCK — FORBIDDEN (already shown): ${excludeProducts.length > 0 ? exclude
 
 SUGGESTED STARTING POINTS (use at least 2 of these): ${categorySuggestions}
 
-CRITICAL: Do NOT suggest products that naturally cost MORE than NZ$${budgetMax} in New Zealand. Match products to the budget — if cheap versions exist in NZ at this price point, recommend those.
+BUDGET ENFORCEMENT — THIS IS CRITICAL:
+Every product MUST be available in New Zealand for between NZ$${budgetMin} and NZ$${budgetMax}.
+Do NOT suggest products that cost more than NZ$${budgetMax} in NZ. Do NOT suggest products that cost less than NZ$${budgetMin} when better options exist at this budget.
+
 Mirror Rule: name and searchQuery must match. searchQuery max 4 words, no brand names.
-${isForChild ? 'CHILD GIFT: This is for a CHILD. Only suggest age-appropriate kids products from the suggested starting points. No adult fitness, phone accessories, PC accessories, or home improvement items.' : ''}
+${isForChild ? 'CHILD GIFT: This is for a CHILD. ONLY suggest age-appropriate kids products. NO adult fitness gear, NO phone/PC accessories, NO home improvement, NO adult lifestyle items. Kids products only.' : ''}
 ${refreshInstruction ? `STRATEGY: ${refreshInstruction}` : ''}
 Session: ${Date.now().toString(36)}`;
 
@@ -526,9 +550,7 @@ Session: ${Date.now().toString(36)}`;
     return res.status(500).json({ error: `AI recommendation failed: ${err.message}` });
   }
 
-  // ── STEP 1.5: Kids prefix — force child-appropriate search results ────────
-  // If whoFor is a child/kid/baby, prepend "kids" to every searchQuery
-  // This ensures retailer searches return children's products, not adult ones
+  // ── STEP 1.5: Kids prefix ─────────────────────────────────────────────────
   if (isForChild) {
     products = products.map(p => ({
       ...p,
@@ -538,12 +560,11 @@ Session: ${Date.now().toString(36)}`;
     console.log('🧒 Child detected — prefixed all searchQuery with "kids"');
   }
 
-  // ── STEP 2: Normalise + build links + images ──────────────────────────────
+  // ── STEP 2: Normalise + build links + images ───────────────────────────────
   const enriched = await Promise.all(products.map(async (product) => {
     const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
     const richSearchTerm  = (product.name + ' ' + (product.searchQuery || '')).toLowerCase().trim();
 
-    // Smart retailer routing — matches product type to best NZ retailer
     const { url: buyLink, storeName: bestStoreName } = buildBuyLink(
       cleanSearchTerm, product.name, product.type, budgetTier, budgetMin, budgetMax
     );
@@ -556,7 +577,7 @@ Session: ${Date.now().toString(36)}`;
     return { name: product.name, type: product.type, reason: product.reason, budgetLabel, bestStoreName, buyLink, imageUrl, stores };
   }));
 
-  // ── STEP 3: Brevo email ─────────────────────────────────────────────────────
+  // ── STEP 3: Brevo email ───────────────────────────────────────────────────
   if (BREVO_KEY && email) {
     try {
       const rows = enriched.map((p, i) => `
