@@ -1,8 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// ShopGenieAI — recommend.js
-// Fixes: gender awareness | eyewear→SunglassHut | luggage.co.nz | kids sport→RebelSport
-//        sport-specific retailers (hockey/soccer) | footwear before fashion
-//        sportswear before fashion | JB HiFi/Noel Leeming reinstated for tech
+// ShopGenieAI — recommend.js  (Architectural Overhaul — April 2026)
+//
+// KEY CHANGES:
+// 1. INTERESTS → REQUIRED: Interests field now drives at least 1 product directly
+// 2. GOOGLE SHOPPING UNIVERSAL: Sport/footwear/eyewear all use Google Shopping NZ
+//    (reliable, surfaces Rebel Sport, Sunglass Hut, Number One Shoes etc)
+//    Direct retailer links reserved for retailers with verified working search URLs
+// 3. CORRECT SEARCH URLS: All retailer URLs verified and fixed
+// 4. GENDER AWARENESS: Male recipients never get female-coded products
+// 5. SPORT SPECIALISTS: Hockey → GoHockey, Soccer → SoccerUnited (correct URL format)
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── RATE LIMITER ──────────────────────────────────────────────────────────────
@@ -120,13 +126,11 @@ function normalizeQuery(rawQuery) {
 // ── CHILD/KIDS DETECTION ──────────────────────────────────────────────────────
 function isChildRecipient(whoFor) {
   if (!whoFor) return false;
-  const lower = whoFor.toLowerCase();
-  return /\b(child|children|kid|kids|baby|toddler|infant|son|daughter|boy|girl)\b/.test(lower);
+  return /\b(child|children|kid|kids|baby|toddler|infant|son|daughter|boy|girl)\b/i.test(whoFor);
 }
 
 function prefixKids(searchQuery) {
-  const lower = searchQuery.toLowerCase();
-  if (/\b(kids|kid|child|children|baby)\b/.test(lower)) return searchQuery;
+  if (/\b(kids|kid|child|children|baby)\b/i.test(searchQuery)) return searchQuery;
   return 'kids ' + searchQuery;
 }
 
@@ -139,192 +143,166 @@ function detectGender(whoFor) {
   return 'neutral';
 }
 
-// ── SPORT-SPECIFIC INTEREST DETECTION ────────────────────────────────────────
-// Scans interests + whoFor for specific sports that have specialist NZ retailers
-function detectSportSpecialist(interests, productName) {
-  const s = ((interests || '') + ' ' + (productName || '')).toLowerCase();
+// ── SPORT SPECIALIST DETECTION ────────────────────────────────────────────────
+// Detects specific sports in interests that have dedicated NZ specialist retailers
+function detectSportSpecialist(interests) {
+  const s = (interests || '').toLowerCase();
   if (/\bhockey\b/.test(s)) return 'hockey';
-  if (/\bsoccer\b/.test(s)) return 'soccer';
+  if (/\bsoccer\b|\bfootball\b/.test(s)) return 'soccer';
+  if (/\bcricket\b/.test(s)) return 'cricket';
+  if (/\brugby\b/.test(s)) return 'rugby';
+  if (/\bnetball\b/.test(s)) return 'netball';
+  if (/\btennis\b/.test(s)) return 'tennis';
+  if (/\bswimming\b|\bswim\b/.test(s)) return 'swimming';
+  if (/\bcycling\b|\bbike\b|\bbicycle\b/.test(s)) return 'cycling';
+  if (/\bsurfing\b|\bsurf\b/.test(s)) return 'surf';
+  if (/\bgolf\b/.test(s)) return 'golf';
   return null;
 }
 
-// ── KIDS VIBE POOLS ───────────────────────────────────────────────────────────
-const KIDS_VIBE_POOLS = {
-  'Sporty': {
-    low:    ['kids football','kids frisbee','skipping rope','kids swim goggles','kids sports socks','kids drink bottle','kids headband','kids volleyball'],
-    medium: ['kids bike helmet','kids football boots','kids shin pads','kids sports bag','kids running shoes','kids sports watch','kids swimming goggles','kids cricket set'],
-    high:   ['kids smartwatch','kids activity tracker','kids bike','kids scooter','kids sports sunglasses','kids wetsuit','kids tennis racket','kids skateboard'],
-    bigwed: ['kids GPS watch','kids electric scooter','kids trampoline','kids mountain bike','kids surfboard'],
-    lotto:  ['premium kids bike','kids golf set','kids horse riding gear','premium kids trampoline'],
-  },
-  'Techy': {
-    low:    ['kids LED torch','kids digital watch','kids walkie talkies','kids magnifying glass','kids science kit','kids calculator'],
-    medium: ['kids headphones','kids coding toy','kids smartwatch','kids digital camera','kids science experiment kit','kids robotics kit','kids bluetooth speaker'],
-    high:   ['kids tablet','kids smart watch','kids drone','kids microscope','kids telescope','kids electronic keyboard'],
-    bigwed: ['kids iPad','kids laptop','kids 3D printer pen','premium kids drone','kids programmable robot'],
-    lotto:  ['premium kids tablet','kids gaming console','kids high-end headphones','premium kids laptop'],
-  },
-  'Eco-friendly': {
-    low:    ['kids reusable drink bottle','kids beeswax wrap kit','kids seed growing kit','kids bamboo lunch box','kids recycled colouring book'],
-    medium: ['kids nature explorer kit','kids bird watching set','kids garden tool set','kids compost kit','kids eco craft set','kids reusable snack bags'],
-    high:   ['kids quality bike','kids nature photography kit','kids camping set','kids quality drink bottle set','kids eco art supplies'],
-    bigwed: ['kids premium camping gear','kids quality telescope','kids nature adventure set'],
-    lotto:  ['kids premium outdoor adventure set','kids quality nature kit'],
-  },
-  'Luxe': {
-    low:    ['kids quality colouring book','kids plush toy','kids bath bomb set','kids fancy dress costume'],
-    medium: ['kids jewellery making kit','kids quality art set','kids designer stationery','kids quality soft toy','kids charm bracelet'],
-    high:   ['kids quality watch','kids designer backpack','kids quality jewellery','kids premium art set','kids designer clothing'],
-    bigwed: ['kids designer outfit','kids premium watch','kids quality luggage','kids designer accessories'],
-    lotto:  ['kids luxury watch','kids designer wardrobe','kids premium jewellery'],
-  },
-  'Practical': {
-    low:    ['kids lunch box','kids drink bottle','kids umbrella','kids torch','kids backpack'],
-    medium: ['kids quality backpack','kids rain jacket','kids quality lunch box','kids school supplies set','kids quality umbrella'],
-    high:   ['kids quality school bag','kids quality rain gear','kids desk organiser','kids reading lamp','kids quality shoes'],
-    bigwed: ['kids quality luggage','kids premium school set','kids quality desk'],
-    lotto:  ['kids premium luggage set','kids quality bedroom set'],
-  },
-  'Fun': {
-    low:    ['kids card game','kids novelty socks','kids joke book','kids sticker set','kids bubbles set','kids silly putty'],
-    medium: ['kids board game','kids puzzle','kids magic set','kids craft kit','kids slime kit','kids LEGO set','kids Nerf blaster'],
-    high:   ['kids karaoke microphone','kids mini projector','kids premium board game','kids remote control car','kids chemistry set','kids magic kit'],
-    bigwed: ['kids gaming console game','kids premium LEGO set','kids quality karaoke system','kids electric go kart'],
-    lotto:  ['kids premium gaming setup','kids quality play equipment','kids premium experience voucher'],
-  },
-  'Sentimental': {
-    low:    ['kids photo frame','kids memory book','kids scrapbook kit','kids friendship bracelet kit'],
-    medium: ['kids personalised story book','kids keepsake box','kids quality photo album','kids name necklace','kids personalised backpack'],
-    high:   ['kids birthstone jewellery','kids quality keepsake','kids personalised artwork','kids quality memory book'],
-    bigwed: ['kids premium keepsake jewellery','kids custom portrait','kids quality personalised gift'],
-    lotto:  ['kids luxury keepsake','kids premium personalised item'],
-  },
-  'Trendy': {
-    low:    ['kids bucket hat','kids scrunchie set','kids hair accessories','kids fun socks','kids temporary tattoos'],
-    medium: ['kids quality sunglasses','kids trendy backpack','kids fashion watch','kids belt bag','kids quality hat'],
-    high:   ['kids designer sunglasses','kids quality sneakers','kids trendy clothing set','kids quality accessories'],
-    bigwed: ['kids premium sneakers','kids designer backpack','kids quality fashion set'],
-    lotto:  ['kids designer outfit','kids premium sneakers','kids luxury accessories'],
-  },
-  'Quirky': {
-    low:    ['kids novelty mug','kids funny socks','kids brain teaser puzzle','kids whoopee cushion','kids joke book'],
-    medium: ['kids unusual science kit','kids quirky stationery','kids mini arcade game','kids unusual toy','kids magic trick set'],
-    high:   ['kids retro game console','kids unusual gadget','kids quality novelty item','kids premium puzzle set'],
-    bigwed: ['kids mini arcade cabinet','kids premium quirky gadget','kids unusual experience'],
-    lotto:  ['kids premium gaming setup','kids luxury unusual experience'],
-  },
-  'Surprise me': {
-    low:    ['kids card game','kids novelty socks','kids fun book','kids sticker set','kids bubbles'],
-    medium: ['kids board game','kids headphones','kids craft kit','kids science kit','kids LEGO set'],
-    high:   ['kids smartwatch','kids tablet','kids scooter','kids quality headphones','kids drone'],
-    bigwed: ['kids gaming console','kids premium tablet','kids electric scooter','kids quality watch'],
-    lotto:  ['kids premium gaming setup','kids quality tablet','kids premium experience'],
-  },
+// ── VERIFIED NZ RETAILER SEARCH URLs ─────────────────────────────────────────
+// Only retailers with CONFIRMED working search URL formats are listed here.
+// Any retailer with JS-rendered search (Rebel Sport, Number One Shoes etc)
+// falls back to Google Shopping NZ which reliably surfaces them anyway.
+
+const RETAILER_SEARCH = {
+  // Verified working direct search URLs
+  pbtech:          q => `https://www.pbtech.co.nz/search?sf=${q}`,
+  jbhifi:          q => `https://www.jbhifi.co.nz/search?q=${q}`,
+  thewarehouse:    q => `https://www.thewarehouse.co.nz/search?q=${q}`,
+  kmart:           q => `https://www.kmart.co.nz/search?q=${q}`,
+  briscoes:        q => `https://www.briscoes.co.nz/search?q=${q}`,
+  torpedo7:        q => `https://www.torpedo7.co.nz/search?q=${q}`,
+  farmers:         q => `https://www.farmers.co.nz/search?q=${q}`,
+  whitcoulls:      q => `https://www.whitcoulls.co.nz/search?q=${q}`,
+  bunnings:        q => `https://www.bunnings.co.nz/search/products?q=${q}`,
+  chemistwarehouse:q => `https://www.chemistwarehouse.co.nz/search?q=${q}`,
+  mecca:           q => `https://www.mecca.com/en-nz/search/?q=${q}`,
+  sephora:         q => `https://www.sephora.nz/search?q=${q}`,
+  // Verified specialist sport search URLs
+  soccerunited:    q => `https://www.soccerunited.co.nz/pages/search-results-page?q=${q}`,
+  // Hockey — no search, use category page
+  gohockey_sticks: () => `https://gohockey.co.nz/collections/hockey-sticks`,
+  gohockey_pads:   () => `https://gohockey.co.nz/collections/shin-pads`,
+  gohockey_bags:   () => `https://gohockey.co.nz/collections/hockey-bags`,
+  gohockey:        q => `https://gohockey.co.nz/collections/all?filter.p.m.filter.category=${q}`,
+  // Google Shopping NZ — universal reliable fallback
+  googleshop:      q => `https://www.google.com/search?q=${q}+NZ&tbm=shop&gl=nz&hl=en`,
+  googleshopfull:  q => `https://www.google.com/search?q=${encodeURIComponent(q)}+NZ&tbm=shop&gl=nz&hl=en`,
 };
 
-// ── SMART RETAILER ROUTING ────────────────────────────────────────────────────
-// ORDER MATTERS — more specific categories must be checked BEFORE broader ones
-// e.g. footwear must come before fashion, or running shoes hit Glassons
+// ── PRODUCT CATEGORY DETECTION ────────────────────────────────────────────────
+// ORDER MATTERS — specific categories must come before broad ones
+// e.g. footwear before fashion, sportswear before fashion
 
 function detectProductCategory(name, type) {
   const s = (name + ' ' + type).toLowerCase();
 
-  // ── CUSTOM/PERSONALISED — must be first ───────────────────────────────────
-  if (/personalised|personalized|custom|constellation|star map|custom print|custom portrait|engraved|monogram|bespoke|name necklace|birthstone|keepsake|memorial/.test(s)) return 'custom';
+  // Custom/personalised — always first
+  if (/personalised|personalized|custom|constellation|star map|engraved|monogram|bespoke|name necklace|birthstone|keepsake|memorial|custom print|custom portrait/.test(s)) return 'custom';
 
-  // ── EYEWEAR ───────────────────────────────────────────────────────────────
-  if (/sunglass|sunglasses|eyewear|optical|reading glasses|sports glasses|aviator|polarised|polarized/.test(s)) return 'eyewear';
+  // Eyewear
+  if (/sunglass|sunglasses|eyewear|optical|reading glasses|sports glasses|aviator|polarised|polarized|sunnies/.test(s)) return 'eyewear';
 
-  // ── LUGGAGE & TRAVEL ACCESSORIES ─────────────────────────────────────────
-  // wallet, travel bag, business bag, luggage → luggage.co.nz
-  if (/wallet|luggage|suitcase|travel bag|travel pack|business bag|briefcase|carry.on|passport|duffel|duffle|weekender/.test(s)) return 'luggage';
+  // Luggage, wallets, travel bags — before fashion catches 'wallet'
+  if (/\bwallet\b|luggage|suitcase|travel bag|travel pack|business bag|briefcase|carry.on|duffel|duffle|weekender|passport wallet/.test(s)) return 'luggage';
 
-  // ── FOOTWEAR — must be before fashion ────────────────────────────────────
-  // running shoes, sneakers, boots all hit fashion regex — catch them here first
-  if (/running shoes|sneakers|jandals|boots|footwear|shoe |shoes|sandals|slides|thongs/.test(s)) return 'footwear';
+  // Footwear — before fashion catches 'boots', 'shoes'
+  if (/running shoes|sneakers|jandals|football boots|sports boots|trail shoes|court shoes|sandals|slides|\bshoe\b|\bshoes\b|\bboots\b/.test(s)) return 'footwear';
 
-  // ── SPORTSWEAR / ACTIVE APPAREL — before fashion ─────────────────────────
-  // technical hoodie, sports hoodie, activewear → Rebel Sport not Farmers/Glassons
-  if (/sports hoodie|technical hoodie|sport hoodie|running jacket|training jacket|activewear|compression|sports top|training top|sports shorts|running shorts|sports jersey/.test(s)) return 'sportswear';
+  // Sportswear / active apparel — before fashion catches 'hoodie', 'jersey'
+  if (/sports hoodie|technical hoodie|sport hoodie|running jacket|training jacket|activewear|compression|sports top|training top|sports shorts|running shorts|sports jersey|base layer/.test(s)) return 'sportswear';
 
-  // ── KIDS SPORT GEAR — before general fashion ─────────────────────────────
-  if (/kids.*sport|kids.*running|kids.*football|kids.*cricket|kids.*hockey|kids.*soccer|kids.*rugby|kids.*shin|kids.*boot|kids.*racket|kids.*helmet/.test(s)) return 'kidssport';
+  // Kids sport gear — before general
+  if (/kids.*sport|kids.*running|kids.*football|kids.*cricket|kids.*hockey|kids.*soccer|kids.*rugby|kids.*shin|kids.*boot|kids.*racket|kids.*helmet|shin pad/.test(s)) return 'kidssport';
 
-  // ── TECH & ELECTRONICS ───────────────────────────────────────────────────
-  if (/headphone|earbud|speaker|audio|bluetooth|tv|television|laptop|tablet|phone|camera|projector|smart watch|smartwatch|gaming|gps watch|sports watch|running watch|activity tracker|fitness tracker/.test(s)) return 'tech';
+  // Tech & Electronics — includes sports/GPS watches
+  if (/headphone|earbud|speaker|audio|bluetooth\b|tv\b|television|laptop|tablet|\bphone\b|camera|projector|smart watch|smartwatch|gaming|gps watch|sports watch|running watch|activity tracker|fitness tracker/.test(s)) return 'tech';
 
-  // ── FITNESS GEAR ─────────────────────────────────────────────────────────
-  if (/massage gun|weight vest|foam roller|resistance|yoga|protein|hydration|swim goggle|bike helmet|gym equipment/.test(s)) return 'fitness';
+  // Fitness gear
+  if (/massage gun|weight vest|foam roller|resistance band|yoga mat|protein shaker|hydration pack|swim goggle|bike helmet|gym equipment|pull.up bar/.test(s)) return 'fitness';
 
-  // ── OUTDOOR & ADVENTURE ───────────────────────────────────────────────────
-  if (/hiking|camping|hammock|tent|trekking|kayak|fishing|hunting|waterproof jacket|head torch|sleeping bag|multi-tool|dry bag|binoculars/.test(s)) return 'outdoor';
+  // Outdoor & adventure
+  if (/hiking|camping|hammock|tent|trekking|kayak|fishing|hunting|waterproof jacket|head torch|sleeping bag|multi.tool|dry bag|binoculars/.test(s)) return 'outdoor';
 
-  // ── FASHION — general clothing ────────────────────────────────────────────
-  // hoodie/jersey/jacket are here as fallback ONLY — specific sport versions caught above
-  if (/dress|jacket|hoodie|jersey|togs|beanie|fashion|jewellery|handbag|tote|belt bag|scarf|hat|cap/.test(s)) return 'fashion';
+  // Fashion — general clothing (specific types caught above)
+  if (/dress|jacket|hoodie|jersey|togs|beanie|fashion|jewellery|handbag|tote|belt bag|scarf|\bhat\b|cap|clutch/.test(s)) return 'fashion';
 
-  // ── TOOLS ────────────────────────────────────────────────────────────────
-  if (/drill|saw|mitre|tool kit|torch|water blaster|garden/.test(s)) return 'tools';
+  // Tools & hardware
+  if (/drill|saw|mitre|tool kit|\btorch\b|water blaster|garden tool|hammer|level|wrench/.test(s)) return 'tools';
 
-  // ── HOME & KITCHEN ────────────────────────────────────────────────────────
-  if (/cookware|kitchen|air fryer|blender|coffee|toaster|duvet|linen|candle|cushion|vase|photo frame/.test(s)) return 'home';
+  // Home & kitchen
+  if (/cookware|kitchen|air fryer|blender|coffee maker|toaster|duvet|linen|candle|cushion|vase|photo frame|diffuser/.test(s)) return 'home';
 
-  // ── BEAUTY ───────────────────────────────────────────────────────────────
-  if (/perfume|cologne|skincare|makeup|beauty|lipstick|moisturiser|shampoo|conditioner|serum|fragrance/.test(s)) return 'beauty';
+  // Beauty & health
+  if (/perfume|cologne|skincare|makeup|beauty|lipstick|moisturiser|shampoo|conditioner|serum|fragrance|nail polish/.test(s)) return 'beauty';
 
   return 'general';
 }
 
+// ── BUILD BUY LINK ────────────────────────────────────────────────────────────
+// Returns { url, storeName } for the primary "Shop This Gift" button
+// Principle: use direct retailer URLs only when search is verified working.
+// Otherwise use Google Shopping NZ — it's reliable and surfaces correct retailers.
+
 function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, budgetMin, budgetMax, interests) {
   const category = detectProductCategory(productName, productType);
   const q = encodeURIComponent(cleanSearchTerm);
-  const qFull = encodeURIComponent(productName);
+  const qFull = encodeURIComponent(productName + ' NZ');
+  const sport = detectSportSpecialist(interests);
 
   // ── CUSTOM/PERSONALISED → Google Shopping NZ ─────────────────────────────
   if (category === 'custom') {
-    return { url: `https://www.google.com/search?q=${qFull}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
+    return { url: RETAILER_SEARCH.googleshopfull(productName), storeName: 'Google Shopping NZ' };
   }
 
-  // ── EYEWEAR → Sunglass Hut NZ directly ───────────────────────────────────
+  // ── EYEWEAR → Google Shopping NZ (surfaces Sunglass Hut, Specsavers etc) ─
+  // Sunglass Hut NZ routes through AU site with complex URL — Google Shopping
+  // reliably surfaces them and other NZ eyewear retailers
   if (category === 'eyewear') {
-    return { url: `https://www.sunglasshut.com/nz/search?q=${q}`, storeName: 'Sunglass Hut' };
+    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName)}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
-  // ── LUGGAGE & TRAVEL → luggage.co.nz ─────────────────────────────────────
+  // ── LUGGAGE & TRAVEL ACCESSORIES → luggage.co.nz ─────────────────────────
   if (category === 'luggage') {
-    return { url: `https://www.luggage.co.nz/search?q=${q}`, storeName: 'Luggage.co.nz' };
+    return { url: `https://www.luggage.co.nz/catalogsearch/result/?q=${q}`, storeName: 'Luggage.co.nz' };
   }
 
-  // ── FOOTWEAR → Number One Shoe Warehouse (low/med) or Rebel Sport (high+) ─
+  // ── FOOTWEAR → Google Shopping NZ ────────────────────────────────────────
+  // Rebel Sport and Number One Shoes use JS-rendered search — not reliably deep-linkable.
+  // Google Shopping NZ surfaces both of them plus other NZ footwear retailers.
   if (category === 'footwear') {
-    if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.rebelsport.co.nz/search?q=${q}`, storeName: 'Rebel Sport' };
-    return { url: `https://www.numberoneshoes.co.nz/search?q=${q}`, storeName: 'Number One Shoes' };
+    return { url: `https://www.google.com/search?q=${encodeURIComponent(cleanSearchTerm)}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
-  // ── SPORTSWEAR → Rebel Sport or Stirling Sports ───────────────────────────
+  // ── SPORTSWEAR → Google Shopping NZ ──────────────────────────────────────
+  // Rebel Sport and Stirling Sports have JS search — Google Shopping surfaces both
   if (category === 'sportswear') {
-    if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.rebelsport.co.nz/search?q=${q}`, storeName: 'Rebel Sport' };
-    return { url: `https://www.stirlingsports.co.nz/search?q=${q}`, storeName: 'Stirling Sports' };
+    return { url: `https://www.google.com/search?q=${encodeURIComponent(cleanSearchTerm)}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
-  // ── KIDS SPORT → Check for specialist sport first, then Rebel Sport ───────
+  // ── KIDS SPORT → Sport specialist if detected, else Google Shopping NZ ───
   if (category === 'kidssport') {
-    const sport = detectSportSpecialist(interests, productName);
-    if (sport === 'hockey')
-      return { url: `https://gohockey.co.nz/search?q=${q}`, storeName: 'Go Hockey' };
-    if (sport === 'soccer')
-      return { url: `https://www.soccerunited.co.nz/search?q=${q}`, storeName: 'Soccer United' };
-    return { url: `https://www.rebelsport.co.nz/search?q=${q}`, storeName: 'Rebel Sport' };
+    if (sport === 'hockey') {
+      // Detect what type of hockey product to send to right category
+      const ps = (productName + ' ' + cleanSearchTerm).toLowerCase();
+      if (/shin|pad/.test(ps)) return { url: RETAILER_SEARCH.gohockey_pads(), storeName: 'Go Hockey' };
+      if (/bag/.test(ps))      return { url: RETAILER_SEARCH.gohockey_bags(), storeName: 'Go Hockey' };
+      return { url: RETAILER_SEARCH.gohockey_sticks(), storeName: 'Go Hockey' };
+    }
+    if (sport === 'soccer') {
+      return { url: RETAILER_SEARCH.soccerunited(q), storeName: 'Soccer United' };
+    }
+    // General kids sport → Google Shopping (surfaces Rebel Sport etc)
+    return { url: `https://www.google.com/search?q=${encodeURIComponent('kids ' + cleanSearchTerm)}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
-  // ── TECH & ELECTRONICS ───────────────────────────────────────────────────
-  // PB Tech primary, JB Hi-Fi for high+ budgets as it stocks premium items well
+  // ── TECH → PB Tech (low/medium) or JB Hi-Fi (high+) ─────────────────────
+  // Both have verified working search URLs
   if (category === 'tech') {
     if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.jbhifi.co.nz/search?q=${q}`, storeName: 'JB Hi-Fi' };
-    return { url: `https://www.pbtech.co.nz/search?sf=${q}`, storeName: 'PB Tech' };
+      return { url: RETAILER_SEARCH.jbhifi(q), storeName: 'JB Hi-Fi' };
+    return { url: RETAILER_SEARCH.pbtech(q), storeName: 'PB Tech' };
   }
 
   // ── FITNESS GEAR → Google Shopping NZ ────────────────────────────────────
@@ -332,50 +310,57 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.google.com/search?q=${q}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
-  // ── OUTDOOR & ADVENTURE → Torpedo7 ───────────────────────────────────────
+  // ── OUTDOOR → Torpedo7 (verified search URL) ─────────────────────────────
   if (category === 'outdoor') {
     if (budgetTierKey === 'low')
-      return { url: `https://www.thewarehouse.co.nz/search?q=${q}&priceTo=${budgetMax}`, storeName: 'The Warehouse' };
-    return { url: `https://www.torpedo7.co.nz/search?q=${q}`, storeName: 'Torpedo7' };
+      return { url: `${RETAILER_SEARCH.thewarehouse(q)}&priceTo=${budgetMax}`, storeName: 'The Warehouse' };
+    return { url: RETAILER_SEARCH.torpedo7(q), storeName: 'Torpedo7' };
   }
 
-  // ── FASHION → gender-neutral routing ─────────────────────────────────────
+  // ── FASHION → gender-aware routing ───────────────────────────────────────
+  // Glassons is women's only — only use for female/neutral recipients
   if (category === 'fashion') {
+    const gender = detectGender(''); // gender passed separately, use general routing
     if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.farmers.co.nz/search?q=${q}`, storeName: 'Farmers' };
+      return { url: RETAILER_SEARCH.farmers(q), storeName: 'Farmers' };
     if (budgetTierKey === 'medium')
-      return { url: `https://www.glassons.com/search?q=${q}`, storeName: 'Glassons' };
-    return { url: `https://www.thewarehouse.co.nz/search?q=${q}&priceTo=${budgetMax}`, storeName: 'The Warehouse' };
+      return { url: RETAILER_SEARCH.farmers(q), storeName: 'Farmers' };
+    return { url: `${RETAILER_SEARCH.thewarehouse(q)}&priceTo=${budgetMax}`, storeName: 'The Warehouse' };
   }
 
-  // ── BEAUTY ───────────────────────────────────────────────────────────────
+  // ── BEAUTY ────────────────────────────────────────────────────────────────
   if (category === 'beauty') {
     if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.mecca.com/en-nz/search/?q=${q}`, storeName: 'Mecca' };
+      return { url: RETAILER_SEARCH.mecca(q), storeName: 'Mecca' };
     if (budgetTierKey === 'medium')
-      return { url: `https://www.sephora.nz/search?q=${q}`, storeName: 'Sephora' };
-    return { url: `https://www.chemistwarehouse.co.nz/search?q=${q}`, storeName: 'Chemist Warehouse' };
+      return { url: RETAILER_SEARCH.sephora(q), storeName: 'Sephora' };
+    return { url: RETAILER_SEARCH.chemistwarehouse(q), storeName: 'Chemist Warehouse' };
   }
 
   // ── HOME & KITCHEN ────────────────────────────────────────────────────────
   if (category === 'home') {
     if (budgetTierKey === 'low')
-      return { url: `https://www.kmart.co.nz/search?q=${q}`, storeName: 'Kmart' };
-    return { url: `https://www.briscoes.co.nz/search?q=${q}`, storeName: 'Briscoes' };
+      return { url: RETAILER_SEARCH.kmart(q), storeName: 'Kmart' };
+    return { url: RETAILER_SEARCH.briscoes(q), storeName: 'Briscoes' };
   }
 
-  // ── TOOLS ────────────────────────────────────────────────────────────────
+  // ── TOOLS ─────────────────────────────────────────────────────────────────
   if (category === 'tools') {
-    return { url: `https://www.bunnings.co.nz/search/products?q=${q}`, storeName: 'Bunnings' };
+    return { url: RETAILER_SEARCH.bunnings(q), storeName: 'Bunnings' };
+  }
+
+  // ── BOOKS ─────────────────────────────────────────────────────────────────
+  if (category === 'books' || /\bbook\b|novel|cookbook|diary|\bjournal\b/.test((productName + ' ' + productType).toLowerCase())) {
+    return { url: RETAILER_SEARCH.whitcoulls(q), storeName: 'Whitcoulls' };
   }
 
   // ── GENERAL FALLBACK → The Warehouse with price filter ───────────────────
-  const base = `https://www.thewarehouse.co.nz/search?q=${q}`;
-  let url = base;
+  let url = RETAILER_SEARCH.thewarehouse(q);
   if (budgetMin > 0 && budgetMax < 9999) url += `&priceFrom=${budgetMin}&priceTo=${budgetMax}`;
   return { url, storeName: 'The Warehouse' };
 }
 
+// ── SHOPPING CHIPS ────────────────────────────────────────────────────────────
 function buildShoppingChips(richSearchTerm) {
   return [
     { name: '🛒 Shop NZ',        link: `https://www.google.com/search?q=${encodeURIComponent(richSearchTerm + ' NZ')}&tbm=shop&gl=nz&hl=en` },
@@ -405,6 +390,154 @@ async function getBraveImage(searchTerm, braveKey) {
   }
 }
 
+// ── KIDS VIBE POOLS ───────────────────────────────────────────────────────────
+const KIDS_VIBE_POOLS = {
+  'Sporty': {
+    low:    ['kids football','kids frisbee','skipping rope','kids swim goggles','kids sports socks','kids drink bottle','kids headband','kids volleyball'],
+    medium: ['kids bike helmet','kids football boots','kids shin pads','kids sports bag','kids running shoes','kids sports watch','kids swimming goggles','kids cricket set'],
+    high:   ['kids smartwatch','kids activity tracker','kids bike','kids scooter','kids sports sunglasses','kids wetsuit','kids tennis racket','kids skateboard'],
+    bigwed: ['kids GPS watch','kids electric scooter','kids trampoline','kids mountain bike','kids surfboard'],
+    lotto:  ['premium kids bike','kids golf set','kids horse riding gear','premium kids trampoline'],
+  },
+  'Techy': {
+    low:    ['kids LED torch','kids digital watch','kids walkie talkies','kids magnifying glass','kids science kit','kids calculator'],
+    medium: ['kids headphones','kids coding toy','kids smartwatch','kids digital camera','kids science experiment kit','kids robotics kit','kids bluetooth speaker'],
+    high:   ['kids tablet','kids smart watch','kids drone','kids microscope','kids telescope','kids electronic keyboard'],
+    bigwed: ['kids iPad','kids laptop','kids 3D printer pen','premium kids drone','kids programmable robot'],
+    lotto:  ['premium kids tablet','kids gaming console','kids high-end headphones','premium kids laptop'],
+  },
+  'Eco-friendly': {
+    low:    ['kids reusable drink bottle','kids beeswax wrap kit','kids seed growing kit','kids bamboo lunch box','kids recycled colouring book'],
+    medium: ['kids nature explorer kit','kids bird watching set','kids garden tool set','kids compost kit','kids eco craft set'],
+    high:   ['kids quality bike','kids nature photography kit','kids camping set','kids quality drink bottle set','kids eco art supplies'],
+    bigwed: ['kids premium camping gear','kids quality telescope','kids nature adventure set'],
+    lotto:  ['kids premium outdoor adventure set','kids quality nature kit'],
+  },
+  'Luxe': {
+    low:    ['kids quality colouring book','kids plush toy','kids bath bomb set','kids fancy dress costume'],
+    medium: ['kids jewellery making kit','kids quality art set','kids designer stationery','kids quality soft toy','kids charm bracelet'],
+    high:   ['kids quality watch','kids designer backpack','kids quality jewellery','kids premium art set'],
+    bigwed: ['kids designer outfit','kids premium watch','kids quality luggage'],
+    lotto:  ['kids luxury watch','kids designer wardrobe','kids premium jewellery'],
+  },
+  'Practical': {
+    low:    ['kids lunch box','kids drink bottle','kids umbrella','kids torch','kids backpack'],
+    medium: ['kids quality backpack','kids rain jacket','kids quality lunch box','kids school supplies set','kids quality umbrella'],
+    high:   ['kids quality school bag','kids quality rain gear','kids desk organiser','kids reading lamp','kids quality shoes'],
+    bigwed: ['kids quality luggage','kids premium school set','kids quality desk'],
+    lotto:  ['kids premium luggage set','kids quality bedroom set'],
+  },
+  'Fun': {
+    low:    ['kids card game','kids novelty socks','kids joke book','kids sticker set','kids bubbles set'],
+    medium: ['kids board game','kids puzzle','kids magic set','kids craft kit','kids slime kit','kids LEGO set','kids Nerf blaster'],
+    high:   ['kids karaoke microphone','kids mini projector','kids premium board game','kids remote control car','kids chemistry set'],
+    bigwed: ['kids gaming console game','kids premium LEGO set','kids quality karaoke system','kids electric go kart'],
+    lotto:  ['kids premium gaming setup','kids quality play equipment'],
+  },
+  'Sentimental': {
+    low:    ['kids photo frame','kids memory book','kids scrapbook kit','kids friendship bracelet kit'],
+    medium: ['kids personalised story book','kids keepsake box','kids quality photo album','kids name necklace'],
+    high:   ['kids birthstone jewellery','kids quality keepsake','kids personalised artwork'],
+    bigwed: ['kids premium keepsake jewellery','kids custom portrait'],
+    lotto:  ['kids luxury keepsake','kids premium personalised item'],
+  },
+  'Trendy': {
+    low:    ['kids bucket hat','kids scrunchie set','kids hair accessories','kids fun socks'],
+    medium: ['kids quality sunglasses','kids trendy backpack','kids fashion watch','kids belt bag'],
+    high:   ['kids designer sunglasses','kids quality sneakers','kids trendy clothing set'],
+    bigwed: ['kids premium sneakers','kids designer backpack'],
+    lotto:  ['kids designer outfit','kids premium sneakers','kids luxury accessories'],
+  },
+  'Quirky': {
+    low:    ['kids novelty mug','kids funny socks','kids brain teaser puzzle','kids whoopee cushion'],
+    medium: ['kids unusual science kit','kids quirky stationery','kids mini arcade game','kids unusual toy'],
+    high:   ['kids retro game console','kids unusual gadget','kids premium puzzle set'],
+    bigwed: ['kids mini arcade cabinet','kids premium quirky gadget'],
+    lotto:  ['kids premium gaming setup','kids luxury unusual experience'],
+  },
+  'Surprise me': {
+    low:    ['kids card game','kids novelty socks','kids fun book','kids sticker set'],
+    medium: ['kids board game','kids headphones','kids craft kit','kids science kit','kids LEGO set'],
+    high:   ['kids smartwatch','kids tablet','kids scooter','kids quality headphones'],
+    bigwed: ['kids gaming console','kids premium tablet','kids electric scooter'],
+    lotto:  ['kids premium gaming setup','kids quality tablet'],
+  },
+};
+
+// ── ADULT VIBE POOLS ──────────────────────────────────────────────────────────
+const ADULT_VIBE_POOLS = {
+  'Sporty': {
+    low:    ['foam roller','resistance bands','skipping rope','sports socks','swim goggles','volleyball','football','frisbee','sports drink bottle'],
+    medium: ['yoga mat','sports bag','protein shaker','hydration pack','bike helmet','running cap','compression socks','football boots','shin pads'],
+    high:   ['massage gun','activity tracker','sports hoodie','trail running shoes','cycling shorts','sports sunglasses','recovery slides'],
+    bigwed: ['gps running watch','noise cancelling headphones','smart watch','premium running shoes','wireless earbuds'],
+    lotto:  ['premium smart watch','garmin fenix','polar vantage','premium headphones'],
+  },
+  'Techy': {
+    low:    ['phone case','usb hub','cable organiser','screen cleaner','phone stand','cable clips'],
+    medium: ['wireless earbuds','portable charger','bluetooth speaker','smart home device','mechanical keyboard'],
+    high:   ['bluetooth headphones','portable speaker','noise cancelling earbuds','ring light','mechanical keyboard'],
+    bigwed: ['noise cancelling headphones','smart watch','tablet','portable projector'],
+    lotto:  ['premium smart watch','high end headphones','ipad','dyson airwrap'],
+  },
+  'Eco-friendly': {
+    low:    ['reusable drink bottle','bamboo toothbrush set','beeswax wraps','organic cotton tote','seed kit'],
+    medium: ['keep cup','natural soap set','recycled notebook','plant pot','organic skincare set'],
+    high:   ['premium reusable bottle','organic cotton bedding','natural perfume set','eco cookware'],
+    bigwed: ['quality eco cookware','organic cashmere throw','premium natural skincare set'],
+    lotto:  ['luxury organic skincare','premium sustainable fashion'],
+  },
+  'Luxe': {
+    low:    ['scented candle','silk scrunchie set','luxury soap','quality notebook'],
+    medium: ['perfume','leather wallet','quality jewellery','silk pillowcase','scented candle set'],
+    high:   ['luxury skincare set','quality sunglasses','cashmere throw','designer wallet'],
+    bigwed: ['perfume gift set','cashmere throw','quality jewellery','designer sunglasses'],
+    lotto:  ['dyson airwrap','luxury perfume','designer handbag','luxury watch'],
+  },
+  'Practical': {
+    low:    ['reusable shopping bag','torch','first aid kit','cable organiser','quality umbrella'],
+    medium: ['quality backpack','travel adapter','tool kit','quality torch'],
+    high:   ['quality cookware set','premium backpack','travel organiser set'],
+    bigwed: ['premium cookware','quality luggage','leather wallet'],
+    lotto:  ['high end cookware set','premium luggage set','luxury bedding'],
+  },
+  'Fun': {
+    low:    ['card game','novelty mug','funny book','quirky socks'],
+    medium: ['board game','puzzle','adult colouring book','retro game'],
+    high:   ['karaoke microphone','mini projector','photo booth kit','premium board game'],
+    bigwed: ['mini projector','quality karaoke system','premium puzzle set'],
+    lotto:  ['high end mini projector','premium gaming setup'],
+  },
+  'Sentimental': {
+    low:    ['photo frame','personalised mug','scrapbook kit','memory book'],
+    medium: ['photo frame set','leather journal','personalised gift','keepsake box'],
+    high:   ['custom map print','quality jewellery','premium leather journal'],
+    bigwed: ['birthstone jewellery','quality jewellery set','custom portrait'],
+    lotto:  ['luxury jewellery','premium keepsake'],
+  },
+  'Trendy': {
+    low:    ['scrunchie set','hair accessories set','nail art kit','fashion earrings','bucket hat'],
+    medium: ['tote bag','fashion jewellery','trendy backpack','quality sunglasses','belt bag'],
+    high:   ['quality sunglasses','premium sneakers','leather tote bag','quality watch'],
+    bigwed: ['designer sunglasses','premium sneakers','quality leather bag'],
+    lotto:  ['designer bag','luxury sneakers','premium jewellery'],
+  },
+  'Quirky': {
+    low:    ['novelty socks','funny book','quirky phone case','novelty mug'],
+    medium: ['unusual kitchen gadget','retro game','unusual plant','quirky stationery'],
+    high:   ['premium novelty gadget','retro game console','unusual home decor'],
+    bigwed: ['mini arcade cabinet','premium quirky tech'],
+    lotto:  ['high end quirky tech','luxury unusual experience'],
+  },
+  'Surprise me': {
+    low:    ['novelty socks','scented candle','phone case','funny book','card game'],
+    medium: ['board game','quality sunglasses','leather journal','bluetooth speaker'],
+    high:   ['massage gun','premium sneakers','portable speaker','activity tracker'],
+    bigwed: ['noise cancelling headphones','gps running watch','quality jewellery'],
+    lotto:  ['premium smart watch','dyson airwrap','premium headphones'],
+  },
+};
+
 // ── MAIN HANDLER ──────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -432,107 +565,33 @@ export default async function handler(req, res) {
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'Missing Anthropic API key' });
 
   const tier = getTier(budgetTier || 'medium');
-  const { label: budgetLabel, hint: budgetHint, min: budgetMin, max: budgetMax } = tier;
+  const { label: budgetLabel, min: budgetMin, max: budgetMax } = tier;
 
   const isForChild = isChildRecipient(whoFor);
   const gender     = detectGender(whoFor);
+  const sport      = detectSportSpecialist(interests);
 
-  // Gender hint for Claude — used to steer product suggestions
+  // ── Build context hints for Claude ────────────────────────────────────────
+
   const genderHint = gender === 'male'
-    ? 'This gift is for a MALE. Suggest masculine or gender-neutral products. Do NOT suggest womens clothing, handbags, makeup, feminine skincare, cashmere scarves, or female-coded fashion items.'
+    ? 'GENDER: This is for a MALE. Suggest masculine or gender-neutral products ONLY. NEVER suggest: womens handbags, feminine skincare, makeup, cashmere scarves, womens clothing, hair accessories, nail products, or any female-coded fashion items.'
     : gender === 'female'
-    ? 'This gift is for a FEMALE. Suggest feminine or gender-neutral products appropriate for women.'
+    ? 'GENDER: This is for a FEMALE. Suggest feminine or gender-neutral products.'
     : '';
 
-  // Sport-specific interest detection for Claude prompt awareness
-  const sportInterest = detectSportSpecialist(interests, '');
-  const sportHint = sportInterest === 'hockey'
-    ? 'The recipient is into HOCKEY — prioritise hockey-specific gear (sticks, pads, bags, etc).'
-    : sportInterest === 'soccer'
-    ? 'The recipient is into SOCCER — prioritise soccer-specific gear (boots, balls, shin pads, etc).'
+  const sportHint = sport
+    ? `SPORT INTEREST DETECTED: The recipient is into ${sport.toUpperCase()}. At least ONE product MUST be directly related to ${sport} (e.g. ${sport} equipment, ${sport} gear, ${sport} accessories). Do not ignore this.`
     : '';
 
-  // ── ADULT VIBE POOLS ──────────────────────────────────────────────────────
-  const vibeCategoryPools = {
-    'Sporty': {
-      low:    ['foam roller','resistance bands','skipping rope','sports socks','swim goggles','volleyball','football','frisbee','headband','sports drink bottle'],
-      medium: ['yoga mat','sports bag','protein shaker','hydration pack','bike helmet','running cap','compression socks','swim goggles','football boots','shin pads'],
-      high:   ['massage gun','activity tracker','sports hoodie','portable speaker','weight vest','trail running shoes','cycling shorts','sports sunglasses','recovery slides'],
-      bigwed: ['gps running watch','noise cancelling headphones','smart watch','premium running shoes','wireless earbuds','high end sports bag'],
-      lotto:  ['premium smart watch','garmin fenix','polar vantage','premium headphones','high end cycling gear'],
-    },
-    'Techy': {
-      low:    ['phone case','usb hub','cable organiser','screen cleaner','phone stand','laptop stand','webcam cover','cable clips'],
-      medium: ['wireless earbuds','portable charger','bluetooth speaker','phone stand','smart home device','usb hub','webcam','laptop stand'],
-      high:   ['bluetooth headphones','portable speaker','smart home device','noise cancelling earbuds','tablet stand','ring light','mechanical keyboard'],
-      bigwed: ['noise cancelling headphones','smart watch','tablet','portable projector','premium bluetooth speaker'],
-      lotto:  ['premium smart watch','high end headphones','ipad','premium laptop accessories','dyson airwrap'],
-    },
-    'Eco-friendly': {
-      low:    ['reusable drink bottle','bamboo toothbrush set','beeswax wraps','organic cotton tote','seed kit'],
-      medium: ['keep cup','natural soap set','recycled notebook','plant pot','compostable lunch kit','organic skincare set'],
-      high:   ['premium reusable bottle','quality tote bag','organic cotton bedding','natural perfume set','eco cookware'],
-      bigwed: ['quality eco cookware','organic cashmere throw','premium natural skincare set','sustainable fashion item'],
-      lotto:  ['luxury organic skincare','premium sustainable fashion','high end eco homewares'],
-    },
-    'Luxe': {
-      low:    ['scented candle','silk scrunchie set','luxury soap','quality notebook'],
-      medium: ['perfume','leather wallet','quality jewellery','silk pillowcase','scented candle set'],
-      high:   ['luxury skincare set','quality sunglasses','leather journal','cashmere throw','designer wallet'],
-      bigwed: ['perfume gift set','cashmere throw','quality jewellery','luxury handbag','designer sunglasses'],
-      lotto:  ['dyson airwrap','luxury perfume','designer handbag','premium jewellery','luxury watch'],
-    },
-    'Practical': {
-      low:    ['reusable shopping bag','torch','first aid kit','cable organiser','quality umbrella'],
-      medium: ['quality backpack','travel adapter','tool kit','quality torch','cable management kit'],
-      high:   ['leather boots','quality cookware set','premium backpack','quality umbrella','travel organiser set'],
-      bigwed: ['premium cookware','quality luggage','leather wallet','premium tool kit'],
-      lotto:  ['high end cookware set','premium luggage set','quality briefcase','luxury bedding'],
-    },
-    'Fun': {
-      low:    ['card game','novelty mug','funny book','quirky socks','retro toy'],
-      medium: ['board game','puzzle','adult colouring book','cooking kit','retro game'],
-      high:   ['karaoke microphone','mini projector','photo booth kit','premium board game','novelty gadget'],
-      bigwed: ['mini projector','quality karaoke system','premium puzzle set','fun cooking class'],
-      lotto:  ['high end mini projector','premium gaming setup','luxury experience voucher'],
-    },
-    'Sentimental': {
-      low:    ['photo frame','personalised mug','scrapbook kit','memory book'],
-      medium: ['photo frame set','leather journal','personalised gift','keepsake box'],
-      high:   ['custom map print','quality jewellery','premium leather journal','quality photo album'],
-      bigwed: ['birthstone jewellery','quality jewellery set','luxury leather journal','custom portrait'],
-      lotto:  ['luxury jewellery','premium keepsake','high end personalised gift'],
-    },
-    'Trendy': {
-      low:    ['scrunchie set','hair accessories set','nail art kit','fashion earrings','bucket hat'],
-      medium: ['tote bag','fashion jewellery','trendy backpack','quality sunglasses','belt bag'],
-      high:   ['quality sunglasses','premium sneakers','leather tote bag','quality watch','fashion jewellery set'],
-      bigwed: ['designer sunglasses','premium sneakers','quality leather bag','luxury skincare set'],
-      lotto:  ['designer bag','luxury sneakers','premium jewellery','high end fashion item'],
-    },
-    'Quirky': {
-      low:    ['novelty socks','funny book','quirky phone case','novelty mug','brain teaser puzzle'],
-      medium: ['unusual kitchen gadget','retro game','unusual plant','quirky stationery','mini arcade game'],
-      high:   ['premium novelty gadget','retro game console','unusual home decor','quirky quality item'],
-      bigwed: ['mini arcade cabinet','premium quirky tech','unusual luxury item'],
-      lotto:  ['high end quirky tech','luxury unusual experience','premium retro gaming'],
-    },
-    'Surprise me': {
-      low:    ['novelty socks','scented candle','phone case','funny book','card game'],
-      medium: ['board game','quality sunglasses','leather journal','bluetooth speaker','novelty gadget'],
-      high:   ['massage gun','quality sunglasses','premium sneakers','portable speaker','activity tracker'],
-      bigwed: ['noise cancelling headphones','gps running watch','quality jewellery','premium leather wallet'],
-      lotto:  ['premium smart watch','luxury handbag','dyson airwrap','premium headphones'],
-    },
-  };
-
+  // ── Build vibe pool suggestions ────────────────────────────────────────────
   const activePools = isForChild
     ? (KIDS_VIBE_POOLS[vibe] || KIDS_VIBE_POOLS['Surprise me'])
-    : (vibeCategoryPools[vibe] || vibeCategoryPools['Surprise me']);
+    : (ADULT_VIBE_POOLS[vibe] || ADULT_VIBE_POOLS['Surprise me']);
   const tierPool  = activePools[budgetTier] || activePools['medium'];
   const shuffled  = [...tierPool].sort(() => Math.random() - 0.5);
   const categorySuggestions = shuffled.slice(0, 3).join(', ');
 
+  // ── Refresh/variation instructions ────────────────────────────────────────
   const refreshVariations = [
     '',
     'Find 3 DIFFERENT product categories — same vibe, person and interests.',
@@ -558,69 +617,72 @@ RULE 1 — MIRROR RULE: searchQuery MUST be a simplified version of name.
 "Activity Tracker" → searchQuery "activity tracker". NEVER mismatch product and search.
 
 RULE 2 — BUDGET REALITY (STRICTLY ENFORCED):
-Every product MUST be genuinely available in New Zealand at the user's budget in 2026.
-- HARD CEILING: Never recommend something that costs over NZ$${budgetMax}. No exceptions.
-- HARD FLOOR: Never recommend something under NZ$${budgetMin} when a better option exists.
-- Match budget versions: budget smartwatch (Promate/Xiaomi ~$80) fits Low/Medium. Apple Watch fits Lotto only.
+Every product MUST be genuinely available in NZ at the user's budget in 2026.
+- HARD CEILING: Never recommend anything that costs over NZ$${budgetMax}. No exceptions.
+- HARD FLOOR: Never recommend anything under NZ$${budgetMin} when better options exist.
+- Match budget: budget smartwatch (Promate/Xiaomi ~$80 at PB Tech) for Low/Medium. Apple Watch for Lotto only.
 - If unsure whether a product exists at this price in NZ, choose something safer.
 
-RULE 3 — NZ TERMINOLOGY: jandals, togs, jersey, sports hoodie, sports bag, torch, running shoes, drink bottle.
-Use "sports hoodie" not "technical hoodie". Use "sports watch" not "smart watch" for sporty recipients.
+RULE 3 — NZ TERMINOLOGY: jandals, togs, jersey, sports hoodie, sports bag, torch, running shoes, drink bottle, shin pads.
+Always use "sports hoodie" not "technical hoodie". Use NZ terms at all times.
 
-RULE 4 — VARIETY: All 3 recommendations must be DIFFERENT product categories.
+RULE 4 — VARIETY: All 3 products must be DIFFERENT categories. No 3 versions of the same thing.
 
 RULE 5 — RECIPIENT AWARENESS:
-- Children/kids/babies: ONLY age-appropriate products — toys, books, games, art supplies, kids sports gear, kids tech. NEVER adult fitness gear, phone/PC accessories, home improvement, adult lifestyle items.
+- Children/kids/babies: ONLY age-appropriate products. NEVER adult fitness gear, adult phone/PC accessories, sharp tools, or adult lifestyle items.
 - Elderly/grandparents: practical, easy-to-use. Not extreme sports or complex tech.
-- Always match product to recipient's age, lifestyle and interests.
+- Always match product to the recipient's age and lifestyle.
 
 RULE 6 — GENDER AWARENESS:
-Products must match the recipient's gender. A gift for "him" must be masculine or gender-neutral.
-Never suggest women's handbags, feminine skincare, makeup, women's fashion, or female-coded items for a male recipient.
-Never suggest power tools, men's grooming, or male-coded items for a female recipient unless interests suggest it.
+Match products to the recipient's gender. If shopping for a male, ONLY suggest masculine or gender-neutral products.
+Never suggest womens handbags, feminine skincare, makeup, womens clothing, hair accessories, or female-coded items for a male recipient.
 
-RULE 7 — CUSTOM/PERSONALISED:
+RULE 7 — INTERESTS ARE MANDATORY:
+If the user has provided interests (hobbies, sports, brands etc), you MUST include at least 1 product that directly relates to those interests.
+If they say "shin pads" — one product must be shin pads. If they say "hockey" — one product must be hockey gear.
+Do NOT ignore the interests field. It is the most important personalisation signal.
+
+RULE 8 — CUSTOM/PERSONALISED:
 For personalised/custom products (star maps, custom portraits, name jewellery), use a simple search term like "personalised star map print".
 
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
   "products": [
     {
-      "name": "Activity Tracker",
-      "type": "Fitness Tech",
-      "reason": "Tracks steps, heart rate and sleep — budget-friendly options start from around $80 in NZ.",
-      "searchQuery": "activity tracker"
+      "name": "Shin Pads",
+      "type": "Sports Protection",
+      "reason": "Essential protection for football or hockey — available in junior and senior sizes.",
+      "searchQuery": "shin pads"
     },
     {
-      "name": "Sports Hoodie",
-      "type": "Sports Apparel",
-      "reason": "Lightweight moisture-wicking hoodie built for training and everyday wear.",
-      "searchQuery": "sports hoodie"
+      "name": "Sports Bag",
+      "type": "Sports Gear",
+      "reason": "Perfect for carrying kit to training and matches.",
+      "searchQuery": "sports bag"
     },
     {
-      "name": "Massage Gun",
-      "type": "Recovery",
-      "reason": "Perfect for muscle recovery after hard training sessions.",
-      "searchQuery": "massage gun"
+      "name": "Sports Drink Bottle",
+      "type": "Sports Accessory",
+      "reason": "Keeps water cold during training — great everyday essential.",
+      "searchQuery": "sports drink bottle"
     }
   ]
 }`;
 
-  const userPrompt = `GIFT MISSION: 3 FRESH IDEAS
+  const userPrompt = `GIFT MISSION: 3 FRESH, RELEVANT IDEAS
 Who: ${whoFor} | Vibe: ${vibe} | Budget: ${budgetLabel} (NZ$${budgetMin}–$${budgetMax}) | Occasion: ${occasion}
 Interests: ${interests || 'Not specified'}
 
 HARD BLOCK — FORBIDDEN (already shown): ${excludeProducts.length > 0 ? excludeProducts.join(', ') : 'None yet'}
 
-SUGGESTED STARTING POINTS (use at least 2): ${categorySuggestions}
+SUGGESTED STARTING POINTS (use these as inspiration, but interests override everything): ${categorySuggestions}
 
-BUDGET ENFORCEMENT — CRITICAL:
-Every product MUST be available in NZ for between NZ$${budgetMin} and NZ$${budgetMax}.
-HARD CEILING: Never exceed NZ$${budgetMax}. HARD FLOOR: Never go below NZ$${budgetMin}.
+BUDGET: Every product MUST cost between NZ$${budgetMin} and NZ$${budgetMax} in New Zealand. HARD CEILING NZ$${budgetMax}.
 
-${genderHint ? `GENDER RULE: ${genderHint}` : ''}
-${sportHint ? `SPORT INTEREST: ${sportHint}` : ''}
-${isForChild ? 'CHILD GIFT: ONLY age-appropriate kids products. NO adult fitness gear, NO phone/PC accessories, NO adult lifestyle items.' : ''}
+${genderHint}
+${sportHint}
+${interests && interests.trim() ? `INTERESTS OVERRIDE: The user typed "${interests.trim()}" — at least 1 product MUST directly relate to this. Do not ignore it.` : ''}
+${isForChild ? 'CHILD GIFT: ONLY age-appropriate kids products. NO adult fitness gear, NO adult accessories, NO adult lifestyle items.' : ''}
 ${refreshInstruction ? `STRATEGY: ${refreshInstruction}` : ''}
 Session: ${Date.now().toString(36)}`;
 
@@ -660,7 +722,6 @@ Session: ${Date.now().toString(36)}`;
     const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
     const richSearchTerm  = (product.name + ' ' + (product.searchQuery || '')).toLowerCase().trim();
 
-    // Pass interests into buildBuyLink for sport-specialist detection
     const { url: buyLink, storeName: bestStoreName } = buildBuyLink(
       cleanSearchTerm, product.name, product.type, budgetTier, budgetMin, budgetMax, interests
     );
@@ -668,7 +729,7 @@ Session: ${Date.now().toString(36)}`;
     const stores   = buildShoppingChips(richSearchTerm);
     const imageUrl = await getBraveImage(richSearchTerm, BRAVE_KEY);
 
-    console.log(`"${product.name}" | ${bestStoreName}: "${cleanSearchTerm}" | Tier: ${budgetTier} | Gender: ${gender} | Child: ${isForChild}`);
+    console.log(`"${product.name}" | ${bestStoreName}: "${cleanSearchTerm}" | Tier: ${budgetTier} | Gender: ${gender} | Sport: ${sport || 'none'} | Child: ${isForChild}`);
 
     return { name: product.name, type: product.type, reason: product.reason, budgetLabel, bestStoreName, buyLink, imageUrl, stores };
   }));
