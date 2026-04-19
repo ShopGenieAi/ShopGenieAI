@@ -96,6 +96,7 @@ const NZ_TERM_MAP = [
   ['water bottle','drink bottle'],['drink bottle','drink bottle'],
   ['running backpack','hydration pack'],['tennis racquet','tennis racket'],
   ['soccer ball','football'],['soccer cleats','football boots'],['soccer boots','football boots'],
+  ['hockey ball set','hockey ball'],['hockey balls','hockey ball'],
   ['shin guards','shin pads'],['swim goggles','swimming goggles'],
   ['cycling helmet','bike helmet'],['bicycle helmet','bike helmet'],
   ['soda','soft drink'],['candy','lollies'],['sweets','lollies'],
@@ -241,123 +242,15 @@ function detectProductCategory(name, type) {
 }
 
 // ── BUILD BUY LINK ────────────────────────────────────────────────────────────
-// Returns { url, storeName } for the primary "Shop This Gift" button
-// Principle: use direct retailer URLs only when search is verified working.
-// Otherwise use Google Shopping NZ — it's reliable and surfaces correct retailers.
+// V2: Universal Google Shopping NZ for ALL products.
+// Reliable, always works, surfaces correct NZ retailers.
+// V3: Replace with verified direct retailer deep links per category.
 
 function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, budgetMin, budgetMax, interests) {
-  const category = detectProductCategory(productName, productType);
-  const q = encodeURIComponent(cleanSearchTerm);
-  const qFull = encodeURIComponent(productName + ' NZ');
-  const sport = detectSportSpecialist(interests);
-
-  // ── CUSTOM/PERSONALISED → Google Shopping NZ ─────────────────────────────
-  if (category === 'custom') {
-    return { url: RETAILER_SEARCH.googleshopfull(productName), storeName: 'Google Shopping NZ' };
-  }
-
-  // ── EYEWEAR → Google Shopping NZ (surfaces Sunglass Hut, Specsavers etc) ─
-  // Sunglass Hut NZ routes through AU site with complex URL — Google Shopping
-  // reliably surfaces them and other NZ eyewear retailers
-  if (category === 'eyewear') {
-    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName)}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // ── LUGGAGE & TRAVEL ACCESSORIES → luggage.co.nz ─────────────────────────
-  if (category === 'luggage') {
-    return { url: `https://www.luggage.co.nz/catalogsearch/result/?q=${q}`, storeName: 'Luggage.co.nz' };
-  }
-
-  // ── FOOTWEAR → Google Shopping NZ ────────────────────────────────────────
-  // Rebel Sport and Number One Shoes use JS-rendered search — not reliably deep-linkable.
-  // Google Shopping NZ surfaces both of them plus other NZ footwear retailers.
-  if (category === 'footwear') {
-    return { url: `https://www.google.com/search?q=${encodeURIComponent(cleanSearchTerm)}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // ── SPORTSWEAR → Google Shopping NZ ──────────────────────────────────────
-  // Rebel Sport and Stirling Sports have JS search — Google Shopping surfaces both
-  if (category === 'sportswear') {
-    return { url: `https://www.google.com/search?q=${encodeURIComponent(cleanSearchTerm)}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // ── KIDS SPORT → Sport specialist if detected, else Google Shopping NZ ───
-  if (category === 'kidssport') {
-    if (sport === 'hockey') {
-      // Detect what type of hockey product to send to right category
-      const ps = (productName + ' ' + cleanSearchTerm).toLowerCase();
-      if (/shin|pad/.test(ps)) return { url: RETAILER_SEARCH.gohockey_pads(), storeName: 'Go Hockey' };
-      if (/bag/.test(ps))      return { url: RETAILER_SEARCH.gohockey_bags(), storeName: 'Go Hockey' };
-      return { url: RETAILER_SEARCH.gohockey_sticks(), storeName: 'Go Hockey' };
-    }
-    if (sport === 'soccer') {
-      return { url: RETAILER_SEARCH.soccerunited(q), storeName: 'Soccer United' };
-    }
-    // General kids sport → Google Shopping (surfaces Rebel Sport etc)
-    return { url: `https://www.google.com/search?q=${encodeURIComponent('kids ' + cleanSearchTerm)}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // ── TECH → PB Tech (low/medium) or JB Hi-Fi (high+) ─────────────────────
-  // Both have verified working search URLs
-  if (category === 'tech') {
-    if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: RETAILER_SEARCH.jbhifi(q), storeName: 'JB Hi-Fi' };
-    return { url: RETAILER_SEARCH.pbtech(q), storeName: 'PB Tech' };
-  }
-
-  // ── FITNESS GEAR → Google Shopping NZ ────────────────────────────────────
-  if (category === 'fitness') {
-    return { url: `https://www.google.com/search?q=${q}+NZ&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // ── OUTDOOR → Torpedo7 (verified search URL) ─────────────────────────────
-  if (category === 'outdoor') {
-    if (budgetTierKey === 'low')
-      return { url: `${RETAILER_SEARCH.thewarehouse(q)}&priceTo=${budgetMax}`, storeName: 'The Warehouse' };
-    return { url: RETAILER_SEARCH.torpedo7(q), storeName: 'Torpedo7' };
-  }
-
-  // ── FASHION → gender-aware routing ───────────────────────────────────────
-  // Glassons is women's only — only use for female/neutral recipients
-  if (category === 'fashion') {
-    const gender = detectGender(''); // gender passed separately, use general routing
-    if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: RETAILER_SEARCH.farmers(q), storeName: 'Farmers' };
-    if (budgetTierKey === 'medium')
-      return { url: RETAILER_SEARCH.farmers(q), storeName: 'Farmers' };
-    return { url: `${RETAILER_SEARCH.thewarehouse(q)}&priceTo=${budgetMax}`, storeName: 'The Warehouse' };
-  }
-
-  // ── BEAUTY ────────────────────────────────────────────────────────────────
-  if (category === 'beauty') {
-    if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: RETAILER_SEARCH.mecca(q), storeName: 'Mecca' };
-    if (budgetTierKey === 'medium')
-      return { url: RETAILER_SEARCH.sephora(q), storeName: 'Sephora' };
-    return { url: RETAILER_SEARCH.chemistwarehouse(q), storeName: 'Chemist Warehouse' };
-  }
-
-  // ── HOME & KITCHEN ────────────────────────────────────────────────────────
-  if (category === 'home') {
-    if (budgetTierKey === 'low')
-      return { url: RETAILER_SEARCH.kmart(q), storeName: 'Kmart' };
-    return { url: RETAILER_SEARCH.briscoes(q), storeName: 'Briscoes' };
-  }
-
-  // ── TOOLS ─────────────────────────────────────────────────────────────────
-  if (category === 'tools') {
-    return { url: RETAILER_SEARCH.bunnings(q), storeName: 'Bunnings' };
-  }
-
-  // ── BOOKS ─────────────────────────────────────────────────────────────────
-  if (category === 'books' || /\bbook\b|novel|cookbook|diary|\bjournal\b/.test((productName + ' ' + productType).toLowerCase())) {
-    return { url: RETAILER_SEARCH.whitcoulls(q), storeName: 'Whitcoulls' };
-  }
-
-  // ── GENERAL FALLBACK → The Warehouse with price filter ───────────────────
-  let url = RETAILER_SEARCH.thewarehouse(q);
-  if (budgetMin > 0 && budgetMax < 9999) url += `&priceFrom=${budgetMin}&priceTo=${budgetMax}`;
-  return { url, storeName: 'The Warehouse' };
+  // Build the best possible search query — product name is more descriptive than normalised term
+  const searchQuery = productName + ' NZ';
+  const url = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}&tbm=shop&gl=nz&hl=en`;
+  return { url, storeName: 'Google Shopping NZ' };
 }
 
 // ── SHOPPING CHIPS ────────────────────────────────────────────────────────────
@@ -580,7 +473,7 @@ export default async function handler(req, res) {
     : '';
 
   const sportHint = sport
-    ? `SPORT INTEREST DETECTED: The recipient is into ${sport.toUpperCase()}. At least ONE product MUST be directly related to ${sport} (e.g. ${sport} equipment, ${sport} gear, ${sport} accessories). Do not ignore this.`
+    ? `SPORT INTEREST DETECTED: The recipient is into ${sport.toUpperCase()}. At least TWO of the 3 products MUST be directly related to ${sport} — specific ${sport} gear, ${sport} equipment, or ${sport} accessories. Do NOT suggest unrelated products like hydration packs, generic sports bags, or generic fitness gear when a specific sport has been identified. Serve the sport.`
     : '';
 
   // ── Build vibe pool suggestions ────────────────────────────────────────────
