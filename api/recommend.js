@@ -538,6 +538,12 @@ Do NOT ignore the interests field. It is the most important personalisation sign
 RULE 8 — CUSTOM/PERSONALISED:
 For personalised/custom products (star maps, custom portraits, name jewellery), use a simple search term like "personalised star map print".
 
+RULE 9 — NO LAZY WORD ASSOCIATION:
+NEVER suggest drink bottles, water bottles, or hydration products unless the user has explicitly typed "drink bottle", "water bottle", or "hydration" in their interests.
+Swimming, yoga, running, cycling, sport, and fitness do NOT imply a drink bottle. There are always far better, more thoughtful gift options.
+Same rule applies to: generic sports socks (unless "socks" mentioned), generic caps/beanies (unless mentioned), generic towels (unless mentioned).
+Always pick the most relevant and interesting gift — not the most obvious word association.
+
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
   "products": [
