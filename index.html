@@ -498,6 +498,11 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
       <div class="fb-sub">Takes 30 seconds — your feedback makes the Genie smarter.</div>
 
       <div class="fb-section">
+        <span class="fb-lbl">Your name</span>
+        <input type="text" class="fb-textarea" id="fbName" placeholder="e.g. Sarah" maxlength="40" style="min-height:0;height:42px;resize:none" oninput="checkFbSubmit()"/>
+      </div>
+
+      <div class="fb-section">
         <span class="fb-lbl">Rate each area (1–5 stars)</span>
         <div class="star-row">
           <span class="star-row-lbl">⭐ Overall experience</span>
@@ -951,8 +956,9 @@ function setRating(key, groupId, val) {
 }
 
 function checkFbSubmit() {
-  // Require all 5 ratings filled
-  const allSet = Object.values(fbRatings).every(v => v > 0);
+  // Require name + all 5 ratings filled
+  const name = (document.getElementById('fbName')?.value || '').trim();
+  const allSet = name.length > 0 && Object.values(fbRatings).every(v => v > 0);
   const btn = document.getElementById('btnFbSubmit');
   if (btn) btn.disabled = !allSet;
 }
@@ -961,6 +967,7 @@ function openFeedback() {
   // Reset state
   Object.keys(fbRatings).forEach(k => fbRatings[k] = 0);
   document.getElementById('fbComment').value = '';
+  document.getElementById('fbName').value = '';
   document.getElementById('fbForm').style.display = '';
   document.getElementById('fbSent').style.display = 'none';
   document.getElementById('btnFbSubmit').disabled = true;
@@ -987,6 +994,7 @@ async function submitFeedback() {
     priceAccuracy: fbRatings.price,
     linkQuality:   fbRatings.links,
     uxRating:      fbRatings.ux,
+    testerName:    document.getElementById('fbName').value.trim() || 'Anonymous',
     comment:       document.getElementById('fbComment').value.trim(),
     // Quiz context — pass current session answers
     whoFor:    A.q2,
