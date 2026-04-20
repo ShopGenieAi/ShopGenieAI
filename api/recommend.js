@@ -555,6 +555,24 @@ Swimming, yoga, running, cycling, sport, and fitness do NOT imply a drink bottle
 Same rule applies to: generic sports socks (unless "socks" mentioned), generic caps/beanies (unless mentioned), generic towels (unless mentioned).
 Always pick the most relevant and interesting gift — not the most obvious word association.
 
+
+RULE 10 — NO LAZY HOODIE FILLER:
+When a specific sport is identified in interests, ALL 3 products MUST be specific to that sport. A sports hoodie is NOT a sport-specific product — it is generic activewear filler. Never use a sports hoodie, generic jersey, or generic activewear as a filler third product when a specific sport has been identified.
+There are ALWAYS 3 meaningful sport-specific products available:
+- Hockey → stick, shin pads, bag, gloves, mouth guard, goalkeeper pads, turf shoes
+- Swimming → goggles, fins, swim cap, kickboard, pull buoy, paddles, drag shorts
+- Football → boots, shin pads, ball, goalkeeper gloves, training bib, ankle support
+- Rugby → boots, mouthguard, headgear, tackle bag, training cones, jersey
+- Cricket → bat, gloves, helmet, batting pads, cricket ball, kit bag
+- Cycling → helmet, gloves, cycling shorts, lights set, bike computer, jersey
+- Running → running shoes, GPS watch, compression socks, foam roller, race belt
+- Tennis → racket, balls, grip tape, tennis bag, wristbands, court shoes
+- Golf → golf balls, glove, divot tool, golf towel, tee set, bag accessory
+- Netball → netball shoes, ball, knee pads, training bibs, ankle support
+- Gym → resistance bands, lifting gloves, gym bag, foam roller, protein shaker
+- Mountain Biking → helmet, gloves, knee pads, bike lights, cycling jersey
+If you cannot think of 3 sport-specific products, look harder — they always exist.
+
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
   "products": [
