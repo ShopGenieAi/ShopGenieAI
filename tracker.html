@@ -259,6 +259,13 @@ const TASKS = [
   {id:'v2-27',phase:'v2',title:'Step 5 — replace freetext with structured interest pills',tag:'ui',note:'Current freetext box too vague — users type "shin pads" expecting only shin pads. Replace with structured quick-pick categories: Sport (Football/Hockey/Rugby/Cricket/Swimming/Tennis/Golf/Cycling/Running/Surfing/Gym), Brand (Nike/Adidas/Kathmandu/Apple/Samsung etc), Style (Leather/Gold/Silver/Personalised/Eco-friendly), Hobby (Cooking/Gaming/Photography/Reading/Gardening/Travel/Music). Multi-select pills. Claude gets structured signal e.g. Sport:Hockey → 3 hockey-specific products.'},
   {id:'v2-28',phase:'v2',title:'Water bottle word association bug — sport activities triggering drink bottle',tag:'api',note:'Claude word-associates swimming/yoga/running with drink bottle. Fix: RULE 9 in Claude prompt — never suggest drink bottles unless explicitly mentioned in interests. Sport activities do not imply a drink bottle gift.'},
 
+  {id:'v2-29',phase:'v2',title:'Step 0 — Name capture (personalises loading screen + results)',tag:'ui',note:'First name collected before quiz. Used in loading screen ("Sarah\'s Genie is thinking…") and results heading. Logged to Brevo contacts as FIRSTNAME attribute.'},
+  {id:'v2-30',phase:'v2',title:'Step 5 — structured interest pills (Sport / Style / Hobby)',tag:'ui',note:'Replaced freetext with multi-select pill categories: Sport (Football/Hockey/Rugby/Cricket/Swimming/Tennis/Golf/Cycling/Running/Surfing/Gym/Netball/Mountain Biking/Volleyball) + Style (Leather/Gold/Silver/Personalised/Eco-friendly/Luxury/Retro) + Hobby (Cooking/Gaming/Photography/Reading/Gardening/Travel/Music/Fishing/Art & Craft/DIY). Default pills: Not sporty / No preference / Not sure. Freetext "Anything else?" box retained for brands and extra info.'},
+  {id:'v2-31',phase:'v2',title:'recommend.js overhaul — Gender awareness (RULE 6) + Interests mandatory (RULE 7)',tag:'api',note:'RULE 6: Gender awareness added — male recipients never get female-coded products. RULE 7: Structured interests are mandatory — sport interest triggers 2+ sport-specific products, style/hobby triggers at least 1 matching product. Sport specialist detection routes to GoHockey / SoccerUnited etc.'},
+  {id:'v2-32',phase:'v2',title:'Universal Google Shopping NZ buy button (v2 baseline)',tag:'api',note:'All buy buttons now use Google Shopping NZ (product name + NZ, tbm=shop&gl=nz). Reliable, always works, surfaces correct NZ retailers. Direct retailer deep links to be added in v3.'},
+  {id:'v2-33',phase:'v2',title:'Water bottle ban — RULE 9 in Claude prompt',tag:'api',note:'RULE 9: Never suggest drink bottles / water bottles unless user explicitly types it. Swimming/running/yoga/cycling do NOT imply a drink bottle. Same rule for generic sports socks, generic caps, generic towels.'},
+  {id:'v2-34',phase:'v2',title:'Brevo contact logging on every quiz submission',tag:'backend',note:'Every submission logged to Brevo contacts list ID 3 (ShopGenieAI Testers). Logs: FIRSTNAME, WHYFOR, VIBE, BUDGET, OCCASION, INTERESTS, PRODUCTS, LAST_SEEN, SOURCE. Uses dummy email for anonymous users. Enables user tracking without mandatory email gate.'},
+
   {id:'v3-1',phase:'v3',title:'Supabase search logging — capture every quiz submission',tag:'data',note:'Log: timestamp, quiz answers, products returned, retailers found, prices, click events'},
   {id:'v3-2',phase:'v3',title:'NZBN API verification for unknown domains',tag:'backend',note:'Verify .co.nz domains not in whitelist via portal.api.business.govt.nz before showing'},
   {id:'v3-3',phase:'v3',title:'Vercel cron job — background price refresh every 30 mins',tag:'infra',note:'Replaces live-check webhook idea. Show "last checked X mins ago" on prices'},
@@ -271,6 +278,7 @@ const TASKS = [
   {id:'v3-10',phase:'v3',title:'Post-April 8 Supabase anon key change test',tag:'infra',note:'Run test submission to confirm key change has no impact (assessed low risk)'},
   {id:'v3-11',phase:'v3',title:'Make.com Module 4 & 84 Anthropic connection re-link',tag:'infra',note:'Re-link connection 7673376, retype max_tokens as integer in Make UI'},
   {id:'v3-12',phase:'v3',title:'Brevo email — store chips as clickable links in email',tag:'backend',note:'Currently stores show as plain text in email. Add hyperlinks using retailer search URLs'},
+  {id:'v3-13',phase:'v3',title:'RCI — Retailer Click Intelligence (outbound click tracking)',tag:'data',note:'Track every "Shop This Gift" click. Route through /api/click?to=<encoded_url>&product=<n>&retailer=<store>&tier=<budget>&vibe=<vibe>&session=<id> before redirect. Log to Supabase: timestamp, product name, retailer domain, budget tier, vibe, occasion, session ID, whoFor. Powers retailer performance reports + affiliate negotiation data. Example pitch: "We sent 847 clicks to PB Tech last month — want a preferred placement deal?" Zero UX impact — click still lands on retailer instantly.'},
 
   {id:'v4-1',phase:'v4',title:'Breadcrumb extraction + semantic similarity verification',tag:'backend',note:'Puppeteer/Playwright scraper extracts breadcrumb nav, vector embedding comparison for category match'},
   {id:'v4-2',phase:'v4',title:'Product comparison engine — Price + Shipping + Category accuracy score',tag:'backend',note:'Score each result: price fit, retailer trust, category accuracy, shipping speed'},
@@ -286,7 +294,7 @@ const TASKS = [
 
 const TAG_CLASS = {ui:'tag-ui',api:'tag-api',backend:'tag-backend',data:'tag-data',infra:'tag-infra'};
 const TAG_LABEL = {ui:'UI',api:'API/Prompt',backend:'Backend',data:'Data',infra:'Infra'};
-const PHASE_LABEL = {v2:'Current Session',v3:'v3 — Next Sprint',v4:'v4 — Future Vision'};
+const PHASE_LABEL = {v2:'v2 — Current Build',v3:'v3 — Next Sprint',v4:'v4 — Future Vision'};
 
 let state = {};
 let sigTarget = null;
