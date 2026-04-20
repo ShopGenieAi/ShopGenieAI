@@ -61,6 +61,8 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 .name-input-wrap input{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:12px;font-family:var(--fb);font-size:1.1rem;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;text-align:center;font-weight:600}
 .name-input-wrap input:focus{border-color:var(--gold)}
 .name-input-wrap input::placeholder{color:#c4b09a;font-weight:400}
+.name-error{display:none;margin-top:10px;background:#2d1f0f;border:2px solid var(--terra);border-radius:10px;padding:11px 14px;font-size:.82rem;color:#f5e6c8;line-height:1.5;animation:fadeUp .3s ease both;text-align:center}
+.name-error.show{display:block}
 
 .step{display:none}
 .step.active{display:block;animation:fadeUp .4s ease both}
@@ -226,6 +228,7 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
           onkeydown="if(event.key==='Enter'&&this.value.trim())fromName()"/>
       </div>
       <div style="font-size:.73rem;color:#b5a190;margin-top:8px">So the Genie can personalise your picks 🧞</div>
+      <div class="name-error" id="nameError"></div>
       <div class="step-nav">
         <span></span>
         <button id="n0" onclick="fromName()" disabled class="btn-next hide">Let's go →</button>
@@ -522,8 +525,46 @@ function checkName(){
   if(btn){ btn.disabled=!val; val?btn.classList.remove('hide'):btn.classList.add('hide'); }
 }
 
+const BAD_NAMES = [
+  'sex','sexy','fuck','shit','cunt','dick','cock','ass','arse','bitch','bastard',
+  'wank','wanker','piss','prick','slag','slut','whore','twat','fanny','turd',
+  'penis','vagina','boobs','tits','naked','nude','porn','drugs','nazi','hitler',
+  'dogballs','dog balls','sugar plum','plum fairy',
+];
+const BAD_NAME_MSGS = [
+  "The Genie is gonna reach through the screen and backhand you for that name! 🖐️😂 Try again with your REAL name!",
+  "Ka kino! 😱 That's not a name, that's a cry for help. The Genie only grants wishes to people with REAL names!",
+  "Bro... your nan uses this app. Have some respect! 🧓 Pop in your actual name and let's get gifting!",
+  "Haere atu! 🧞 The Genie has seen some things but THAT name takes the pineapple lumps. Use your real name!",
+  "The Genie has reported your name to Santa's naughty list 🎅❌ Try again with something your mum would approve of!",
+  "Mate that's not a name, that's a crime 😂 The Genie refuses to work until you put in something decent!",
+];
+
 function fromName(){
-  const val=$('firstName').value.trim();
+  const val = $('firstName').value.trim();
+  const lower = val.toLowerCase().replace(/\s+/g,'');
+  const errEl = document.getElementById('nameError');
+
+  // Check for inappropriate names
+  const isBad = BAD_NAMES.some(t => lower.includes(t.replace(/\s+/g,'')));
+  // Check for non-name characters (numbers, symbols etc)
+  const hasWeirdChars = /[^a-zA-Z\s\-\']/.test(val);
+
+  if(isBad || hasWeirdChars){
+    const msg = isBad
+      ? BAD_NAME_MSGS[Math.floor(Math.random() * BAD_NAME_MSGS.length)]
+      : "Oi! Names only have letters mate 😂 No numbers or symbols — just your actual name!";
+    if(errEl){ errEl.textContent = msg; errEl.classList.add('show'); }
+    $('firstName').value = '';
+    $('firstName').focus();
+    const btn=$('n0');
+    if(btn){ btn.disabled=true; btn.classList.add('hide'); }
+    return;
+  }
+
+  // Clear any error
+  if(errEl) errEl.classList.remove('show');
+
   A.firstName = val || 'Friend';
   // Update loading screen with name
   const ldTitle=$('ldTitle');
