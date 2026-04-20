@@ -446,6 +446,20 @@ export default async function handler(req, res) {
 
   const { email, firstName = '', shoppingFor, whoFor, vibe, budgetTier, occasion, interests, refreshSeed = 0, excludeProducts = [] } = req.body;
 
+  // ── Name validation — block rude/inappropriate first names ─────────────────
+  const INAPPROPRIATE_NAMES = [
+    'sex','sexy','fuck','shit','cunt','dick','cock','ass','arse','bitch','bastard',
+    'wank','wanker','piss','prick','slag','slut','whore','twat','fanny','turd',
+    'penis','vagina','boobs','tits','naked','nude','porn','drugs','nazi','hitler',
+  ];
+  const cleanName = (firstName || '').toLowerCase().trim();
+  if (cleanName && INAPPROPRIATE_NAMES.some(t => cleanName.includes(t))) {
+    const msg = INAPPROPRIATE_MESSAGES[Math.floor(Math.random() * INAPPROPRIATE_MESSAGES.length)];
+    return res.status(400).json({ error: 'INAPPROPRIATE', message: msg });
+  }
+  // Sanitise name — only allow letters, spaces, hyphens, apostrophes (real names)
+  const safeName = (firstName || '').replace(/[^a-zA-Z\s\-\']/g, '').trim().slice(0, 30) || '';
+
   const allInputs = `${shoppingFor} ${whoFor} ${vibe} ${occasion} ${interests}`.toLowerCase();
   if (INAPPROPRIATE_TERMS.some(t => allInputs.includes(t))) {
     const msg = INAPPROPRIATE_MESSAGES[Math.floor(Math.random() * INAPPROPRIATE_MESSAGES.length)];
@@ -559,7 +573,7 @@ Always pick the most relevant and interesting gift — not the most obvious word
 RULE 10 — NO LAZY HOODIE FILLER:
 When a specific sport is identified in interests, ALL 3 products MUST be specific to that sport. A sports hoodie is NOT a sport-specific product — it is generic activewear filler. Never use a sports hoodie, generic jersey, or generic activewear as a filler third product when a specific sport has been identified.
 There are ALWAYS 3 meaningful sport-specific products available:
-- Hockey → stick, shin pads, bag, gloves, mouth guard, goalkeeper pads, turf shoes
+- Hockey → field hockey stick, shin pads, hockey bag, hockey gloves, mouth guard, goalkeeper pads, turf shoes, hockey grip tape, chamois hockey grip. NEW ZEALAND plays FIELD HOCKEY not ice hockey. NEVER suggest ice hockey products, hockey wax, hockey puck, or ice skates. Use "hockey grip tape" or "chamois hockey grip" NOT "hockey wax grip".
 - Swimming → goggles, fins, swim cap, kickboard, pull buoy, paddles, drag shorts
 - Football → boots, shin pads, ball, goalkeeper gloves, training bib, ankle support
 - Rugby → boots, mouthguard, headgear, tackle bag, training cones, jersey
@@ -670,7 +684,7 @@ Session: ${Date.now().toString(36)}`;
       const contactPayload = {
         email: contactEmail,
         attributes: {
-          FIRSTNAME:   firstName || 'Anonymous',
+          FIRSTNAME:   safeName || 'Anonymous',
           WHYFOR:      whoFor,
           VIBE:        vibe,
           BUDGET:      budgetLabel,
@@ -688,7 +702,7 @@ Session: ${Date.now().toString(36)}`;
         headers: { 'Content-Type': 'application/json', 'api-key': BREVO_KEY },
         body: JSON.stringify(contactPayload),
       });
-      console.log(`📋 Brevo contact logged: ${firstName || 'Anonymous'} | ${whoFor} | ${vibe} | ${budgetLabel}`);
+      console.log(`📋 Brevo contact logged: ${safeName || 'Anonymous'} | ${whoFor} | ${vibe} | ${budgetLabel}`);
     } catch(e) { console.error('Brevo contact error:', e); }
   }
 
