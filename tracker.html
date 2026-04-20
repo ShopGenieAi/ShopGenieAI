@@ -273,6 +273,7 @@ const TASKS = [
   {id:'v3-5',phase:'v3',title:'Supabase repeat control timing fix',tag:'backend',note:'GET runs before new product names are written — race condition on duplicate check'},
   {id:'v3-6',phase:'v3',title:'MAX_REFRESHES set to 5 for public launch',tag:'ui',note:'Currently set to 2 for friend testing'},
   {id:'v3-7',phase:'v3',title:'Friend testing round — collect feedback from 5+ testers',tag:'data',note:'Gather feedback on: product relevance, price accuracy, link quality, UX flow'},
+  {id:'v3-16',phase:'v3',title:'Live tester feedback form — real-time submissions to Mark',tag:'ui',note:'Standalone HTML page (not PDF). Testers fill in: name, what they tested, what worked, what did not, suggestions. Submits instantly via Brevo or similar — Mark sees feedback in real-time. Include a disclaimer: "We read everything — common bugs and popular requests will be prioritised. One-off suggestions may not make the cut but are always appreciated!" Keep it friendly and Kiwi. No login required, mobile-friendly, on-brand ShopGenieAI styling.'},
   {id:'v3-8',phase:'v3',title:'Disclaimer note added to quiz Step 5 (results page already done)',tag:'ui',note:'Step 5 disclaimer needs same bold treatment as results page note'},
   {id:'v3-9',phase:'v3',title:'In-app product cards post-quiz (eliminate Make.com pipeline)',tag:'infra',note:'v3 architecture: Vercel serverless → Claude → Serper → Brevo directly'},
   {id:'v3-10',phase:'v3',title:'Post-April 8 Supabase anon key change test',tag:'infra',note:'Run test submission to confirm key change has no impact (assessed low risk)'},
@@ -294,7 +295,7 @@ const TASKS = [
 
 const TAG_CLASS = {ui:'tag-ui',api:'tag-api',backend:'tag-backend',data:'tag-data',infra:'tag-infra'};
 const TAG_LABEL = {ui:'UI',api:'API/Prompt',backend:'Backend',data:'Data',infra:'Infra'};
-const PHASE_LABEL = {v2:'v2 — Current Build',v3:'v3 — Next Sprint',v4:'v4 — Future Vision'};
+const PHASE_LABEL = {v3:'v3 — Next Sprint 🚀',v2:'v2 — Completed ✅',v4:'v4 — Future Vision'};
 
 let state = {};
 let sigTarget = null;
@@ -319,7 +320,7 @@ function filter(f){
 
 function render(){
   const list = document.getElementById('taskList');
-  const phases = ['v2','v3','v4'];
+  const phases = ['v3','v2','v4'];
   let html = '';
 
   phases.forEach(phase => {
@@ -441,7 +442,7 @@ function updateStats(){
 }
 
 function updateProgress(){
-  ['v2','v3','v4'].forEach(ph => {
+  ['v3','v2','v4'].forEach(ph => {
     const all  = TASKS.filter(t=>t.phase===ph);
     const done = all.filter(t=>getTaskState(t.id).status==='done').length;
     const pct  = all.length ? Math.round((done/all.length)*100) : 0;
