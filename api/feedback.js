@@ -19,6 +19,7 @@ export default async function handler(req, res) {
     priceAccuracy,
     linkQuality,
     uxRating,
+    testerName,
     comment,
     // Quiz context — captured automatically
     whoFor,
@@ -55,6 +56,12 @@ export default async function handler(req, res) {
   <div style="text-align:center;margin-bottom:28px;">
     <div style="font-size:26px;font-weight:900;color:#3d2b1a;">🧞 ShopGenieAI</div>
     <div style="font-size:12px;color:#9a8878;font-style:italic;">Tester Feedback Report</div>
+  </div>
+
+  <!-- Tester name -->
+  <div style="background:white;border-radius:12px;border:1px solid #e8ddd0;padding:14px 20px;margin-bottom:16px;text-align:center;">
+    <div style="font-size:12px;color:#9a8878;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:4px;">Feedback from</div>
+    <div style="font-size:22px;font-weight:900;color:#3d2b1a;">${testerName || 'Anonymous'}</div>
   </div>
 
   <!-- Overall rating hero -->
@@ -142,7 +149,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         sender: { name: 'ShopGenieAI Feedback', email: 'saym577@gmail.com' },
         to: [{ email: 'saym577@gmail.com', name: 'Mark' }],
-        subject: `🧞 Tester Feedback — ${overallRating}/5 stars · ${vibe || ''} · ${whoFor || ''}`,
+        subject: `🧞 Tester Feedback from ${testerName || 'Anonymous'} — ${overallRating}/5 stars · ${vibe || ''} · ${whoFor || ''}`,
         htmlContent,
       }),
     });
