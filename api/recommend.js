@@ -218,7 +218,7 @@ function detectProductCategory(name, type) {
   if (/kids.*sport|kids.*running|kids.*football|kids.*cricket|kids.*hockey|kids.*soccer|kids.*rugby|kids.*shin|kids.*boot|kids.*racket|kids.*helmet|shin pad/.test(s)) return 'kidssport';
 
   // Tech & Electronics — includes sports/GPS watches
-  if (/headphone|earbud|speaker|audio|bluetooth\b|tv\b|television|laptop|tablet|\bphone\b|camera|projector|smart watch|smartwatch|gaming|gps watch|sports watch|running watch|activity tracker|fitness tracker/.test(s)) return 'tech';
+  if (/headphone|earbud|headset|speaker|audio|bluetooth\b|tv\b|television|laptop|tablet|\bphone\b|camera|projector|smart watch|smartwatch|gaming|gps watch|sports watch|running watch|activity tracker|fitness tracker|vr headset|mixed reality|spatial computing|vision pro/.test(s)) return 'tech';
 
   // Fitness gear
   if (/massage gun|weight vest|foam roller|resistance band|yoga mat|protein shaker|hydration pack|swim goggle|bike helmet|gym equipment|pull.up bar/.test(s)) return 'fitness';
