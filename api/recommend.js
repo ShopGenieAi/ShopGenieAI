@@ -832,7 +832,10 @@ Session: ${Date.now().toString(36)}`;
             ${p.bestStoreName?`<div style="font-size:12px;color:#9a8878;">Best match at ${p.bestStoreName}</div>`:''}</div>
             <a href="${p.buyLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Shop This Gift →</a>
           </div>
-          <div style="margin-top:10px;font-size:12px;color:#9a8878;">Also search: ${p.stores.map(s=>`<a href="${s.link}" style="color:#c8922a;">${s.name}</a>`).join(' · ')}</div>
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e8ddd0;">
+            <div style="font-size:11px;color:#9a8878;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Also search:</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">${p.stores.map(s=>`<a href="${s.link}" target="_blank" style="display:inline-block;background:rgba(122,158,126,.12);color:#3d7a50;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;text-decoration:none;border:1px solid rgba(122,158,126,.3);">${s.name}</a>`).join('')}</div>
+          </div>
         </div>`).join('');
 
       await fetch('https://api.brevo.com/v3/smtp/email', {
