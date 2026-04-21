@@ -193,7 +193,7 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
   <div class="tabs">
     <button class="tab t-all on" onclick="filter('all')">All tasks</button>
     <button class="tab t-v2" onclick="filter('v2')">Current session</button>
-    <button class="tab t-v3" onclick="filter('v3')">v3 — Next sprint</button>
+    <button class="tab t-v3" onclick="filter('v3')">v3 — Build the App</button>
     <button class="tab t-v4" onclick="filter('v4')">v4 — Future</button>
     <button class="tab t-all" onclick="filter('done')" style="border-color:var(--sage);color:var(--sage)" id="tabDone">Signed off</button>
     <button class="tab t-all" onclick="filter('blocked')" style="border-color:#d4a017;color:#d4a017" id="tabBlock">Blocked</button>
@@ -264,22 +264,27 @@ const TASKS = [
   {id:'v2-33',phase:'v2',title:'Water bottle ban — RULE 9 in Claude prompt',tag:'api',note:'RULE 9: Never suggest drink bottles / water bottles unless user explicitly types it. Swimming/running/yoga/cycling do NOT imply a drink bottle. Same rule for generic sports socks, generic caps, generic towels.'},
   {id:'v2-34',phase:'v2',title:'Brevo contact logging on every quiz submission',tag:'backend',note:'Every submission logged to Brevo contacts list ID 3 (ShopGenieAI Testers). Logs: FIRSTNAME, WHYFOR, VIBE, BUDGET, OCCASION, INTERESTS, PRODUCTS, LAST_SEEN, SOURCE. Uses dummy email for anonymous users. Enables user tracking without mandatory email gate.'},
 
-  {id:'v3-1',phase:'v3',title:'Supabase search logging — capture every quiz submission',tag:'data',note:'Log: timestamp, quiz answers, products returned, retailers found, prices, click events'},
+  // ── V3 — Build the App ────────────────────────────────────────────────────
+  // CORE — the actual point of v3
+  {id:'v3-9',phase:'v3',title:'In-app product cards — render 3 gift cards directly after quiz (no email required)',tag:'infra',note:'The whole point of v3. Architecture: Vercel serverless → Claude Haiku → Brave images → render cards in-app. Email becomes optional secondary delivery, not primary. Eliminates Make.com pipeline entirely.'},
   {id:'v3-14',phase:'v3',title:'Smart retailer routing — direct deep links per product category',tag:'api',note:'Replace universal Google Shopping NZ buy button with verified direct retailer search URLs per category. Tech→PB Tech. Fitness→Google Shopping NZ. Outdoor→Torpedo7. Fashion (low)→Warehouse, (mid)→Glassons, (high)→Farmers. Beauty (low)→Chemist Warehouse, (mid)→Sephora, (high)→Mecca. Books→Whitcoulls. Home (low)→Kmart, (mid+)→Briscoes. Tools→Bunnings. General→Warehouse with priceTo filter. All URLs verified working before deploy.'},
-  {id:'v3-15',phase:'v3',title:'Complete retailer routing map — all 9 categories x 5 budget tiers',tag:'api',note:'Full matrix: every category matched to the right retailer at every budget tier. Verify all search URL formats are live before flipping the switch. Google Shopping NZ chips remain as fallback on every card regardless.'},
-  {id:'v3-2',phase:'v3',title:'NZBN API verification for unknown domains',tag:'backend',note:'Verify .co.nz domains not in whitelist via portal.api.business.govt.nz before showing'},
-  {id:'v3-3',phase:'v3',title:'Vercel cron job — background price refresh every 30 mins',tag:'infra',note:'Replaces live-check webhook idea. Show "last checked X mins ago" on prices'},
-  {id:'v3-4',phase:'v3',title:'Top 50 NZ retailer whitelist with search URL patterns',tag:'data',note:'Expanded RETAILER_SEARCH_PATTERNS with breadcrumb CSS selectors per domain'},
-  {id:'v3-5',phase:'v3',title:'Supabase repeat control timing fix',tag:'backend',note:'GET runs before new product names are written — race condition on duplicate check'},
-  {id:'v3-6',phase:'v3',title:'MAX_REFRESHES set to 5 for public launch',tag:'ui',note:'Currently set to 2 for friend testing'},
-  {id:'v3-7',phase:'v3',title:'Friend testing round — collect feedback from 5+ testers',tag:'data',note:'Gather feedback on: product relevance, price accuracy, link quality, UX flow'},
-  {id:'v3-16',phase:'v3',title:'Live tester feedback form — real-time submissions to Mark',tag:'ui',note:'Standalone HTML page (not PDF). Testers fill in: name, what they tested, what worked, what did not, suggestions. Submits instantly via Brevo or similar — Mark sees feedback in real-time. Include a disclaimer: "We read everything — common bugs and popular requests will be prioritised. One-off suggestions may not make the cut but are always appreciated!" Keep it friendly and Kiwi. No login required, mobile-friendly, on-brand ShopGenieAI styling.'},
-  {id:'v3-8',phase:'v3',title:'Disclaimer note added to quiz Step 5 (results page already done)',tag:'ui',note:'Step 5 disclaimer needs same bold treatment as results page note'},
-  {id:'v3-9',phase:'v3',title:'In-app product cards post-quiz (eliminate Make.com pipeline)',tag:'infra',note:'v3 architecture: Vercel serverless → Claude → Serper → Brevo directly'},
-  {id:'v3-10',phase:'v3',title:'Post-April 8 Supabase anon key change test',tag:'infra',note:'Run test submission to confirm key change has no impact (assessed low risk)'},
-  {id:'v3-11',phase:'v3',title:'Make.com Module 4 & 84 Anthropic connection re-link',tag:'infra',note:'Re-link connection 7673376, retype max_tokens as integer in Make UI'},
-  {id:'v3-12',phase:'v3',title:'Brevo email — store chips as clickable links in email',tag:'backend',note:'Currently stores show as plain text in email. Add hyperlinks using retailer search URLs'},
-  {id:'v3-13',phase:'v3',title:'RCI — Retailer Click Intelligence (outbound click tracking)',tag:'data',note:'Track every "Shop This Gift" click. Route through /api/click?to=<encoded_url>&product=<n>&retailer=<store>&tier=<budget>&vibe=<vibe>&session=<id> before redirect. Log to Supabase: timestamp, product name, retailer domain, budget tier, vibe, occasion, session ID, whoFor. Powers retailer performance reports + affiliate negotiation data. Example pitch: "We sent 847 clicks to PB Tech last month — want a preferred placement deal?" Zero UX impact — click still lands on retailer instantly.'},
+  {id:'v3-15',phase:'v3',title:'Complete retailer routing map — all 9 categories x 5 budget tiers verified',tag:'api',note:'Full matrix: every category matched to the right retailer at every budget tier. Verify all search URL formats are live before flipping the switch. Google Shopping NZ chips remain as fallback on every card regardless.'},
+
+  // CARRY-OVER FROM V2 — unresolved bugs
+  {id:'v3-25',phase:'v3',title:'Sentimental vibe routing fix — custom/personalised products to Google Shopping NZ or Etsy',tag:'api',note:'BUG carried from v2: Personalised Constellation Star Map Print routed to The Warehouse — returned fridges. Custom/personalised products must route to Google Shopping NZ. Etsy reinstated for sentimental/custom vibe only (was globally blacklisted for over-recommending but IS correct for custom prints).'},
+  {id:'v3-26',phase:'v3',title:'Fashion/accessories routing fix — premium items must not go to The Warehouse',tag:'api',note:'BUG carried from v2: Sports sunglasses at High Budget (50-300) routing to The Warehouse. Premium sunglasses, sports apparel and accessories at High/BigWed/Lotto must route to Sunglass Hutt, Rebel Sport or Torpedo7. The Warehouse and Kmart are low-budget fashion only.'},
+
+  // TESTING & QUALITY
+  {id:'v3-6',phase:'v3',title:'MAX_REFRESHES → 5 for public launch',tag:'ui',note:'Currently set to 3 for friend testing. Bump to 5 before going public.'},
+  {id:'v3-7',phase:'v3',title:'Friend testing round — collect feedback from 5+ testers',tag:'data',note:'Gather structured feedback via the feedback form. Track: product relevance, price accuracy, link quality, UX flow. Aim for 5 real testers before public launch.'},
+  {id:'v3-16',phase:'v3',title:'Live tester feedback form — modal on results page',tag:'ui',note:'✅ Shipped. Star ratings (overall, relevance, price, link quality, UX) + optional comment. Auto-captures tester first name from quiz step 0. Emails Mark at saym577@gmail.com via Brevo on submit.'},
+  {id:'v3-27',phase:'v3',title:'Mobile UX pass — test on real iPhone and Android before public launch',tag:'ui',note:'Full end-to-end test on physical devices. Check: quiz flow, card swipe, buy button tap targets, feedback modal scroll, email prompt. Not just browser DevTools — real devices.'},
+  {id:'v3-28',phase:'v3',title:'Performance audit — API response time under realistic load',tag:'backend',note:'Measure Claude Haiku + Brave image response times. Target: results in under 10s on a NZ mobile connection. Identify bottlenecks before public launch. Check Vercel function timeout limits.'},
+
+  // GROWTH & REVENUE FOUNDATION
+  {id:'v3-13',phase:'v3',title:'RCI — Retailer Click Intelligence (outbound click tracking)',tag:'data',note:'Track every Shop This Gift click. Route through /api/click?to=<url>&product=<n>&retailer=<store>&tier=<budget>&vibe=<vibe> before redirect. Log: timestamp, product, retailer domain, budget tier, vibe, whoFor. Zero UX impact — redirect is instant. Lays groundwork for affiliate revenue pitch: "We sent 847 clicks to PB Tech last month."'},
+  {id:'v3-29',phase:'v3',title:'Share results button — let users share their 3 picks',tag:'ui',note:'After results load, add a Share button that generates a shareable summary (copy link or native share sheet on mobile). Massive organic growth lever — people share gift ideas with the person buying for them. Low effort, high impact.'},
+  {id:'v3-12',phase:'v3',title:'Brevo email — Google Shopping chips as clickable links',tag:'backend',note:'Currently the 3 Google Shopping chips (Shop NZ / Compare Prices / Top Rated) show as plain text in the Brevo email. Wire up as proper hyperlinks using the retailer search URLs already generated in recommend.js.'},
 
   {id:'v4-1',phase:'v4',title:'Breadcrumb extraction + semantic similarity verification',tag:'backend',note:'Puppeteer/Playwright scraper extracts breadcrumb nav, vector embedding comparison for category match'},
   {id:'v4-2',phase:'v4',title:'Product comparison engine — Price + Shipping + Category accuracy score',tag:'backend',note:'Score each result: price fit, retailer trust, category accuracy, shipping speed'},
@@ -295,7 +300,7 @@ const TASKS = [
 
 const TAG_CLASS = {ui:'tag-ui',api:'tag-api',backend:'tag-backend',data:'tag-data',infra:'tag-infra'};
 const TAG_LABEL = {ui:'UI',api:'API/Prompt',backend:'Backend',data:'Data',infra:'Infra'};
-const PHASE_LABEL = {v3:'v3 — Next Sprint 🚀',v2:'v2 — Completed ✅',v4:'v4 — Future Vision'};
+const PHASE_LABEL = {v3:'v3 — Build the App 🚀',v2:'v2 — Completed ✅',v4:'v4 — Future Vision'};
 
 let state = {};
 let sigTarget = null;
