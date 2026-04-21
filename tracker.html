@@ -282,10 +282,10 @@ const TASKS = [
   {id:'v3-28',phase:'v3',title:'Performance audit — API response time under realistic load',tag:'backend',note:'Measure Claude Haiku + Brave image response times. Target: results in under 10s on a NZ mobile connection. Identify bottlenecks before public launch. Check Vercel function timeout limits.'},
 
   // GROWTH & REVENUE FOUNDATION
-  {id:'v3-13',phase:'v3',title:'RCI — Retailer Click Intelligence (outbound click tracking)',tag:'data',note:'✅ Shipped. All buy buttons + store chips route through /api/click before redirect. Logs to Vercel + Supabase clicks table. Captures: product, store, type, vibe, budget, occasion, who-for, card position, timestamp.'},
-  {id:'v3-30',phase:'v3',title:'RCI Dashboard — /rci internal analytics page',tag:'ui',note:'✅ Shipped. Password-protected dashboard at shopgenieai.com/rci. Stat cards, bar charts (top products, stores, vibes, budgets), full click log table. Supabase backend, vibe filters, date range selector, auto-refreshes every 60s.'},
-  {id:'v3-29',phase:'v3',title:'Share results button — let users share their 3 picks',tag:'ui',note:'✅ Shipped. Share button on results page. Mobile: native OS share sheet (WhatsApp, iMessage etc). Desktop: copies shopgenieai.com to clipboard with toast pop-up confirmation.'},
-  {id:'v3-12',phase:'v3',title:'Brevo email — Google Shopping chips as clickable links',tag:'backend',note:'Currently the 3 Google Shopping chips (Shop NZ / Compare Prices / Top Rated) show as plain text in the Brevo email. Wire up as proper hyperlinks using the retailer search URLs already generated in recommend.js.'},
+  {id:'v3-11',phase:'v3',title:'RCI — Retailer Click Intelligence (outbound click tracking)',tag:'data',note:'✅ Shipped. All buy buttons + store chips route through /api/click before redirect. Logs to Vercel + Supabase clicks table. Captures: product, store, type, vibe, budget, occasion, who-for, card position, timestamp.'},
+  {id:'v3-12',phase:'v3',title:'RCI Dashboard — /rci internal analytics page',tag:'ui',note:'✅ Shipped. Password-protected dashboard at shopgenieai.com/rci. Stat cards, bar charts (top products, stores, vibes, budgets), full click log table. Supabase backend, vibe filters, date range selector, auto-refreshes every 60s.'},
+  {id:'v3-13',phase:'v3',title:'Share results button — native share sheet on mobile, clipboard on desktop',tag:'ui',note:'✅ Shipped. Share button on results page. Mobile: native OS share sheet (WhatsApp, iMessage etc). Desktop: copies shopgenieai.com to clipboard with toast pop-up confirmation.'},
+  {id:'v3-14',phase:'v3',title:'Brevo email — Google Shopping chips as clickable links',tag:'backend',note:'Currently the 3 Google Shopping chips (Shop NZ / Compare Prices / Top Rated) show as plain text in the Brevo email. Wire up as proper hyperlinks using the retailer search URLs already generated in recommend.js.'},
 
   {id:'v4-1',phase:'v4',title:'Breadcrumb extraction + semantic similarity verification',tag:'backend',note:'Puppeteer/Playwright scraper extracts breadcrumb nav, vector embedding comparison for category match'},
   {id:'v4-2',phase:'v4',title:'Product comparison engine — Price + Shipping + Category accuracy score',tag:'backend',note:'Score each result: price fit, retailer trust, category accuracy, shipping speed'},
@@ -354,7 +354,12 @@ function render(){
     const pending = tasks.filter(t => getTaskState(t.id).status !== 'done');
     const done    = tasks.filter(t => getTaskState(t.id).status === 'done');
     const sorted  = [...pending, ...done];
-    let displayNum = 1;
+
+    // Number pending tasks only — done tasks show a tick, number never shifts
+    const pendingNums = {};
+    let numCounter = 1;
+    tasks.forEach(t => { pendingNums[t.id] = numCounter++; });
+
     let dividerShown = false;
 
     sorted.forEach(t => {
@@ -372,6 +377,7 @@ function render(){
       const noteHtml = ts.note && isDone ? `<div class="task-note">💬 "${ts.note}"</div>` : '';
       const blockBtn   = !isDone && !isBlocked ? `<button class="btn-block" onclick="event.stopPropagation();markBlocked('${t.id}')">Mark blocked</button>` : '';
       const unblockBtn = isBlocked ? `<button class="btn-block" onclick="event.stopPropagation();unblock('${t.id}')">Unblock</button>` : '';
+      const displayNum = isDone ? '✓' : pendingNums[t.id];
 
       html += `<div class="task ${cls}" onclick="clickTask('${t.id}','${t.title.replace(/'/g,"\'")}')">
         <div class="check"><span class="check-tick">✓</span><span class="check-block">!</span></div>
@@ -386,7 +392,6 @@ function render(){
           ${sigHtml}${noteHtml}
         </div>
       </div>`;
-      displayNum++;
     });
     html += '</div></div>';
   });
