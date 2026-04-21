@@ -242,15 +242,122 @@ function detectProductCategory(name, type) {
 }
 
 // ── BUILD BUY LINK ────────────────────────────────────────────────────────────
-// V2: Universal Google Shopping NZ for ALL products.
-// Reliable, always works, surfaces correct NZ retailers.
-// V3: Replace with verified direct retailer deep links per category.
+// V3: Smart retailer routing — direct deep links per product category + budget tier.
+// Google Shopping NZ remains as fallback on chips for every card regardless.
 
 function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, budgetMin, budgetMax, interests) {
-  // Build the best possible search query — product name is more descriptive than normalised term
-  const searchQuery = productName + ' NZ';
-  const url = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}&tbm=shop&gl=nz&hl=en`;
-  return { url, storeName: 'Google Shopping NZ' };
+  const category = detectProductCategory(productName, productType);
+  const q  = encodeURIComponent(cleanSearchTerm);
+  const qp = encodeURIComponent(productName); // richer query for Google Shopping
+
+  // ── CUSTOM / SENTIMENTAL ─────────────────────────────────────────────────────
+  // Personalised, star maps, engraved, keepsakes — Google Shopping NZ is most
+  // reliable. Etsy reinstated for custom/sentimental only (was globally blacklisted
+  // for over-recommending but IS correct for custom prints).
+  if (category === 'custom') {
+    return { url: RETAILER_SEARCH.googleshopfull(productName + ' NZ'), storeName: 'Google Shopping NZ' };
+  }
+
+  // ── EYEWEAR ──────────────────────────────────────────────────────────────────
+  // Sunglass Hutt for all budgets — best NZ eyewear specialist. Rebel Sport as
+  // fallback for sports glasses via Google Shopping.
+  if (category === 'eyewear') {
+    return { url: `https://www.sunglasshut.com/nz/search?q=${q}`, storeName: 'Sunglass Hutt' };
+  }
+
+  // ── FOOTWEAR ─────────────────────────────────────────────────────────────────
+  // Google Shopping NZ — surfaces Rebel Sport, Number One Shoes, Shoe Warehouse
+  // (all have JS-rendered search so direct links are unreliable)
+  if (category === 'footwear') {
+    return { url: RETAILER_SEARCH.googleshopfull(productName + ' NZ'), storeName: 'Google Shopping NZ' };
+  }
+
+  // ── SPORTSWEAR / ACTIVE APPAREL ───────────────────────────────────────────────
+  // Rebel Sport via Google Shopping — reliable for sports apparel at all budgets
+  if (category === 'sportswear') {
+    return { url: RETAILER_SEARCH.googleshopfull(productName + ' NZ'), storeName: 'Google Shopping NZ' };
+  }
+
+  // ── KIDS SPORT GEAR ───────────────────────────────────────────────────────────
+  if (category === 'kidssport') {
+    return { url: RETAILER_SEARCH.googleshopfull('kids ' + productName + ' NZ'), storeName: 'Google Shopping NZ' };
+  }
+
+  // ── TECH & ELECTRONICS ───────────────────────────────────────────────────────
+  // PB Tech for all budgets — best NZ tech retailer, reliable search
+  if (category === 'tech') {
+    return { url: RETAILER_SEARCH.pbtech(q), storeName: 'PB Tech' };
+  }
+
+  // ── FITNESS GEAR ─────────────────────────────────────────────────────────────
+  // Google Shopping NZ — surfaces Rebel Sport, Torpedo7, and fitness specialists
+  if (category === 'fitness') {
+    return { url: RETAILER_SEARCH.googleshopfull(productName + ' NZ'), storeName: 'Google Shopping NZ' };
+  }
+
+  // ── OUTDOOR & ADVENTURE ──────────────────────────────────────────────────────
+  // Torpedo7 for medium+, The Warehouse for low budget
+  if (category === 'outdoor') {
+    if (budgetTierKey === 'low')
+      return { url: RETAILER_SEARCH.thewarehouse(q), storeName: 'The Warehouse' };
+    return { url: RETAILER_SEARCH.torpedo7(q), storeName: 'Torpedo7' };
+  }
+
+  // ── LUGGAGE & TRAVEL ──────────────────────────────────────────────────────────
+  // Farmers for premium, The Warehouse for low
+  if (category === 'luggage') {
+    if (['high','bigwed','lotto'].includes(budgetTierKey))
+      return { url: RETAILER_SEARCH.farmers(q), storeName: 'Farmers' };
+    return { url: RETAILER_SEARCH.thewarehouse(q), storeName: 'The Warehouse' };
+  }
+
+  // ── FASHION & CLOTHING ───────────────────────────────────────────────────────
+  // Premium → Farmers | Mid → Glassons (female) or Farmers (male/neutral) | Low → The Warehouse
+  if (category === 'fashion') {
+    if (['high','bigwed','lotto'].includes(budgetTierKey))
+      return { url: RETAILER_SEARCH.farmers(q), storeName: 'Farmers' };
+    if (budgetTierKey === 'medium')
+      return { url: `https://www.glassons.com/search?q=${q}`, storeName: 'Glassons' };
+    return { url: RETAILER_SEARCH.thewarehouse(q), storeName: 'The Warehouse' };
+  }
+
+  // ── BEAUTY & HEALTH ───────────────────────────────────────────────────────────
+  // Mecca for premium, Sephora for mid, Chemist Warehouse for low
+  if (category === 'beauty') {
+    if (['high','bigwed','lotto'].includes(budgetTierKey))
+      return { url: RETAILER_SEARCH.mecca(q), storeName: 'Mecca' };
+    if (budgetTierKey === 'medium')
+      return { url: RETAILER_SEARCH.sephora(q), storeName: 'Sephora' };
+    return { url: RETAILER_SEARCH.chemistwarehouse(q), storeName: 'Chemist Warehouse' };
+  }
+
+  // ── HOME & KITCHEN ────────────────────────────────────────────────────────────
+  // Briscoes for medium+, Kmart for low
+  if (category === 'home') {
+    if (budgetTierKey === 'low')
+      return { url: RETAILER_SEARCH.kmart(q), storeName: 'Kmart' };
+    return { url: RETAILER_SEARCH.briscoes(q), storeName: 'Briscoes' };
+  }
+
+  // ── TOOLS & HARDWARE ─────────────────────────────────────────────────────────
+  if (category === 'tools') {
+    return { url: RETAILER_SEARCH.bunnings(q), storeName: 'Bunnings' };
+  }
+
+  // ── BOOKS & STATIONERY ────────────────────────────────────────────────────────
+  if (category === 'books') {
+    return { url: RETAILER_SEARCH.whitcoulls(q), storeName: 'Whitcoulls' };
+  }
+
+  // ── GENERAL FALLBACK ──────────────────────────────────────────────────────────
+  // The Warehouse with price filter for low/medium, Google Shopping for premium
+  if (['high','bigwed','lotto'].includes(budgetTierKey)) {
+    return { url: RETAILER_SEARCH.googleshopfull(productName + ' NZ'), storeName: 'Google Shopping NZ' };
+  }
+  const warehouseUrl = budgetMax < 9999
+    ? `https://www.thewarehouse.co.nz/search?q=${q}&priceTo=${budgetMax}`
+    : RETAILER_SEARCH.thewarehouse(q);
+  return { url: warehouseUrl, storeName: 'The Warehouse' };
 }
 
 // ── SHOPPING CHIPS ────────────────────────────────────────────────────────────
