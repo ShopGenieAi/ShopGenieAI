@@ -2,7 +2,7 @@
 // ShopGenieAI — click.js
 // RCI Click Tracking — logs every "Shop This Gift" click then redirects
 // Captures: product, store, vibe, budget, occasion, who-for, timestamp
-// Logs to Vercel serverless console (visible in Vercel dashboard logs)
+// Persists to Supabase clicks table + logs to Vercel console
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -24,14 +24,11 @@ export default async function handler(req, res) {
   } = req.query;
 
   // ── Validate destination URL ───────────────────────────────────────────────
-  if (!url) {
-    return res.status(400).send('Missing destination URL');
-  }
+  if (!url) return res.status(400).send('Missing destination URL');
 
   let destination;
   try {
     destination = decodeURIComponent(url);
-    // Basic safety — only allow http/https destinations
     const parsed = new URL(destination);
     if (!['http:', 'https:'].includes(parsed.protocol)) {
       return res.status(400).send('Invalid URL protocol');
@@ -40,26 +37,42 @@ export default async function handler(req, res) {
     return res.status(400).send('Invalid URL');
   }
 
-  // ── Log the click ──────────────────────────────────────────────────────────
+  // ── Build click data ───────────────────────────────────────────────────────
   const clickData = {
-    ts: new Date().toISOString(),
-    product: product ? decodeURIComponent(product) : '(unknown)',
-    store:   store   ? decodeURIComponent(store)   : '(unknown)',
-    type:    type    ? decodeURIComponent(type)     : '(unknown)',
-    vibe:    vibe    ? decodeURIComponent(vibe)     : '(unknown)',
-    budget:  budget  ? decodeURIComponent(budget)  : '(unknown)',
-    occasion:occasion? decodeURIComponent(occasion): '(unknown)',
-    who:     who     ? decodeURIComponent(who)     : '(unknown)',
-    pos:     pos     || '?',
-    dest:    destination,
-    ip:      req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown',
-    ua:      req.headers['user-agent'] || 'unknown',
+    product:    product  ? decodeURIComponent(product)  : null,
+    store:      store    ? decodeURIComponent(store)    : null,
+    type:       type     ? decodeURIComponent(type)     : null,
+    vibe:       vibe     ? decodeURIComponent(vibe)     : null,
+    budget:     budget   ? decodeURIComponent(budget)   : null,
+    occasion:   occasion ? decodeURIComponent(occasion) : null,
+    who_for:    who      ? decodeURIComponent(who)      : null,
+    position:   pos      ? parseInt(pos, 10)            : null,
+    dest_url:   destination,
+    ip:         req.headers['x-forwarded-for']?.split(',')[0]?.trim() || null,
+    user_agent: req.headers['user-agent'] || null,
   };
 
-  // Structured log — shows up clean in Vercel Function Logs
-  console.log('[RCI_CLICK]', JSON.stringify(clickData));
+  // ── Log to console (Vercel logs) ───────────────────────────────────────────
+  console.log('[RCI_CLICK]', JSON.stringify({ ts: new Date().toISOString(), ...clickData }));
 
-  // ── Redirect to destination ────────────────────────────────────────────────
+  // ── Persist to Supabase (fire and forget — don't delay redirect) ──────────
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+  if (SUPABASE_URL && SUPABASE_KEY) {
+    fetch(`${SUPABASE_URL}/rest/v1/clicks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify(clickData),
+    }).catch(err => console.error('[RCI_CLICK] Supabase write failed:', err.message));
+  }
+
+  // ── Redirect immediately ───────────────────────────────────────────────────
   res.setHeader('Location', destination);
   return res.status(302).end();
 }
