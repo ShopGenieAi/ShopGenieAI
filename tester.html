@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ShopGenieAI Tester</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0d0d0d;--panel:#161616;--border:#252525;
+  --gold:#c8922a;--terra:#c4623a;--sage:#7a9e7e;--text:#e8e0d4;
+  --muted:#6b6055;--white:#fff;--green:#4ade80;--red:#f87171;--blue:#60a5fa;
+  /* Left panel — warm lighter tone */
+  --lp-bg:#201b14;--lp-border:#38302400;--lp-text:#d8ccbc;--lp-muted:#a09080;
+  --lp-label:#e8b84b;--lp-input:#2c2318;--lp-input-border:#3d3225;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* HEADER */
+.hdr{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;background:#111}
+.badge{background:var(--gold);color:#000;font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:3px}
+.hdr-title{font-family:'JetBrains Mono',monospace;font-size:.88rem;color:var(--white)}
+.hdr-count{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted)}
+
+/* LAYOUT */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* LEFT PANEL */
+.controls{width:295px;flex-shrink:0;border-right:2px solid #2e2418;display:flex;flex-direction:column;overflow-y:auto;background:var(--lp-bg)}
+.ctrl-section{padding:14px 16px;border-bottom:1px solid #2e2418}
+.ctrl-label{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--lp-label);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;font-weight:700}
+
+/* RANDOM BUTTON */
+.btn-random{width:100%;padding:14px 12px;border:none;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,var(--gold),var(--terra));font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700;color:#000;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(200,146,42,.35);line-height:1.3}
+.btn-random:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(200,146,42,.45)}
+.btn-random:active{transform:translateY(0)}
+.btn-random:disabled{opacity:.35;cursor:not-allowed;transform:none}
+
+/* FIELDS */
+.field{margin-bottom:10px}
+.field label{display:block;font-size:.64rem;color:var(--lp-muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-weight:600}
+.field select,.field input{width:100%;background:var(--lp-input);border:1px solid var(--lp-input-border);border-radius:6px;padding:7px 10px;color:var(--lp-text);font-family:'DM Sans',sans-serif;font-size:.84rem;outline:none;transition:border-color .15s;appearance:none}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23a09080' d='M5 7L1 2h8z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:22px;cursor:pointer}
+.field select:focus,.field input:focus{border-color:var(--gold)}
+.field select option{background:#2c2318;color:var(--lp-text)}
+
+.btn-manual{width:100%;padding:9px;border:1.5px solid var(--gold);border-radius:7px;background:transparent;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s;margin-top:4px}
+.btn-manual:hover{background:rgba(200,146,42,.12)}
+
+/* INTEREST ROWS */
+.int-row{margin-bottom:10px}
+.int-row-label{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--lp-label);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;font-weight:700}
+.int-pills-wrap{display:flex;flex-wrap:wrap;gap:4px}
+.tpill{padding:4px 10px;border-radius:20px;border:1px solid var(--lp-input-border);background:var(--lp-input);font-size:.72rem;color:var(--lp-muted);cursor:pointer;transition:all .15s;user-select:none;font-family:'DM Sans',sans-serif}
+.tpill:hover{border-color:var(--gold);color:var(--lp-text)}
+.tpill.sel{border-color:var(--gold);background:rgba(200,146,42,.2);color:var(--gold);font-weight:600}
+.int-summary{font-family:'JetBrains Mono',monospace;font-size:.64rem;color:var(--sage);margin-top:7px;background:rgba(122,158,126,.1);border-radius:5px;padding:5px 8px;border:1px solid rgba(122,158,126,.2);min-height:0}
+.tp-extra{width:100%;background:var(--lp-input);border:1px solid var(--lp-input-border);border-radius:6px;padding:7px 10px;color:var(--lp-text);font-family:'DM Sans',sans-serif;font-size:.78rem;outline:none;transition:border-color .15s;margin-top:4px}
+.tp-extra:focus{border-color:var(--gold)}
+.tp-extra::placeholder{color:var(--lp-muted)}
+
+.btn-clear{width:100%;padding:7px;background:none;border:1px solid #2e2418;border-radius:6px;color:var(--lp-muted);font-family:'JetBrains Mono',monospace;font-size:.68rem;cursor:pointer;transition:all .15s}
+.btn-clear:hover{border-color:var(--red);color:var(--red)}
+
+/* STATUS */
+.status-bar{padding:9px 16px;font-family:'JetBrains Mono',monospace;font-size:.72rem;border-bottom:1px solid var(--border);min-height:38px;display:flex;align-items:center;gap:8px;background:#111;flex-shrink:0}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-idle{background:var(--muted)}
+.dot-loading{background:var(--gold);animation:pulse 1s ease-in-out infinite}
+.dot-ok{background:var(--green)}
+.dot-err{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* RIGHT LOG */
+.log-panel{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px}
+
+/* RUN CARD */
+.run{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;animation:slideIn .25s ease;flex-shrink:0}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.run-hdr{padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:#1a1a1a}
+.run-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);background:#222;padding:2px 7px;border-radius:4px;flex-shrink:0}
+.run-params{display:flex;gap:5px;flex-wrap:wrap;flex:1}
+.run-chip{font-family:'JetBrains Mono',monospace;font-size:.64rem;background:#222;border:1px solid var(--border);border-radius:5px;padding:2px 8px;color:var(--text)}
+.run-chip.interests{border-color:rgba(200,146,42,.5);color:var(--gold);background:rgba(200,146,42,.08)}
+.run-time{font-family:'JetBrains Mono',monospace;font-size:.64rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.run-err{padding:14px;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--red)}
+
+/* PRODUCTS */
+.products{display:flex;flex-direction:column}
+.product{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.product:last-child{border-bottom:none}
+.product-img{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#222;border:1px solid var(--border);flex-shrink:0}
+.product-img-ph{width:56px;height:56px;border-radius:8px;background:#222;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.product-body{flex:1;min-width:0}
+.product-top{display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap}
+.product-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted)}
+.product-type{font-size:.62rem;color:var(--sage);font-weight:700;text-transform:uppercase;letter-spacing:.07em}
+.product-name{font-size:.92rem;font-weight:700;color:var(--white);margin-bottom:4px}
+.product-reason{font-size:.76rem;color:#a09080;line-height:1.5;margin-bottom:8px}
+.product-foot{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.product-store{font-family:'JetBrains Mono',monospace;font-size:.64rem;color:var(--blue);background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);padding:3px 9px;border-radius:10px}
+.btn-shop{font-family:'JetBrains Mono',monospace;font-size:.64rem;font-weight:700;color:var(--gold);background:rgba(200,146,42,.1);border:1px solid rgba(200,146,42,.3);padding:3px 10px;border-radius:5px;text-decoration:none;transition:all .15s;white-space:nowrap}
+.btn-shop:hover{background:var(--gold);color:#000}
+.chips-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.chip{font-size:.62rem;background:rgba(122,158,126,.07);color:var(--sage);padding:2px 7px;border-radius:8px;text-decoration:none;border:1px solid rgba(122,158,126,.15)}
+.chip:hover{background:rgba(122,158,126,.2)}
+.btn-copy{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:600;color:var(--muted);background:none;border:1px solid var(--border);border-radius:5px;padding:2px 8px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-copy:hover{border-color:var(--blue);color:var(--blue)}
+.btn-copy.copied{border-color:var(--green)!important;color:var(--green)!important}
+
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:10px;pointer-events:none;min-height:300px}
+.empty-state div:first-child{font-size:2.8rem}
+.empty-state div:last-child{font-family:'JetBrains Mono',monospace;font-size:.78rem}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="badge">DEV</div>
+  <div class="hdr-title">ShopGenieAI — API Tester</div>
+  <div class="hdr-count" id="runCount">0 tests run</div>
+</div>
+
+<div class="main">
+
+  <!-- LEFT CONTROLS -->
+  <div class="controls">
+
+    <div class="ctrl-section">
+      <div class="ctrl-label">Quick Test</div>
+      <button class="btn-random" id="btnRandom" onclick="randomiseAndRun()">🎲 Randomise &amp; Run</button>
+    </div>
+
+    <div class="ctrl-section" style="flex:1">
+      <div class="ctrl-label">Manual Override</div>
+
+      <div class="field">
+        <label>Who For</label>
+        <select id="whoFor">
+          <option>Partner Him</option><option>Partner Her</option>
+          <option>Child</option><option>Grandparent</option>
+          <option>Friend</option><option>Work Colleague</option>
+          <option>Mother</option><option>Father</option>
+          <option>Sister</option><option>Brother</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Vibe</label>
+        <select id="vibe">
+          <option>Sporty</option><option>Practical</option><option>Fun</option>
+          <option>Quirky</option><option>Eco-friendly</option><option>Luxe</option>
+          <option>Techy</option><option>Sentimental</option>
+          <option>Trendy</option><option>Surprise me</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Budget</label>
+        <select id="budgetTier">
+          <option value="low">Low 🤑 (&lt;$50)</option>
+          <option value="medium" selected>Medium 💸 ($50–150)</option>
+          <option value="high">High 🎯 ($150–300)</option>
+          <option value="bigwed">Big Wed 🎰 ($300–400)</option>
+          <option value="lotto">Lotto 🎉 ($500+)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Occasion</label>
+        <select id="occasion">
+          <option>Birthday</option><option>Christmas</option>
+          <option>Anniversary</option><option>Father's Day</option>
+          <option>Mother's Day</option><option>Valentine's Day</option>
+          <option>Just Because</option><option>Graduation</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Interests</label>
+
+        <div class="int-row">
+          <div class="int-row-label">🏆 Sport</div>
+          <div class="int-pills-wrap" id="tp-sport">
+            <div class="tpill sel" onclick="tpick(this,'sport','')">Not sporty</div>
+            <div class="tpill" onclick="tpick(this,'sport','Football')">Football</div>
+            <div class="tpill" onclick="tpick(this,'sport','Hockey')">Hockey</div>
+            <div class="tpill" onclick="tpick(this,'sport','Rugby')">Rugby</div>
+            <div class="tpill" onclick="tpick(this,'sport','Cricket')">Cricket</div>
+            <div class="tpill" onclick="tpick(this,'sport','Swimming')">Swimming</div>
+            <div class="tpill" onclick="tpick(this,'sport','Tennis')">Tennis</div>
+            <div class="tpill" onclick="tpick(this,'sport','Golf')">Golf</div>
+            <div class="tpill" onclick="tpick(this,'sport','Cycling')">Cycling</div>
+            <div class="tpill" onclick="tpick(this,'sport','Running')">Running</div>
+            <div class="tpill" onclick="tpick(this,'sport','Gym')">Gym</div>
+            <div class="tpill" onclick="tpick(this,'sport','Surfing')">Surfing</div>
+            <div class="tpill" onclick="tpick(this,'sport','Netball')">Netball</div>
+            <div class="tpill" onclick="tpick(this,'sport','Mountain Biking')">Mt Biking</div>
+            <div class="tpill" onclick="tpick(this,'sport','Volleyball')">Volleyball</div>
+          </div>
+        </div>
+
+        <div class="int-row">
+          <div class="int-row-label">✨ Style</div>
+          <div class="int-pills-wrap" id="tp-style">
+            <div class="tpill sel" onclick="tpick(this,'style','')">No preference</div>
+            <div class="tpill" onclick="tpick(this,'style','Leather')">Leather</div>
+            <div class="tpill" onclick="tpick(this,'style','Gold jewellery')">Gold</div>
+            <div class="tpill" onclick="tpick(this,'style','Silver jewellery')">Silver</div>
+            <div class="tpill" onclick="tpick(this,'style','Personalised')">Personalised</div>
+            <div class="tpill" onclick="tpick(this,'style','Eco-friendly')">Eco-friendly</div>
+            <div class="tpill" onclick="tpick(this,'style','Luxury')">Luxury</div>
+          </div>
+        </div>
+
+        <div class="int-row">
+          <div class="int-row-label">🎯 Hobby</div>
+          <div class="int-pills-wrap" id="tp-hobby">
+            <div class="tpill sel" onclick="tpick(this,'hobby','')">Not sure</div>
+            <div class="tpill" onclick="tpick(this,'hobby','Cooking')">Cooking</div>
+            <div class="tpill" onclick="tpick(this,'hobby','Gaming')">Gaming</div>
+            <div class="tpill" onclick="tpick(this,'hobby','Photography')">Photography</div>
+            <div class="tpill" onclick="tpick(this,'hobby','Reading')">Reading</div>
+            <div class="tpill" onclick="tpick(this,'hobby','Gardening')">Gardening</div>
+            <div class="tpill" onclick="tpick(this,'hobby','Music')">Music</div>
+            <div class="tpill" onclick="tpick(this,'hobby','Fishing')">Fishing</div>
+            <div class="tpill" onclick="tpick(this,'hobby','Travel')">Travel</div>
+            <div class="tpill" onclick="tpick(this,'hobby','Art & Craft')">Art & Craft</div>
+            <div class="tpill" onclick="tpick(this,'hobby','DIY')">DIY</div>
+          </div>
+        </div>
+
+        <div class="int-row">
+          <div class="int-row-label">💬 Anything else?</div>
+          <input class="tp-extra" type="text" id="tp-extra" placeholder="e.g. Nike, Kathmandu, loves gadgets..."/>
+        </div>
+
+        <div class="int-summary" id="tIntSummary"></div>
+      </div>
+
+      <button class="btn-manual" onclick="runManual()">▶ Run Manual Test</button>
+    </div>
+
+    <div class="ctrl-section">
+      <button class="btn-clear" onclick="clearLog()">🗑 Clear all results</button>
+    </div>
+
+  </div>
+
+  <!-- RIGHT LOG -->
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+
+    <div class="status-bar" id="statusBar">
+      <div class="dot dot-idle" id="statusDot"></div>
+      <span id="statusMsg">Ready — hit Randomise or fill in fields manually</span>
+    </div>
+
+    <div class="log-panel" id="logPanel">
+      <div class="empty-state" id="emptyState">
+        <div>🧞</div>
+        <div>Results appear here — newest at top</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const ENDPOINT = 'https://shopgenieai.com/api/recommend';
+
+const WHO      = ['Partner Him','Partner Her','Child','Grandparent','Friend','Work Colleague','Mother','Father','Sister','Brother'];
+const VIBES    = ['Sporty','Practical','Fun','Quirky','Eco-friendly','Luxe','Techy','Sentimental','Trendy','Surprise me'];
+const BUDGETS  = ['low','medium','high','bigwed','lotto'];
+const OCCASIONS= ['Birthday','Christmas','Anniversary',"Father's Day","Mother's Day","Valentine's Day","Just Because","Graduation"];
+const INTERESTS= [
+  'Hockey','Football','Rugby','Cricket','Swimming','Tennis','Golf','Cycling','Running','Gym',
+  'Nike','Adidas','Kathmandu','Garmin','Dyson','Apple',
+  'Leather','Personalised','Eco-friendly','Gold jewellery',
+  'Cooking','Gaming','Photography','Reading','Gardening','Music','Fishing','DIY',
+  'Hockey, Nike','Football, Adidas','Swimming, Garmin','Running, Nike',
+  '','','','',''
+];
+
+const tIntSel = {sport:'',style:'',hobby:''};
+
+function tpick(el, cat, val){
+  document.getElementById('tp-'+cat).querySelectorAll('.tpill').forEach(p=>p.classList.remove('sel'));
+  el.classList.add('sel');
+  tIntSel[cat] = val;
+  updateTIntSummary();
+}
+
+function updateTIntSummary(){
+  const parts = [];
+  if(tIntSel.sport) parts.push('⚽ ' + tIntSel.sport);
+  if(tIntSel.style) parts.push('✨ ' + tIntSel.style);
+  if(tIntSel.hobby) parts.push('🎯 ' + tIntSel.hobby);
+  const extra = document.getElementById('tp-extra')?.value?.trim();
+  if(extra) parts.push('💬 ' + extra);
+  const el = document.getElementById('tIntSummary');
+  if(el) el.textContent = parts.length ? parts.join('  ·  ') : '';
+}
+
+function getTInterests(){
+  const parts = [];
+  if(tIntSel.sport) parts.push(tIntSel.sport);
+  if(tIntSel.style) parts.push(tIntSel.style);
+  if(tIntSel.hobby) parts.push(tIntSel.hobby);
+  const extra = document.getElementById('tp-extra')?.value?.trim();
+  if(extra) parts.push(extra);
+  return parts.join(', ');
+}
+
+function resetTInterests(){
+  Object.keys(tIntSel).forEach(k => tIntSel[k] = '');
+  document.querySelectorAll('.tpill').forEach(p => p.classList.remove('sel'));
+  ['tp-sport','tp-style','tp-hobby'].forEach(id => {
+    document.getElementById(id)?.querySelector('.tpill')?.classList.add('sel');
+  });
+  const extra = document.getElementById('tp-extra');
+  if(extra) extra.value = '';
+  document.getElementById('tIntSummary').textContent = '';
+}
+
+let runCount = 0, running = false;
+let seenProducts = []; // tracks product names across all runs to prevent repeats
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function setStatus(type, msg){
+  document.getElementById('statusDot').className = `dot dot-${type}`;
+  document.getElementById('statusMsg').textContent = msg;
+}
+
+function setFields(p){
+  document.getElementById('whoFor').value     = p.whoFor;
+  document.getElementById('vibe').value       = p.vibe;
+  document.getElementById('budgetTier').value = p.budgetTier;
+  document.getElementById('occasion').value   = p.occasion;
+  resetTInterests();
+  if(p.interests){
+    const sportList = ['Hockey','Football','Rugby','Cricket','Swimming','Tennis','Golf','Cycling','Running','Gym','Surfing','Netball','Mountain Biking','Volleyball'];
+    const styleList = ['Leather','Personalised','Eco-friendly','Gold jewellery','Silver jewellery','Luxury'];
+    const hobbyList = ['Cooking','Gaming','Photography','Reading','Gardening','Travel','Music','Fishing','Art & Craft','DIY'];
+    p.interests.split(',').map(s=>s.trim()).forEach(part => {
+      if(sportList.includes(part)){
+        tIntSel.sport = part;
+        const el = document.querySelector(`#tp-sport .tpill[onclick*="${part}"]`);
+        if(el){ document.querySelectorAll('#tp-sport .tpill').forEach(p=>p.classList.remove('sel')); el.classList.add('sel'); }
+      } else if(styleList.includes(part)){
+        tIntSel.style = part;
+        const el = document.querySelector(`#tp-style .tpill[onclick*="${part}"]`);
+        if(el){ document.querySelectorAll('#tp-style .tpill').forEach(p=>p.classList.remove('sel')); el.classList.add('sel'); }
+      } else if(hobbyList.includes(part)){
+        tIntSel.hobby = part;
+        const el = document.querySelector(`#tp-hobby .tpill[onclick*="${part}"]`);
+        if(el){ document.querySelectorAll('#tp-hobby .tpill').forEach(p=>p.classList.remove('sel')); el.classList.add('sel'); }
+      } else {
+        const extra = document.getElementById('tp-extra');
+        if(extra) extra.value = part;
+      }
+    });
+    updateTIntSummary();
+  }
+}
+
+function getFields(){
+  return {
+    whoFor:     document.getElementById('whoFor').value,
+    vibe:       document.getElementById('vibe').value,
+    budgetTier: document.getElementById('budgetTier').value,
+    occasion:   document.getElementById('occasion').value,
+    interests:  getTInterests(),
+  };
+}
+
+async function randomiseAndRun(){
+  if(running) return;
+  const p = { whoFor:pick(WHO), vibe:pick(VIBES), budgetTier:pick(BUDGETS), occasion:pick(OCCASIONS), interests:pick(INTERESTS) };
+  setFields(p);
+  await fire(p);
+}
+
+async function runManual(){
+  if(running) return;
+  await fire(getFields());
+}
+
+async function fire(params){
+  running = true;
+  document.getElementById('btnRandom').disabled = true;
+  runCount++;
+  document.getElementById('runCount').textContent = `${runCount} test${runCount===1?'':'s'} run`;
+
+  const n = runCount;
+  const t = new Date().toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  setStatus('loading', `Running test #${n}… (${seenProducts.length} products excluded)`);
+  document.getElementById('emptyState').style.display = 'none';
+
+  const runEl = document.createElement('div');
+  runEl.className = 'run';
+  runEl.id = `run-${n}`;
+  runEl.innerHTML = `
+    <div class="run-hdr">
+      <div class="run-num">#${n}</div>
+      <div class="run-params">
+        <div class="run-chip">${params.whoFor}</div>
+        <div class="run-chip">${params.vibe}</div>
+        <div class="run-chip">${params.budgetTier}</div>
+        <div class="run-chip">${params.occasion}</div>
+        ${params.interests ? `<div class="run-chip interests">💬 ${params.interests}</div>` : ''}
+      </div>
+      <button class="btn-copy" id="bc-${n}" onclick="copyRun(${n})" disabled>📋 Copy for Z</button>
+      <div class="run-time">${t} · <span id="rt-${n}" style="color:var(--gold)">⏳</span></div>
+    </div>
+    <div id="rb-${n}" style="padding:14px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted)">Calling API…</div>
+  `;
+
+  // Insert at top — newest first
+  const logPanel = document.getElementById('logPanel');
+  logPanel.insertBefore(runEl, logPanel.firstChild);
+
+  const start = Date.now();
+  try {
+    const resp = await fetch(ENDPOINT, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        email:'', firstName:'Tester', shoppingFor:'A gift for someone',
+        whoFor:params.whoFor, vibe:params.vibe,
+        budgetTier:params.budgetTier, occasion:params.occasion,
+        interests:params.interests, refreshSeed:0, excludeProducts:[...seenProducts],
+      })
+    });
+    const elapsed = ((Date.now()-start)/1000).toFixed(1);
+    document.getElementById(`rt-${n}`).textContent = `${elapsed}s`;
+    const data = await resp.json();
+
+    if(!resp.ok){
+      const msg = data.message || data.error || `HTTP ${resp.status}`;
+      document.getElementById(`rb-${n}`).innerHTML = `<div class="run-err">❌ ${msg}</div>`;
+      setStatus('err', `Test #${n} failed — ${msg}`);
+      document.getElementById(`rt-${n}`).style.color = 'var(--red)';
+    } else {
+      const products = data.products || [];
+      window[`runData_${n}`] = { params, products, elapsed };
+      // Track seen products to prevent repeats across runs
+      products.forEach(p => { if(p.name && !seenProducts.includes(p.name)) seenProducts.push(p.name); });
+      document.getElementById(`bc-${n}`).disabled = false;
+      setStatus('ok', `Test #${n} ✓ — ${products.map(p=>p.name).join(' · ')} · ${elapsed}s`);
+      document.getElementById(`rt-${n}`).style.color = 'var(--green)';
+
+      document.getElementById(`rb-${n}`).innerHTML = `
+        <div class="products">
+          ${products.map((p,i) => `
+            <div class="product">
+              ${p.imageUrl
+                ? `<img class="product-img" src="${p.imageUrl}" alt="${p.name}" onerror="this.style.display='none'"/>`
+                : `<div class="product-img-ph">🎁</div>`}
+              <div class="product-body">
+                <div class="product-top">
+                  <span class="product-num">#${i+1}</span>
+                  <span class="product-type">${p.type||'Gift'}</span>
+                </div>
+                <div class="product-name">${p.name}</div>
+                <div class="product-reason">${p.reason}</div>
+                <div class="product-foot">
+                  <div class="product-store">→ ${p.bestStoreName}</div>
+                  <div class="product-store" style="border-color:rgba(122,158,126,.3);color:var(--sage)">🏷 ${p.type||'general'}</div>
+                  <a class="btn-shop" href="${p.buyLink}" target="_blank" rel="noopener">Shop ↗</a>
+                </div>
+                <div class="chips-row">
+                  ${(p.stores||[]).map(s=>`<a class="chip" href="${s.link}" target="_blank">${s.name}</a>`).join('')}
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+  } catch(e){
+    const elapsed = ((Date.now()-start)/1000).toFixed(1);
+    document.getElementById(`rb-${n}`).innerHTML = `<div class="run-err">❌ Network error: ${e.message}</div>`;
+    setStatus('err', `Test #${n} network error — ${e.message}`);
+    document.getElementById(`rt-${n}`).textContent = `${elapsed}s`;
+    document.getElementById(`rt-${n}`).style.color = 'var(--red)';
+  }
+
+  running = false;
+  document.getElementById('btnRandom').disabled = false;
+}
+
+function copyRun(n){
+  const d = window[`runData_${n}`];
+  if(!d) return;
+  const lines = [
+    `TEST #${n} — ${d.elapsed}s`,
+    `Who: ${d.params.whoFor} | Vibe: ${d.params.vibe} | Budget: ${d.params.budgetTier} | Occasion: ${d.params.occasion}`,
+    `Interests: "${d.params.interests || 'none'}"`,
+    ``,
+    ...d.products.map((p,i) => [
+      `Product ${i+1}: ${p.name}`,
+      `  Type: ${p.type}`,
+      `  Reason: ${p.reason}`,
+      `  Retailer: ${p.bestStoreName}`,
+      `  Link: ${p.buyLink}`,
+    ].join('\n')),
+  ].join('\n');
+  navigator.clipboard.writeText(lines).then(() => {
+    const btn = document.getElementById(`bc-${n}`);
+    btn.textContent = '✅ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 Copy for Z'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function clearLog(){
+  document.getElementById('logPanel').querySelectorAll('.run').forEach(el => el.remove());
+  runCount = 0;
+  seenProducts = [];
+  document.getElementById('runCount').textContent = '0 tests run';
+  document.getElementById('emptyState').style.display = 'flex';
+  setStatus('idle','Ready — hit Randomise or fill in fields manually');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('tp-extra')?.addEventListener('input', updateTIntSummary);
+});
+</script>
+</body>
+</html>
