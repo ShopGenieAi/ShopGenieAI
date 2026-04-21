@@ -820,6 +820,9 @@ Session: ${Date.now().toString(36)}`;
   }
 
   // ── STEP 3b: Brevo email ──────────────────────────────────────────────────
+  // Clean whoFor for display — remove surrounding quotes e.g. Partner "Her" → Partner Her
+  const displayWhoFor = (whoFor || '').replace(/['"]/g, '').trim();
+  const displayName   = safeName ? `, ${safeName}` : '';
   if (BREVO_KEY && email) {
     try {
       const rows = enriched.map((p, i) => `
@@ -844,14 +847,14 @@ Session: ${Date.now().toString(36)}`;
         body: JSON.stringify({
           sender: { name: 'ShopGenieAI', email: 'saym577@gmail.com' },
           to: [{ email }],
-          subject: '🧞 Your 3 personalised gift picks from ShopGenieAI',
+          subject: `🧞 Your 3 personalised gift picks from ShopGenieAI${displayName}`,
           htmlContent: `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
 <body style="margin:0;padding:0;background:#faf6f0;font-family:Arial,sans-serif;">
 <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
   <div style="text-align:center;margin-bottom:36px;"><div style="font-size:28px;font-weight:900;color:#3d2b1a;">🧞 ShopGenieAI</div><div style="font-size:13px;color:#9a8878;font-style:italic;">Your wish is my gift</div></div>
   <div style="background:white;border-radius:18px;padding:32px;border:1px solid #e8ddd0;margin-bottom:24px;">
-    <div style="font-size:22px;font-weight:700;color:#3d2b1a;margin-bottom:10px;">Here are your 3 gift picks! 🎁</div>
-    <div style="font-size:14px;color:#7a6855;">For <strong>${whoFor}</strong> · <strong>${occasion}</strong> · ${budgetLabel}</div>
+    <div style="font-size:22px;font-weight:700;color:#3d2b1a;margin-bottom:10px;">Here are your 3 gift picks${displayName}! 🎁</div>
+    <div style="font-size:14px;color:#7a6855;">For <strong>${displayWhoFor}</strong> · <strong>${occasion}</strong> · ${budgetLabel}</div>
   </div>
   <div style="background:white;border-radius:18px;padding:32px;border:1px solid #e8ddd0;margin-bottom:24px;">${rows}</div>
   <div style="background:#fff9f0;border-radius:12px;padding:16px 20px;border:1px solid #e8ddd0;margin-bottom:24px;font-size:12px;color:#9a8878;line-height:1.6;"><strong style="color:#3d2b1a;">📋 Note:</strong> Links open retailer search pages — browse and buy at your convenience!</div>
