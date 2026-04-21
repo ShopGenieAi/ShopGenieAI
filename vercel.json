@@ -10,6 +10,10 @@
       "use": "@vercel/static"
     },
     {
+      "src": "rci.html",
+      "use": "@vercel/static"
+    },
+    {
       "src": "api/recommend.js",
       "use": "@vercel/node"
     },
@@ -50,6 +54,14 @@
     {
       "src": "/tester.html",
       "dest": "/tester.html"
+    },
+    {
+      "src": "/rci",
+      "dest": "/rci.html"
+    },
+    {
+      "src": "/rci.html",
+      "dest": "/rci.html"
     },
     {
       "src": "/(.*)",
