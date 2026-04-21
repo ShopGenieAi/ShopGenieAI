@@ -765,10 +765,18 @@ async function sendEmail(){
   $('btnSendEmail').disabled=true;
   $('btnSendEmail').textContent='Sending…';
   try{
-    await fetch(`${location.origin}/api/recommend`,{
+    // Pass the EXACT products already on screen — no re-calling Claude
+    await fetch(`${location.origin}/api/email`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email,firstName:A.firstName,shoppingFor:A.q1,whoFor:A.q2,vibe:A.q3,budgetTier:A.budgetTier,occasion:A.occ,interests:A.interests,refreshSeed:refCount,excludeProducts:[]})
+      body:JSON.stringify({
+        email,
+        firstName:A.firstName,
+        whoFor:A.q2,
+        occasion:A.occ,
+        budgetTier:A.budgetTier,
+        products:lastProducts
+      })
     });
     $('emailInputRow').classList.remove('show');
     $('emailSentMsg').style.display='block';
