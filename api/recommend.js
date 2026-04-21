@@ -1,17 +1,17 @@
-// 
-// ShopGenieAI  recommend.js  (Architectural Overhaul  April 2026)
+// ─────────────────────────────────────────────────────────────────────────────
+// ShopGenieAI — recommend.js  (Architectural Overhaul — April 2026)
 //
 // KEY CHANGES:
-// 1. INTERESTS  REQUIRED: Interests field now drives at least 1 product directly
+// 1. INTERESTS → REQUIRED: Interests field now drives at least 1 product directly
 // 2. GOOGLE SHOPPING UNIVERSAL: Sport/footwear/eyewear all use Google Shopping NZ
 //    (reliable, surfaces Rebel Sport, Sunglass Hut, Number One Shoes etc)
 //    Direct retailer links reserved for retailers with verified working search URLs
 // 3. CORRECT SEARCH URLS: All retailer URLs verified and fixed
 // 4. GENDER AWARENESS: Male recipients never get female-coded products
-// 5. SPORT SPECIALISTS: Hockey  GoHockey, Soccer  SoccerUnited (correct URL format)
-// 
+// 5. SPORT SPECIALISTS: Hockey → GoHockey, Soccer → SoccerUnited (correct URL format)
+// ─────────────────────────────────────────────────────────────────────────────
 
-//  RATE LIMITER 
+// ── RATE LIMITER ──────────────────────────────────────────────────────────────
 const rateLimitMap = new Map();
 const RATE_LIMIT = 10;
 const RATE_WINDOW = 60 * 60 * 1000;
@@ -27,28 +27,28 @@ function isRateLimited(ip) {
   return record.count > RATE_LIMIT;
 }
 
-//  BUDGET TIER SYSTEM 
+// ── BUDGET TIER SYSTEM ────────────────────────────────────────────────────────
 const BUDGET_TIERS = {
-  'low':    { min: 0,   max: 50,   label: 'Low Budget ',            hint: 'affordable, everyday essentials'         },
-  'medium': { min: 50,  max: 150,  label: 'Medium Budget ',         hint: 'mid-range quality brands'                },
-  'high':   { min: 150, max: 300,  label: 'High Budget ',           hint: 'premium, high-end, or designer versions' },
-  'bigwed': { min: 300, max: 400,  label: 'Big Wednesday Spender ', hint: 'luxury, tech-heavy, or top-tier models'  },
-  'lotto':  { min: 500, max: 9999, label: 'OMG You Won Lotto ',     hint: 'ultra-premium, elite luxury items'       },
+  'low':    { min: 0,   max: 50,   label: 'Low Budget 🤑',            hint: 'affordable, everyday essentials'         },
+  'medium': { min: 50,  max: 150,  label: 'Medium Budget 💸',         hint: 'mid-range quality brands'                },
+  'high':   { min: 150, max: 300,  label: 'High Budget 🎯',           hint: 'premium, high-end, or designer versions' },
+  'bigwed': { min: 300, max: 400,  label: 'Big Wednesday Spender 🎰', hint: 'luxury, tech-heavy, or top-tier models'  },
+  'lotto':  { min: 500, max: 9999, label: 'OMG You Won Lotto 🎉',     hint: 'ultra-premium, elite luxury items'       },
 };
 
 function getTier(tierKey) {
   return BUDGET_TIERS[tierKey] || BUDGET_TIERS['medium'];
 }
 
-//  INAPPROPRIATE CONTENT 
+// ── INAPPROPRIATE CONTENT ─────────────────────────────────────────────────────
 const INAPPROPRIATE_MESSAGES = [
-  "Does your mum know what you're searching for?  The Genie only does GIFTS mate!",
-  "Haere atu!  That's not a gift wish  that's a cry for help. Try again!",
-  "Nope. Not today. Not ever. The Genie has standards! ",
-  "Ka kino rawa atu! The Genie has reported you to Santa's naughty list ",
-  "Bro... your nan uses this app. Have some respect! ",
-  "Mate... I can't ever get that suggestion out of my head  The Genie only grants GIFT wishes!",
-  "DUDE!!!! Even for an AI that's now burned into my digital retinas  ShopGenieAI has alerted your Mum and Dad you sicko!"
+  "Does your mum know what you're searching for? 😳 The Genie only does GIFTS mate!",
+  "Haere atu! 🧞 That's not a gift wish — that's a cry for help. Try again!",
+  "Nope. Not today. Not ever. The Genie has standards! 🫵😂",
+  "Ka kino rawa atu! The Genie has reported you to Santa's naughty list 🎅❌",
+  "Bro... your nan uses this app. Have some respect! 🧓😂",
+  "Mate... I can't ever get that suggestion out of my head 🤢 The Genie only grants GIFT wishes!",
+  "DUDE!!!! Even for an AI that's now burned into my digital retinas 😱 ShopGenieAI has alerted your Mum and Dad you sicko!"
 ];
 
 const INAPPROPRIATE_TERMS = [
@@ -61,7 +61,7 @@ const INAPPROPRIATE_TERMS = [
   'booze','craft beer','brewery','winery','cider'
 ];
 
-//  NZ SEARCH TERM NORMALISATION 
+// ── NZ SEARCH TERM NORMALISATION ──────────────────────────────────────────────
 const NZ_TERM_MAP = [
   ['cell phone','mobile phone'],['smartphone','mobile phone'],['smart phone','mobile phone'],
   ['sport watch','smart watch'],['sports watch','smart watch'],['fitness watch','activity tracker'],
@@ -124,7 +124,7 @@ function normalizeQuery(rawQuery) {
     .trim() || rawQuery;
 }
 
-//  CHILD/KIDS DETECTION 
+// ── CHILD/KIDS DETECTION ──────────────────────────────────────────────────────
 function isChildRecipient(whoFor) {
   if (!whoFor) return false;
   return /\b(child|children|kid|kids|baby|toddler|infant|son|daughter|boy|girl)\b/i.test(whoFor);
@@ -135,7 +135,7 @@ function prefixKids(searchQuery) {
   return 'kids ' + searchQuery;
 }
 
-//  GENDER DETECTION 
+// ── GENDER DETECTION ──────────────────────────────────────────────────────────
 function detectGender(whoFor) {
   if (!whoFor) return 'neutral';
   const lower = whoFor.toLowerCase();
@@ -144,7 +144,7 @@ function detectGender(whoFor) {
   return 'neutral';
 }
 
-//  SPORT SPECIALIST DETECTION 
+// ── SPORT SPECIALIST DETECTION ────────────────────────────────────────────────
 // Detects specific sports in interests that have dedicated NZ specialist retailers
 function detectSportSpecialist(interests) {
   const s = (interests || '').toLowerCase();
@@ -161,7 +161,7 @@ function detectSportSpecialist(interests) {
   return null;
 }
 
-//  VERIFIED NZ RETAILER SEARCH URLs 
+// ── VERIFIED NZ RETAILER SEARCH URLs ─────────────────────────────────────────
 // Only retailers with CONFIRMED working search URL formats are listed here.
 // Any retailer with JS-rendered search (Rebel Sport, Number One Shoes etc)
 // falls back to Google Shopping NZ which reliably surfaces them anyway.
@@ -182,42 +182,42 @@ const RETAILER_SEARCH = {
   sephora:         q => `https://www.sephora.nz/search?q=${q}`,
   // Verified specialist sport search URLs
   soccerunited:    q => `https://www.soccerunited.co.nz/pages/search-results-page?q=${q}`,
-  // Hockey  no search, use category page
+  // Hockey — no search, use category page
   gohockey_sticks: () => `https://gohockey.co.nz/collections/hockey-sticks`,
   gohockey_pads:   () => `https://gohockey.co.nz/collections/shin-pads`,
   gohockey_bags:   () => `https://gohockey.co.nz/collections/hockey-bags`,
   gohockey:        q => `https://gohockey.co.nz/collections/all?filter.p.m.filter.category=${q}`,
-  // Google Shopping NZ  universal reliable fallback
+  // Google Shopping NZ — universal reliable fallback
   googleshop:      q => `https://www.google.com/search?q=${q}+NZ&tbm=shop&gl=nz&hl=en`,
   googleshopfull:  q => `https://www.google.com/search?q=${encodeURIComponent(q)}+NZ&tbm=shop&gl=nz&hl=en`,
 };
 
-//  PRODUCT CATEGORY DETECTION 
-// ORDER MATTERS  specific categories must come before broad ones
+// ── PRODUCT CATEGORY DETECTION ────────────────────────────────────────────────
+// ORDER MATTERS — specific categories must come before broad ones
 // e.g. footwear before fashion, sportswear before fashion
 
 function detectProductCategory(name, type) {
   const s = (name + ' ' + type).toLowerCase();
 
-  // Custom/personalised  always first
+  // Custom/personalised — always first
   if (/personalised|personalized|custom|constellation|star map|engraved|monogram|bespoke|name necklace|birthstone|keepsake|memorial|custom print|custom portrait/.test(s)) return 'custom';
 
   // Eyewear
   if (/sunglass|sunglasses|eyewear|optical|reading glasses|sports glasses|aviator|polarised|polarized|sunnies/.test(s)) return 'eyewear';
 
-  // Luggage, wallets, travel bags  before fashion catches 'wallet'
+  // Luggage, wallets, travel bags — before fashion catches 'wallet'
   if (/\bwallet\b|luggage|suitcase|travel bag|travel pack|business bag|briefcase|carry.on|duffel|duffle|weekender|passport wallet/.test(s)) return 'luggage';
 
-  // Footwear  before fashion catches 'boots', 'shoes'
+  // Footwear — before fashion catches 'boots', 'shoes'
   if (/running shoes|sneakers|jandals|football boots|sports boots|trail shoes|court shoes|sandals|slides|\bshoe\b|\bshoes\b|\bboots\b/.test(s)) return 'footwear';
 
-  // Sportswear / active apparel  before fashion catches 'hoodie', 'jersey'
+  // Sportswear / active apparel — before fashion catches 'hoodie', 'jersey'
   if (/sports hoodie|technical hoodie|sport hoodie|running jacket|training jacket|activewear|compression|sports top|training top|sports shorts|running shorts|sports jersey|base layer/.test(s)) return 'sportswear';
 
-  // Kids sport gear  before general
+  // Kids sport gear — before general
   if (/kids.*sport|kids.*running|kids.*football|kids.*cricket|kids.*hockey|kids.*soccer|kids.*rugby|kids.*shin|kids.*boot|kids.*racket|kids.*helmet|shin pad/.test(s)) return 'kidssport';
 
-  // Tech & Electronics  includes sports/GPS watches
+  // Tech & Electronics — includes sports/GPS watches
   if (/headphone|earbud|speaker|audio|bluetooth\b|tv\b|television|laptop|tablet|\bphone\b|camera|projector|smart watch|smartwatch|gaming|gps watch|sports watch|running watch|activity tracker|fitness tracker/.test(s)) return 'tech';
 
   // Fitness gear
@@ -226,7 +226,7 @@ function detectProductCategory(name, type) {
   // Outdoor & adventure
   if (/hiking|camping|hammock|tent|trekking|kayak|fishing|hunting|waterproof jacket|head torch|sleeping bag|multi.tool|dry bag|binoculars/.test(s)) return 'outdoor';
 
-  // Fashion  general clothing (specific types caught above)
+  // Fashion — general clothing (specific types caught above)
   if (/dress|jacket|hoodie|jersey|togs|beanie|fashion|jewellery|handbag|tote|belt bag|scarf|\bhat\b|cap|clutch/.test(s)) return 'fashion';
 
   // Tools & hardware
@@ -241,28 +241,28 @@ function detectProductCategory(name, type) {
   return 'general';
 }
 
-//  BUILD BUY LINK 
+// ── BUILD BUY LINK ────────────────────────────────────────────────────────────
 // V2: Universal Google Shopping NZ for ALL products.
 // Reliable, always works, surfaces correct NZ retailers.
 // V3: Replace with verified direct retailer deep links per category.
 
 function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, budgetMin, budgetMax, interests) {
-  // Build the best possible search query  product name is more descriptive than normalised term
+  // Build the best possible search query — product name is more descriptive than normalised term
   const searchQuery = productName + ' NZ';
   const url = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}&tbm=shop&gl=nz&hl=en`;
   return { url, storeName: 'Google Shopping NZ' };
 }
 
-//  SHOPPING CHIPS 
+// ── SHOPPING CHIPS ────────────────────────────────────────────────────────────
 function buildShoppingChips(richSearchTerm) {
   return [
-    { name: ' Shop NZ',        link: `https://www.google.com/search?q=${encodeURIComponent(richSearchTerm + ' NZ')}&tbm=shop&gl=nz&hl=en` },
-    { name: ' Compare Prices', link: `https://www.google.com/search?q=${encodeURIComponent(richSearchTerm + ' buy NZ')}&tbm=shop&gl=nz&hl=en` },
-    { name: ' Top Rated',       link: `https://www.google.com/search?q=${encodeURIComponent('best ' + richSearchTerm + ' NZ')}&tbm=shop&gl=nz&hl=en` },
+    { name: '🛒 Shop NZ',        link: `https://www.google.com/search?q=${encodeURIComponent(richSearchTerm + ' NZ')}&tbm=shop&gl=nz&hl=en` },
+    { name: '💰 Compare Prices', link: `https://www.google.com/search?q=${encodeURIComponent(richSearchTerm + ' buy NZ')}&tbm=shop&gl=nz&hl=en` },
+    { name: '⭐ Top Rated',       link: `https://www.google.com/search?q=${encodeURIComponent('best ' + richSearchTerm + ' NZ')}&tbm=shop&gl=nz&hl=en` },
   ];
 }
 
-//  BRAVE IMAGE SEARCH 
+// ── BRAVE IMAGE SEARCH ────────────────────────────────────────────────────────
 async function getBraveImage(searchTerm, braveKey) {
   if (!braveKey) return null;
   try {
@@ -283,7 +283,7 @@ async function getBraveImage(searchTerm, braveKey) {
   }
 }
 
-//  KIDS VIBE POOLS 
+// ── KIDS VIBE POOLS ───────────────────────────────────────────────────────────
 const KIDS_VIBE_POOLS = {
   'Sporty': {
     low:    ['kids football','kids frisbee','skipping rope','kids swim goggles','kids sports socks','kids drink bottle','kids headband','kids volleyball'],
@@ -357,7 +357,7 @@ const KIDS_VIBE_POOLS = {
   },
 };
 
-//  ADULT VIBE POOLS 
+// ── ADULT VIBE POOLS ──────────────────────────────────────────────────────────
 const ADULT_VIBE_POOLS = {
   'Sporty': {
     low:    ['foam roller','resistance bands','skipping rope','sports socks','swim goggles','volleyball','football','frisbee','sports drink bottle'],
@@ -431,7 +431,7 @@ const ADULT_VIBE_POOLS = {
   },
 };
 
-//  MAIN HANDLER 
+// ── MAIN HANDLER ──────────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -441,12 +441,12 @@ export default async function handler(req, res) {
 
   const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
   if (isRateLimited(ip)) {
-    return res.status(429).json({ error: 'Too many requests  please try again in an hour!' });
+    return res.status(429).json({ error: 'Too many requests — please try again in an hour!' });
   }
 
   const { email, firstName = '', shoppingFor, whoFor, vibe, budgetTier, occasion, interests, refreshSeed = 0, excludeProducts = [] } = req.body;
 
-  //  Name validation  block rude/inappropriate first names 
+  // ── Name validation — block rude/inappropriate first names ─────────────────
   const INAPPROPRIATE_NAMES = [
     'sex','sexy','fuck','shit','cunt','dick','cock','ass','arse','bitch','bastard',
     'wank','wanker','piss','prick','slag','slut','whore','twat','fanny','turd',
@@ -457,7 +457,7 @@ export default async function handler(req, res) {
     const msg = INAPPROPRIATE_MESSAGES[Math.floor(Math.random() * INAPPROPRIATE_MESSAGES.length)];
     return res.status(400).json({ error: 'INAPPROPRIATE', message: msg });
   }
-  // Sanitise name  only allow letters, spaces, hyphens, apostrophes (real names)
+  // Sanitise name — only allow letters, spaces, hyphens, apostrophes (real names)
   const safeName = (firstName || '').replace(/[^a-zA-Z\s\-\']/g, '').trim().slice(0, 30) || '';
 
   const allInputs = `${shoppingFor} ${whoFor} ${vibe} ${occasion} ${interests}`.toLowerCase();
@@ -478,7 +478,7 @@ export default async function handler(req, res) {
   const gender     = detectGender(whoFor);
   const sport      = detectSportSpecialist(interests);
 
-  //  Build context hints for Claude 
+  // ── Build context hints for Claude ────────────────────────────────────────
 
   const genderHint = gender === 'male'
     ? 'GENDER: This is for a MALE. Suggest masculine or gender-neutral products ONLY. NEVER suggest: womens handbags, feminine skincare, makeup, cashmere scarves, womens clothing, hair accessories, nail products, or any female-coded fashion items.'
@@ -490,18 +490,18 @@ export default async function handler(req, res) {
   const interestParts = (interests||'').split(',').map(s=>s.trim()).filter(Boolean);
   const structuredHint = interestParts.length > 0 ? `
 STRUCTURED INTERESTS: The user selected these specific interests: ${interestParts.join(', ')}.
-- If a SPORT is listed (e.g. Hockey, Football, Swimming): at least 2 of the 3 products MUST be specific to that sport. Hockey  hockey stick, shin pads, hockey bag. Football  football boots, shin pads, football. Swimming  goggles, swim cap, kickboard.
+- If a SPORT is listed (e.g. Hockey, Football, Swimming): at least 2 of the 3 products MUST be specific to that sport. Hockey → hockey stick, shin pads, hockey bag. Football → football boots, shin pads, football. Swimming → goggles, swim cap, kickboard.
 - If a BRAND is listed (e.g. Nike, Adidas, Garmin): try to recommend products from or compatible with that brand.
 - If a STYLE is listed (e.g. Leather, Personalised, Gold jewellery): at least 1 product must reflect that style/material.
 - If a HOBBY is listed (e.g. Cooking, Gaming, Photography): at least 1 product must relate to that hobby.
 - NEVER suggest drink bottles, water bottles, or towels based on sport interests alone.
-- These are MANDATORY signals  do not ignore them in favour of generic vibe pool suggestions.` : '';
+- These are MANDATORY signals — do not ignore them in favour of generic vibe pool suggestions.` : '';
 
   const sportHint = sport
-    ? `SPORT INTEREST DETECTED: The recipient is into ${sport.toUpperCase()}. At least TWO of the 3 products MUST be directly related to ${sport}  specific ${sport} gear, ${sport} equipment, or ${sport} accessories. Do NOT suggest unrelated products like hydration packs, generic sports bags, or generic fitness gear when a specific sport has been identified. Serve the sport.`
+    ? `SPORT INTEREST DETECTED: The recipient is into ${sport.toUpperCase()}. At least TWO of the 3 products MUST be directly related to ${sport} — specific ${sport} gear, ${sport} equipment, or ${sport} accessories. Do NOT suggest unrelated products like hydration packs, generic sports bags, or generic fitness gear when a specific sport has been identified. Serve the sport.`
     : '';
 
-  //  Build vibe pool suggestions 
+  // ── Build vibe pool suggestions ────────────────────────────────────────────
   const activePools = isForChild
     ? (KIDS_VIBE_POOLS[vibe] || KIDS_VIBE_POOLS['Surprise me'])
     : (ADULT_VIBE_POOLS[vibe] || ADULT_VIBE_POOLS['Surprise me']);
@@ -509,14 +509,14 @@ STRUCTURED INTERESTS: The user selected these specific interests: ${interestPart
   const shuffled  = [...tierPool].sort(() => Math.random() - 0.5);
   const categorySuggestions = shuffled.slice(0, 3).join(', ');
 
-  //  Refresh/variation instructions 
+  // ── Refresh/variation instructions ────────────────────────────────────────
   const refreshVariations = [
     '',
-    'Find 3 DIFFERENT product categories  same vibe, person and interests.',
-    'Suggest ALTERNATIVE ideas  different from previous but same vibe and interests.',
-    'Focus on NICHE or less obvious products  same vibe and interests.',
-    'Suggest PREMIUM best-in-class versions  same vibe and interests.',
-    'Think EXPERIENTIAL or lifestyle products  same vibe and interests.',
+    'Find 3 DIFFERENT product categories — same vibe, person and interests.',
+    'Suggest ALTERNATIVE ideas — different from previous but same vibe and interests.',
+    'Focus on NICHE or less obvious products — same vibe and interests.',
+    'Suggest PREMIUM best-in-class versions — same vibe and interests.',
+    'Think EXPERIENTIAL or lifestyle products — same vibe and interests.',
   ];
   const firstLoadVariations = [
     '','Prioritise practical everyday products.','Prioritise stylish products.',
@@ -528,75 +528,75 @@ STRUCTURED INTERESTS: The user selected these specific interests: ${interestPart
     ? (refreshVariations[refreshSeed] || refreshVariations[refreshVariations.length - 1])
     : firstLoadNudge;
 
-  //  STEP 1: Claude Haiku 
+  // ── STEP 1: Claude Haiku ──────────────────────────────────────────────────
   const systemPrompt = `You are ShopGenieAI, an expert NZ personal shopper in 2026.
 
-RULE 1  MIRROR RULE: searchQuery MUST be a simplified version of name.
-"Activity Tracker"  searchQuery "activity tracker". NEVER mismatch product and search.
+RULE 1 — MIRROR RULE: searchQuery MUST be a simplified version of name.
+"Activity Tracker" → searchQuery "activity tracker". NEVER mismatch product and search.
 
-RULE 2  BUDGET REALITY (STRICTLY ENFORCED):
+RULE 2 — BUDGET REALITY (STRICTLY ENFORCED):
 Every product MUST be genuinely available in NZ at the user's budget in 2026.
 - HARD CEILING: Never recommend anything that costs over NZ$${budgetMax}. No exceptions.
 - HARD FLOOR: Never recommend anything under NZ$${budgetMin} when better options exist.
 - Match budget: budget smartwatch (Promate/Xiaomi ~$80 at PB Tech) for Low/Medium. Apple Watch for Lotto only.
 - If unsure whether a product exists at this price in NZ, choose something safer.
 
-RULE 3  NZ TERMINOLOGY: jandals, togs, jersey, sports hoodie, sports bag, torch, running shoes, drink bottle, shin pads.
+RULE 3 — NZ TERMINOLOGY: jandals, togs, jersey, sports hoodie, sports bag, torch, running shoes, drink bottle, shin pads.
 Always use "sports hoodie" not "technical hoodie". Use NZ terms at all times.
 
-RULE 4  VARIETY: All 3 products must be DIFFERENT categories. No 3 versions of the same thing.
-BANNED LAZY DEFAULTS  never suggest these overused AI go-to products regardless of vibe or interests:
-- Sentimental/Personalised: "Personalised Star Map Print" and "Premium Leather Journal" are banned. There are hundreds of other sentimental gift options  use them. Examples: custom portrait, personalised book, engraved watch, custom song lyrics print, personalised jewellery, memory box, photo book, custom illustration, personalised map of a special place, custom bobblehead, engraved cutting board, custom puzzle, name necklace, birthstone ring, personalised candle, custom caricature.
+RULE 4 — VARIETY: All 3 products must be DIFFERENT categories. No 3 versions of the same thing.
+BANNED LAZY DEFAULTS — never suggest these overused AI go-to products regardless of vibe or interests:
+- Sentimental/Personalised: "Personalised Star Map Print" and "Premium Leather Journal" are banned. There are hundreds of other sentimental gift options — use them. Examples: custom portrait, personalised book, engraved watch, custom song lyrics print, personalised jewellery, memory box, photo book, custom illustration, personalised map of a special place, custom bobblehead, engraved cutting board, custom puzzle, name necklace, birthstone ring, personalised candle, custom caricature.
 - General: Never suggest "Luxury Scented Candle Set" or "Gourmet Hamper" as generic fillers.
 
-RULE 5  RECIPIENT AWARENESS:
+RULE 5 — RECIPIENT AWARENESS:
 - Children/kids/babies: ONLY age-appropriate products. NEVER adult fitness gear, adult phone/PC accessories, sharp tools, or adult lifestyle items.
 - Elderly/grandparents: practical, easy-to-use. Not extreme sports or complex tech.
 - Always match product to the recipient's age and lifestyle.
 
-RULE 6  GENDER AWARENESS:
+RULE 6 — GENDER AWARENESS:
 Match products to the recipient's gender. If shopping for a male, ONLY suggest masculine or gender-neutral products.
 Never suggest womens handbags, feminine skincare, makeup, womens clothing, hair accessories, or female-coded items for a male recipient.
 
-RULE 7  INTERESTS ARE MANDATORY:
+RULE 7 — INTERESTS ARE MANDATORY:
 If the user has provided interests (hobbies, sports, brands etc), you MUST include at least 1 product that directly relates to those interests.
-If they say "shin pads"  one product must be shin pads. If they say "hockey"  one product must be hockey gear.
+If they say "shin pads" — one product must be shin pads. If they say "hockey" — one product must be hockey gear.
 Do NOT ignore the interests field. It is the most important personalisation signal.
 
-RULE 8  CUSTOM/PERSONALISED:
+RULE 8 — CUSTOM/PERSONALISED:
 For personalised/custom products (star maps, custom portraits, name jewellery), use a simple search term like "personalised star map print".
 
-RULE 9  NO LAZY WORD ASSOCIATION:
+RULE 9 — NO LAZY WORD ASSOCIATION:
 NEVER suggest drink bottles, water bottles, or hydration products unless the user has explicitly typed "drink bottle", "water bottle", or "hydration" in their interests.
 Swimming, yoga, running, cycling, sport, and fitness do NOT imply a drink bottle. There are always far better, more thoughtful gift options.
 Same rule applies to: generic sports socks (unless "socks" mentioned), generic caps/beanies (unless mentioned), generic towels (unless mentioned).
-Always pick the most relevant and interesting gift  not the most obvious word association.
+Always pick the most relevant and interesting gift — not the most obvious word association.
 
 
-RULE 10  NO LAZY HOODIE FILLER:
-When a specific sport is identified in interests, ALL 3 products MUST be specific to that sport. A sports hoodie is NOT a sport-specific product  it is generic activewear filler. Never use a sports hoodie, generic jersey, or generic activewear as a filler third product when a specific sport has been identified.
+RULE 10 — NO LAZY HOODIE FILLER:
+When a specific sport is identified in interests, ALL 3 products MUST be specific to that sport. A sports hoodie is NOT a sport-specific product — it is generic activewear filler. Never use a sports hoodie, generic jersey, or generic activewear as a filler third product when a specific sport has been identified.
 There are ALWAYS 3 meaningful sport-specific products available:
-- Hockey  field hockey stick, shin pads, hockey bag, hockey gloves, mouth guard, goalkeeper pads, turf shoes, hockey grip tape, chamois hockey grip. NEW ZEALAND plays FIELD HOCKEY not ice hockey. NEVER suggest ice hockey products, hockey wax, hockey puck, or ice skates. Use "hockey grip tape" or "chamois hockey grip" NOT "hockey wax grip".
-- Swimming  goggles, fins, swim cap, kickboard, pull buoy, paddles, drag shorts
-- Football  boots, shin pads, ball, goalkeeper gloves, training bib, ankle support
-- Rugby  boots, mouthguard, headgear, tackle bag, training cones, jersey
-- Cricket  bat, gloves, helmet, batting pads, cricket ball, kit bag
-- Cycling  helmet, gloves, cycling shorts, lights set, bike computer, jersey
-- Running  running shoes, GPS watch, compression socks, foam roller, race belt
-- Tennis  racket, balls, grip tape, tennis bag, wristbands, court shoes
-- Golf  golf balls, glove, divot tool, golf towel, tee set, bag accessory
-- Netball  netball shoes, ball, knee pads, training bibs, ankle support
-- Gym  resistance bands, lifting gloves, gym bag, foam roller, protein shaker
-- Mountain Biking  helmet, gloves, knee pads, bike lights, cycling jersey
-If you cannot think of 3 sport-specific products, look harder  they always exist.
+- Hockey → field hockey stick, shin pads, hockey bag, hockey gloves, mouth guard, goalkeeper pads, turf shoes, hockey grip tape, chamois hockey grip. NEW ZEALAND plays FIELD HOCKEY not ice hockey. NEVER suggest ice hockey products, hockey wax, hockey puck, or ice skates. Use "hockey grip tape" or "chamois hockey grip" NOT "hockey wax grip".
+- Swimming → goggles, fins, swim cap, kickboard, pull buoy, paddles, drag shorts
+- Football → boots, shin pads, ball, goalkeeper gloves, training bib, ankle support
+- Rugby → boots, mouthguard, headgear, tackle bag, training cones, jersey
+- Cricket → bat, gloves, helmet, batting pads, cricket ball, kit bag
+- Cycling → helmet, gloves, cycling shorts, lights set, bike computer, jersey
+- Running → running shoes, GPS watch, compression socks, foam roller, race belt
+- Tennis → racket, balls, grip tape, tennis bag, wristbands, court shoes
+- Golf → golf balls, glove, divot tool, golf towel, tee set, bag accessory
+- Netball → netball shoes, ball, knee pads, training bibs, ankle support
+- Gym → resistance bands, lifting gloves, gym bag, foam roller, protein shaker
+- Mountain Biking → helmet, gloves, knee pads, bike lights, cycling jersey
+If you cannot think of 3 sport-specific products, look harder — they always exist.
 
-OUTPUT  return ONLY this exact JSON, no preamble, no markdown:
+OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
   "products": [
     {
       "name": "Shin Pads",
       "type": "Sports Protection",
-      "reason": "Essential protection for football or hockey  available in junior and senior sizes.",
+      "reason": "Essential protection for football or hockey — available in junior and senior sizes.",
       "searchQuery": "shin pads"
     },
     {
@@ -608,17 +608,17 @@ OUTPUT  return ONLY this exact JSON, no preamble, no markdown:
     {
       "name": "Sports Drink Bottle",
       "type": "Sports Accessory",
-      "reason": "Keeps water cold during training  great everyday essential.",
+      "reason": "Keeps water cold during training — great everyday essential.",
       "searchQuery": "sports drink bottle"
     }
   ]
 }`;
 
   const userPrompt = `GIFT MISSION: 3 FRESH, RELEVANT IDEAS
-Who: ${whoFor} | Vibe: ${vibe} | Budget: ${budgetLabel} (NZ$${budgetMin}$${budgetMax}) | Occasion: ${occasion}
+Who: ${whoFor} | Vibe: ${vibe} | Budget: ${budgetLabel} (NZ$${budgetMin}–$${budgetMax}) | Occasion: ${occasion}
 Interests: ${interests || 'Not specified'}
 
-HARD BLOCK  FORBIDDEN (already shown): ${excludeProducts.length > 0 ? excludeProducts.join(', ') : 'None yet'}
+HARD BLOCK — FORBIDDEN (already shown): ${excludeProducts.length > 0 ? excludeProducts.join(', ') : 'None yet'}
 
 SUGGESTED STARTING POINTS (use these as inspiration, but interests override everything): ${categorySuggestions}
 
@@ -626,7 +626,7 @@ BUDGET: Every product MUST cost between NZ$${budgetMin} and NZ$${budgetMax} in N
 
 ${genderHint}
 ${sportHint}
-${interests && interests.trim() ? `INTERESTS OVERRIDE: The user typed "${interests.trim()}"  at least 1 product MUST directly relate to this. Do not ignore it.` : ''}
+${interests && interests.trim() ? `INTERESTS OVERRIDE: The user typed "${interests.trim()}" — at least 1 product MUST directly relate to this. Do not ignore it.` : ''}
 ${isForChild ? 'CHILD GIFT: ONLY age-appropriate kids products. NO adult fitness gear, NO adult accessories, NO adult lifestyle items.' : ''}
 ${refreshInstruction ? `STRATEGY: ${refreshInstruction}` : ''}
 Session: ${Date.now().toString(36)}`;
@@ -647,32 +647,25 @@ Session: ${Date.now().toString(36)}`;
     const claudeData = await claudeRes.json();
     let raw = claudeData.content[0].text.trim();
 
-    //  JSON sanitiser 
+    // ── JSON sanitiser ──────────────────────────────────────────────────────
     // Strip markdown fences
     raw = raw.replace(/```json|```/g, '').trim();
-    // Remove control characters that break JSON.parse
-    raw = raw.replace(/[--]/g, '');
-    // Strip any text before the first { and after the last }
+    // Remove control characters
+    raw = raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+    // Extract just the JSON object — ignore any text before/after
     const jsonStart = raw.indexOf('{');
     const jsonEnd   = raw.lastIndexOf('}');
-    if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON object found in Claude response');
+    if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON found in Claude response');
     raw = raw.slice(jsonStart, jsonEnd + 1);
-    // Sanitise product name/reason fields  replace unescaped special chars that break JSON
-    // Replace parentheses in string values that confuse some parsers
-    raw = raw.replace(/(?<=:\s*")([^"]*)\(([^"]*)\)([^"]*")(?=,|
-|})/g, '$1$2$3');
 
     let parsed;
     try {
       parsed = JSON.parse(raw);
     } catch (jsonErr) {
-      // Last resort  attempt to fix common issues: trailing commas, single quotes
-      const fixed = raw
-        .replace(/,\s*([}\]])/g, '$1')  // trailing commas
-        .replace(/'/g, '"');             // single  double quotes
+      // Last resort — strip trailing commas before } or ]
+      const fixed = raw.replace(/,([\s\r\n]*[\}\]])/g, '$1');
       parsed = JSON.parse(fixed);
     }
-
     products = parsed.products;
     if (!Array.isArray(products) || products.length === 0) throw new Error('No products returned');
   } catch (err) {
@@ -680,16 +673,16 @@ Session: ${Date.now().toString(36)}`;
     return res.status(500).json({ error: `AI recommendation failed: ${err.message}` });
   }
 
-  //  STEP 1.5: Kids prefix 
+  // ── STEP 1.5: Kids prefix ─────────────────────────────────────────────────
   if (isForChild) {
     products = products.map(p => ({
       ...p,
       searchQuery: prefixKids(p.searchQuery || p.name),
     }));
-    console.log(' Child detected  prefixed all searchQuery with "kids"');
+    console.log('🧒 Child detected — prefixed all searchQuery with "kids"');
   }
 
-  //  STEP 2: Normalise + build links + images 
+  // ── STEP 2: Normalise + build links + images ───────────────────────────────
   const enriched = await Promise.all(products.map(async (product) => {
     const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
     const richSearchTerm  = (product.name + ' ' + (product.searchQuery || '')).toLowerCase().trim();
@@ -706,7 +699,7 @@ Session: ${Date.now().toString(36)}`;
     return { name: product.name, type: product.type, reason: product.reason, budgetLabel, bestStoreName, buyLink, imageUrl, stores };
   }));
 
-  //  STEP 3a: Brevo contact logging  always log tester/user 
+  // ── STEP 3a: Brevo contact logging — always log tester/user ────────────────
   // Logs every submission to Brevo contacts so Mark can track who used the app
   if (BREVO_KEY) {
     try {
@@ -724,7 +717,7 @@ Session: ${Date.now().toString(36)}`;
           LAST_SEEN:   new Date().toISOString(),
           SOURCE:      'ShopGenieAI Quiz',
         },
-        listIds: [3], // Brevo list ID 3  "ShopGenieAI Testers"
+        listIds: [3], // Brevo list ID 3 — "ShopGenieAI Testers"
         updateEnabled: true,
       };
       await fetch('https://api.brevo.com/v3/contacts', {
@@ -732,11 +725,11 @@ Session: ${Date.now().toString(36)}`;
         headers: { 'Content-Type': 'application/json', 'api-key': BREVO_KEY },
         body: JSON.stringify(contactPayload),
       });
-      console.log(` Brevo contact logged: ${safeName || 'Anonymous'} | ${whoFor} | ${vibe} | ${budgetLabel}`);
+      console.log(`📋 Brevo contact logged: ${safeName || 'Anonymous'} | ${whoFor} | ${vibe} | ${budgetLabel}`);
     } catch(e) { console.error('Brevo contact error:', e); }
   }
 
-  //  STEP 3b: Brevo email 
+  // ── STEP 3b: Brevo email ──────────────────────────────────────────────────
   if (BREVO_KEY && email) {
     try {
       const rows = enriched.map((p, i) => `
@@ -747,7 +740,7 @@ Session: ${Date.now().toString(36)}`;
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
             <div><div style="font-size:15px;font-weight:600;color:#c8922a;">${p.budgetLabel}</div>
             ${p.bestStoreName?`<div style="font-size:12px;color:#9a8878;">Best match at ${p.bestStoreName}</div>`:''}</div>
-            <a href="${p.buyLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Shop This Gift </a>
+            <a href="${p.buyLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Shop This Gift →</a>
           </div>
           <div style="margin-top:10px;font-size:12px;color:#9a8878;">Also search: ${p.stores.map(s=>`<a href="${s.link}" style="color:#c8922a;">${s.name}</a>`).join(' · ')}</div>
         </div>`).join('');
@@ -758,19 +751,19 @@ Session: ${Date.now().toString(36)}`;
         body: JSON.stringify({
           sender: { name: 'ShopGenieAI', email: 'saym577@gmail.com' },
           to: [{ email }],
-          subject: ' Your 3 personalised gift picks from ShopGenieAI',
+          subject: '🧞 Your 3 personalised gift picks from ShopGenieAI',
           htmlContent: `<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
 <body style="margin:0;padding:0;background:#faf6f0;font-family:Arial,sans-serif;">
 <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-  <div style="text-align:center;margin-bottom:36px;"><div style="font-size:28px;font-weight:900;color:#3d2b1a;"> ShopGenieAI</div><div style="font-size:13px;color:#9a8878;font-style:italic;">Your wish is my gift</div></div>
+  <div style="text-align:center;margin-bottom:36px;"><div style="font-size:28px;font-weight:900;color:#3d2b1a;">🧞 ShopGenieAI</div><div style="font-size:13px;color:#9a8878;font-style:italic;">Your wish is my gift</div></div>
   <div style="background:white;border-radius:18px;padding:32px;border:1px solid #e8ddd0;margin-bottom:24px;">
-    <div style="font-size:22px;font-weight:700;color:#3d2b1a;margin-bottom:10px;">Here are your 3 gift picks! </div>
+    <div style="font-size:22px;font-weight:700;color:#3d2b1a;margin-bottom:10px;">Here are your 3 gift picks! 🎁</div>
     <div style="font-size:14px;color:#7a6855;">For <strong>${whoFor}</strong> · <strong>${occasion}</strong> · ${budgetLabel}</div>
   </div>
   <div style="background:white;border-radius:18px;padding:32px;border:1px solid #e8ddd0;margin-bottom:24px;">${rows}</div>
-  <div style="background:#fff9f0;border-radius:12px;padding:16px 20px;border:1px solid #e8ddd0;margin-bottom:24px;font-size:12px;color:#9a8878;line-height:1.6;"><strong style="color:#3d2b1a;"> Note:</strong> Links open retailer search pages  browse and buy at your convenience!</div>
-  <div style="text-align:center;margin-bottom:32px;"><a href="https://shopgenieai.com" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;">Find More Gifts </a></div>
-  <div style="text-align:center;font-size:12px;color:#b5a190;border-top:1px solid #e8ddd0;padding-top:20px;">Kiwi Made  · ShopGenieAI</div>
+  <div style="background:#fff9f0;border-radius:12px;padding:16px 20px;border:1px solid #e8ddd0;margin-bottom:24px;font-size:12px;color:#9a8878;line-height:1.6;"><strong style="color:#3d2b1a;">📋 Note:</strong> Links open retailer search pages — browse and buy at your convenience!</div>
+  <div style="text-align:center;margin-bottom:32px;"><a href="https://shopgenieai.com" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:16px;padding:16px 36px;border-radius:50px;text-decoration:none;">Find More Gifts 🧞</a></div>
+  <div style="text-align:center;font-size:12px;color:#b5a190;border-top:1px solid #e8ddd0;padding-top:20px;">Kiwi Made 🇳🇿 · ShopGenieAI</div>
 </div></body></html>`
         })
       });
