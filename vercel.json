@@ -20,6 +20,10 @@
     {
       "src": "api/email.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/click.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -34,6 +38,10 @@
     {
       "src": "/api/email",
       "dest": "/api/email.js"
+    },
+    {
+      "src": "/api/click",
+      "dest": "/api/click.js"
     },
     {
       "src": "/tester",
