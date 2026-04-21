@@ -217,6 +217,13 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 .fb-sent-ico{font-size:2.8rem;display:block;margin-bottom:10px}
 .fb-sent-title{font-family:var(--fd);font-size:1.15rem;font-weight:700;color:var(--brown);margin-bottom:6px}
 .fb-sent-sub{font-size:.82rem;color:#9a8878}
+
+/* ── Share button ─────────────────────────────────────────────────────────── */
+.btn-share{background:none;border:2px solid var(--gold);font-family:var(--fb);font-size:.84rem;font-weight:600;color:var(--gold);padding:9px 20px;border-radius:50px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-share:hover{background:rgba(200,146,42,.08);transform:translateY(-1px)}
+/* Copy toast */
+.share-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--brown);color:#faf6f0;font-family:var(--fb);font-size:.84rem;font-weight:600;padding:10px 22px;border-radius:50px;box-shadow:0 6px 24px rgba(61,43,26,.25);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:500;white-space:nowrap}
+.share-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -236,7 +243,7 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
   <h1 class="hero-title">Find the <em>perfect</em> gift<br>for any Kiwi</h1>
   <p class="hero-sub">Answer a few quick questions and our Genie finds 3 hand-picked gifts available right here in New Zealand.</p>
   <button class="btn-start" onclick="showQuiz()">Start the Quiz →</button>
-  <p class="hero-trust">Takes <span>under 2 minutes</span> · Free · No account needed</p>
+  <p class="hero-trust">Takes <span>under 2 minutes</span> · Free · <span>👨‍👩‍👧 Family Friendly</span></p>
   <div style="margin-top:24px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;align-items:center">
     <button onclick="comingSoon()" style="background:none;border:none;cursor:pointer;padding:0;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
       <img src="https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-app-store.svg" alt="App Store" style="height:42px"/>
@@ -484,6 +491,7 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
   <div class="act-row">
     <button class="btn-restart" onclick="restart()">↩ Start over</button>
     <button class="btn-refresh" id="btnRef" onclick="doRefresh()">🔀 Refresh 3 Products</button>
+    <button class="btn-share" onclick="shareResults()">📤 Share Results</button>
     <button class="btn-feedback" onclick="openFeedback()">💬 Give Feedback</button>
   </div>
 </section>
@@ -562,6 +570,7 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 </section>
 
 </main>
+<div class="share-toast" id="shareToast">📋 Link copied to clipboard!</div>
 <footer>Made in Aotearoa 🇳🇿 · Powered by AI · ShopGenieAI © 2025</footer>
 
 <script>
@@ -823,11 +832,17 @@ function renderCards(products){
   $('dots').innerHTML='';cards=[];totalCards=products.length;curCard=0;
 
   products.forEach((p,i)=>{
-    const buyHtml=p.buyLink
-      ?`<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener noreferrer">Shop This Gift →</a>`
+    // ── Route buy link through RCI click tracker ──────────────────────────
+    const clickUrl = p.buyLink ? buildClickUrl(p.buyLink, p, i+1) : null;
+    const buyHtml=clickUrl
+      ?`<a class="btn-buy" href="${clickUrl}" target="_blank" rel="noopener noreferrer">Shop This Gift →</a>`
       :`<div class="pno-result">🔍 Try "${p.name}" at PB Tech, Farmers or Google Shopping</div>`;
     const badgeHtml=p.budgetLabel?`<div class="budget-badge">${p.budgetLabel}</div>`:'';
-    const chipHtml=(p.stores||[]).map(s=>`<a class="chip" href="${s.link}" target="_blank" rel="noopener noreferrer">${s.name}</a>`).join('');
+    // Route store chips through click tracker too
+    const chipHtml=(p.stores||[]).map(s=>{
+      const chipClick = buildClickUrl(s.link, p, i+1, s.name);
+      return `<a class="chip" href="${chipClick}" target="_blank" rel="noopener noreferrer">${s.name}</a>`;
+    }).join('');
     const imgHtml=p.imageUrl?`<img src="${p.imageUrl}" alt="${p.name}" onerror="this.parentElement.classList.add('no-image')"/>`:'';
     const card=document.createElement('div');
     card.className='pcard';
@@ -921,6 +936,64 @@ function resetInterests(){
 
 function comingSoon(){$('csMsg').style.display='block';setTimeout(()=>$('csMsg').style.display='none',3000);}
 window.addEventListener('DOMContentLoaded',()=>{$('n5').disabled=false;});
+// ── RCI CLICK TRACKER ─────────────────────────────────────────────────────────
+function buildClickUrl(destUrl, product, position, overrideStore) {
+  const params = new URLSearchParams({
+    url:     encodeURIComponent(destUrl),
+    product: encodeURIComponent(product.name || ''),
+    store:   encodeURIComponent(overrideStore || product.bestStoreName || ''),
+    type:    encodeURIComponent(product.type || ''),
+    vibe:    encodeURIComponent(A.q3 || ''),
+    budget:  encodeURIComponent(A.budgetTier || ''),
+    occasion:encodeURIComponent(A.occ || ''),
+    who:     encodeURIComponent(A.q2 || ''),
+    pos:     String(position || ''),
+  });
+  return `${location.origin}/api/click?${params.toString()}`;
+}
+
+// ── SHARE RESULTS ─────────────────────────────────────────────────────────────
+async function shareResults(){
+  const nameStr = A.firstName && A.firstName !== 'Friend' ? ` for ${A.firstName}` : '';
+  const vibeStr = A.q3 ? ` (${A.q3} vibe)` : '';
+  const shareText = `🧞 Check out ShopGenieAI — AI-powered gift recommendations for Kiwis!${nameStr}${vibeStr}`;
+  const shareUrl  = 'https://shopgenieai.com';
+
+  // Mobile: use Web Share API if available
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'ShopGenieAI', text: shareText, url: shareUrl });
+      return;
+    } catch (e) {
+      // User cancelled or share failed — fall through to clipboard
+      if (e.name === 'AbortError') return;
+    }
+  }
+
+  // Desktop fallback: copy link to clipboard
+  try {
+    await navigator.clipboard.writeText(shareUrl);
+    showShareToast('📋 Link copied to clipboard!');
+  } catch {
+    // Last resort — select a temp input
+    const tmp = document.createElement('input');
+    tmp.value = shareUrl;
+    document.body.appendChild(tmp);
+    tmp.select();
+    document.execCommand('copy');
+    document.body.removeChild(tmp);
+    showShareToast('📋 Link copied to clipboard!');
+  }
+}
+
+function showShareToast(msg){
+  const t = $('shareToast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
 // ── FEEDBACK MODAL ─────────────────────────────────────────────────────────
 const fbRatings = { overall: 0, relevance: 0, price: 0, links: 0, ux: 0 };
 
