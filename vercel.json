@@ -16,6 +16,10 @@
     {
       "src": "api/feedback.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/email.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -26,6 +30,10 @@
     {
       "src": "/api/feedback",
       "dest": "/api/feedback.js"
+    },
+    {
+      "src": "/api/email",
+      "dest": "/api/email.js"
     },
     {
       "src": "/tester",
