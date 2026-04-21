@@ -6,6 +6,10 @@
       "use": "@vercel/static"
     },
     {
+      "src": "tester.html",
+      "use": "@vercel/static"
+    },
+    {
       "src": "api/recommend.js",
       "use": "@vercel/node"
     },
@@ -22,6 +26,14 @@
     {
       "src": "/api/feedback",
       "dest": "/api/feedback.js"
+    },
+    {
+      "src": "/tester",
+      "dest": "/tester.html"
+    },
+    {
+      "src": "/tester.html",
+      "dest": "/tester.html"
     },
     {
       "src": "/(.*)",
