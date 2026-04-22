@@ -1,8 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // ShopGenieAI — click.js
 // RCI Click Tracking — logs every "Shop This Gift" click then redirects
-// Captures: product, store, vibe, budget, occasion, who-for, timestamp
-// Persists to Supabase clicks table + logs to Vercel console
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -12,18 +10,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const {
-    url,        // destination URL (required)
-    product,    // product name
-    store,      // store name (bestStoreName)
-    vibe,       // quiz Q3 vibe
-    budget,     // budget tier key
-    occasion,   // occasion
-    who,        // whoFor
-    pos,        // card position (1, 2, 3)
-    type,       // product type category
+    url, product, store, vibe, budget, occasion, who, pos, type,
   } = req.query;
 
-  // ── Validate destination URL ───────────────────────────────────────────────
   if (!url) return res.status(400).send('Missing destination URL');
 
   let destination;
@@ -37,7 +26,6 @@ export default async function handler(req, res) {
     return res.status(400).send('Invalid URL');
   }
 
-  // ── Build click data ───────────────────────────────────────────────────────
   const clickData = {
     ts:         new Date().toISOString(),
     product:    product  ? decodeURIComponent(product)  : null,
@@ -53,27 +41,38 @@ export default async function handler(req, res) {
     user_agent: req.headers['user-agent'] || null,
   };
 
-  // ── Log to console (Vercel logs) ───────────────────────────────────────────
-  console.log('[RCI_CLICK]', JSON.stringify({ ts: new Date().toISOString(), ...clickData }));
+  console.log('[RCI_CLICK]', JSON.stringify(clickData));
 
-  // ── Persist to Supabase (fire and forget — don't delay redirect) ──────────
+  // ── Persist to Supabase — AWAITED so Vercel doesn't kill it before it completes
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
   if (SUPABASE_URL && SUPABASE_KEY) {
-    fetch(`${SUPABASE_URL}/rest/v1/clicks`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Prefer': 'return=minimal',
-      },
-      body: JSON.stringify(clickData),
-    }).catch(err => console.error('[RCI_CLICK] Supabase write failed:', err.message));
+    try {
+      const sbRes = await fetch(`${SUPABASE_URL}/rest/v1/clicks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify(clickData),
+      });
+      if (!sbRes.ok) {
+        const errText = await sbRes.text();
+        console.error('[RCI_CLICK] Supabase error:', sbRes.status, errText);
+      } else {
+        console.log('[RCI_CLICK] Saved to Supabase OK');
+      }
+    } catch (err) {
+      console.error('[RCI_CLICK] Supabase fetch threw:', err.message);
+    }
+  } else {
+    console.error('[RCI_CLICK] Missing env vars — SUPABASE_URL:', !!SUPABASE_URL, 'SUPABASE_KEY:', !!SUPABASE_KEY);
   }
 
-  // ── Redirect immediately ───────────────────────────────────────────────────
+  // ── Redirect after write completes
   res.setHeader('Location', destination);
   return res.status(302).end();
 }
