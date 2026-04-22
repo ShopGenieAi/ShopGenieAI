@@ -14,10 +14,6 @@
       "use": "@vercel/static"
     },
     {
-      "src": "Genie_front_on.png",
-      "use": "@vercel/static"
-    },
-    {
       "src": "api/recommend.js",
       "use": "@vercel/node"
     },
@@ -66,10 +62,6 @@
     {
       "src": "/rci.html",
       "dest": "/rci.html"
-    },
-    {
-      "src": "/Genie_front_on.png",
-      "dest": "/Genie_front_on.png"
     },
     {
       "src": "/(.*)",
