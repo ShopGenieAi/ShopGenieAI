@@ -99,8 +99,8 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 .dots span{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:dotPulse 1.4s ease-in-out infinite}
 .dots span:nth-child(2){animation-delay:.2s}
 .dots span:nth-child(3){animation-delay:.4s}
-.fact-card{background:var(--white);border-radius:14px;border:2px solid var(--gold);padding:18px 20px;max-width:460px;margin:0 auto;text-align:center}
-.fact-label{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px}
+.fact-card{background:var(--white);border-radius:14px;border:2px solid var(--gold);padding:18px 20px;max-width:460px;margin:0 auto;text-align:left}
+.fact-label{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .fact-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:dotPulse 1s ease-in-out infinite}
 .fact-text{font-size:.9rem;color:var(--brown);line-height:1.6}
 #results{display:none;animation:fadeUp .6s ease both}
@@ -111,7 +111,7 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 .res-note{background:#2d1f0f;border-radius:10px;padding:11px 15px;border:2px solid var(--gold);margin-bottom:20px;font-size:.75rem;color:#f5e6c8;line-height:1.5}
 .res-note strong{color:var(--gold-l)}
 .swipe-wrap{position:relative;margin-bottom:28px;touch-action:pan-y}
-.swipe-stack{position:relative;width:100%;min-height:460px;overflow:hidden}
+.swipe-stack{position:relative;width:100%;min-height:380px}
 .pcard{position:absolute;top:0;left:0;right:0;background:var(--white);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;display:flex;flex-direction:column;transition:transform .4s cubic-bezier(.4,0,.2,1),box-shadow .4s ease,opacity .4s ease;will-change:transform,opacity}
 .pimg{position:relative;width:100%;height:190px;overflow:hidden;background:var(--cream);flex-shrink:0}
 @media(max-width:480px){.pimg{height:165px}}
@@ -217,13 +217,6 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 .fb-sent-ico{font-size:2.8rem;display:block;margin-bottom:10px}
 .fb-sent-title{font-family:var(--fd);font-size:1.15rem;font-weight:700;color:var(--brown);margin-bottom:6px}
 .fb-sent-sub{font-size:.82rem;color:#9a8878}
-
-/* ── Share button ─────────────────────────────────────────────────────────── */
-.btn-share{background:none;border:2px solid var(--gold);font-family:var(--fb);font-size:.84rem;font-weight:600;color:var(--gold);padding:9px 20px;border-radius:50px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
-.btn-share:hover{background:rgba(200,146,42,.08);transform:translateY(-1px)}
-/* Copy toast */
-.share-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--brown);color:#faf6f0;font-family:var(--fb);font-size:.84rem;font-weight:600;padding:10px 22px;border-radius:50px;box-shadow:0 6px 24px rgba(61,43,26,.25);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:500;white-space:nowrap}
-.share-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -243,7 +236,7 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
   <h1 class="hero-title">Find the <em>perfect</em> gift<br>for any Kiwi</h1>
   <p class="hero-sub">Answer a few quick questions and our Genie finds 3 hand-picked gifts available right here in New Zealand.</p>
   <button class="btn-start" onclick="showQuiz()">Start the Quiz →</button>
-  <p class="hero-trust">Takes <span>under 2 minutes</span> · Free · <span>👨‍👩‍👧 Family Friendly</span></p>
+  <p class="hero-trust">Takes <span>under 2 minutes</span> · Free · No account needed</p>
   <div style="margin-top:24px;display:flex;justify-content:center;gap:12px;flex-wrap:wrap;align-items:center">
     <button onclick="comingSoon()" style="background:none;border:none;cursor:pointer;padding:0;transition:transform .2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
       <img src="https://developer.apple.com/app-store/marketing/guidelines/images/badge-download-on-the-app-store.svg" alt="App Store" style="height:42px"/>
@@ -491,8 +484,7 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
   <div class="act-row">
     <button class="btn-restart" onclick="restart()">↩ Start over</button>
     <button class="btn-refresh" id="btnRef" onclick="doRefresh()">🔀 Refresh 3 Products</button>
-    <button class="btn-share" onclick="shareResults()">📤 Share Results</button>
-    <button class="btn-feedback" onclick="openFeedback()">💬 Give Feedback</button>
+    <button class="btn-feedback" onclick="window.open('https://form.jotform.com/261111533128041','_blank')">💬 Give Feedback</button>
   </div>
 </section>
 
@@ -570,46 +562,35 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 </section>
 
 </main>
-<div class="share-toast" id="shareToast">📋 Link copied to clipboard!</div>
 <footer>Made in Aotearoa 🇳🇿 · Powered by AI · ShopGenieAI © 2025</footer>
 
 <script>
 const MAX_REFRESHES = 3;
 
 const FACTS = [
-  "🥝 New Zealand has more cats per capita than any other country. They all want premium gifts and will judge you for anything less.",
-  "🐑 There are 6 sheep for every person in NZ. None of them have ever once asked for a practical gift.",
-  "🧀 NZ was the first country to give women the right to vote in 1893. Men still can't figure out what to buy them.",
-  "🦜 The Kea parrot will dismantle your car for fun. Imagine what it'd do to a badly wrapped present.",
-  "🏔️ NZ has more golf courses per capita than any other country. Dad gift sorted. You're welcome.",
-  "🍖 New Zealanders eat more ice cream per capita than almost anyone on Earth. So if in doubt, just get ice cream.",
-  "🎬 The Lord of the Rings was filmed in NZ. Peter Jackson still hasn't returned the country to its original condition.",
-  "🦴 The Moa stood 3.6 metres tall and is now extinct. Historians believe it was gift-wrapped once and never recovered.",
-  "🌊 Wellington is the windiest city in the world. Every umbrella ever bought there has lasted exactly one use.",
-  "🎵 Crowded House is from NZ. Australia claimed them. NZ claimed them back. It's ongoing. Send help.",
-  "🦎 The Tuatara hasn't evolved in 200 million years. Basically your uncle at Christmas.",
-  "🌏 NZ is 2,000km from Australia. Still easier to get to than The Warehouse car park on Christmas Eve.",
-  "🚀 Ernest Rutherford split the atom and was born in NZ. He did not use this to speed up courier delivery.",
-  "🐬 Hector's dolphin is the world's smallest dolphin. Still a better gift idea than a scented candle.",
-  "🏉 The All Blacks have a win rate of over 75%. Your gift recommendations are about to beat that.",
-  "🍞 NZ sells 70 million meat pies a year. That's 15 per person. No one is talking about this enough.",
-  "🎸 Split Enz once performed in full face paint and giant platform shoes. Still less awkward than buying a gift card.",
-  "🌋 NZ sits on the Ring of Fire. The Genie is completely fine with this and not stressed at all.",
-  "🐧 The Little Blue Penguin is the world's smallest penguin. It is also NZ's most reliable Christmas shopper.",
-  "🏄 NZ has 15,000km of coastline. That's a lot of places to pretend you forgot someone's birthday.",
-  "🎪 NZ once had a Minister of Fun. The role was abolished. Coincidence? The Genie thinks not.",
-  "🧁 Pavlova was invented in NZ. Australia disagrees. This is not up for debate. Moving on.",
-  "🐝 NZ has no native land snakes. Making it the only country where the most dangerous thing is forgetting an anniversary.",
-  "🛸 More UFO sightings are reported per capita in NZ than almost anywhere else. The Genie has no comment.",
-  "🎯 The Genie has now considered over 1 million gift combinations. Only three of them involved a gift card. Barely.",
-  "🧲 NZ exports over 600,000 tonnes of butter a year. Your gift idea is probably better than butter. Probably.",
-  "🌿 NZ was settled by humans only 700 years ago. It took them 699 years to invent online shopping.",
-  "🏊 NZ won more Olympic gold medals per capita than any other country at the 2024 Paris Games. Overachievers.",
-  "🦅 The Haast's Eagle had a wingspan of 3 metres and is now extinct. It could have delivered gifts but chose violence instead.",
-  "🎭 Russell Crowe is from NZ. Australia claimed him too. NZ is considering a strongly worded letter.",
+  "🥝 New Zealand has more cats per capita than any other country. Probably all demanding expensive gifts.",
+  "🐑 There are 6 sheep for every person in NZ. None of them know what they want for Christmas.",
+  "🧀 NZ was the first country to give women the right to vote in 1893. Still waiting on the right to skip queues at Briscoes.",
+  "🦜 The Kea is the world's only alpine parrot — and they will absolutely steal your car keys. And your gift.",
+  "🌋 New Zealand sits on the Ring of Fire. Not the hot sauce, though Kiwis would put it on everything.",
+  "🏔️ NZ has more golf courses per capita than any other country. Confirming that dads everywhere are the same.",
+  "🍞 The humble meat pie sells over 70 million units per year in NZ. That's roughly 15 per person. No judgement.",
+  "🌿 NZ was one of the last places on Earth settled by humans. Worth the wait, tbh.",
+  "🎬 The Lord of the Rings trilogy was filmed in NZ. The Genie is still waiting for its cameo.",
+  "🦴 The Moa was a giant flightless bird reaching 3.6m tall. Would have been impossible to gift wrap.",
+  "🏄 NZ has 15,000km of coastline. That's a lot of beach towels that could've been great gifts.",
+  "🌊 Wellington is the windiest city in the world. The Genie's hat has blown off 3 times today.",
+  "🎵 Crowded House is from NZ. Don't tell Australia — they've already claimed enough of our legends.",
+  "🦎 The Tuatara is a living fossil barely changed in 200 million years. Like your uncle's taste in gifts.",
+  "🌏 NZ is 2,000km from its nearest neighbour Australia. Still closer than The Warehouse on a Saturday.",
+  "🚀 Ernest Rutherford, who split the atom, was born in NZ. He did not use this power to speed up delivery.",
+  "🐬 Hector's dolphin, found only in NZ, is the world's smallest dolphin. Still bigger than the last present you got.",
+  "⏰ NZ was one of the first countries to enter each new year. The Genie has been celebrating since 1893.",
+  "🏉 NZ invented the haka — still the best pre-match intimidation tactic in history.",
+  "🎸 Split Enz and Crowded House both called NZ home. Australia tried to claim them. NZ said no.",
 ];
 let factIdx=0,factTimer=null;
-function startFacts(){factIdx=Math.floor(Math.random()*FACTS.length);rotateFact();factTimer=setInterval(rotateFact,9000);}
+function startFacts(){factIdx=Math.floor(Math.random()*FACTS.length);rotateFact();factTimer=setInterval(rotateFact,6000);}
 function rotateFact(){const el=document.getElementById('factText');if(!el)return;el.style.animation='none';el.offsetHeight;el.style.animation='factSlide .4s ease both';el.textContent=FACTS[factIdx++%FACTS.length];}
 function stopFacts(){if(factTimer){clearInterval(factTimer);factTimer=null;}}
 
@@ -842,17 +823,11 @@ function renderCards(products){
   $('dots').innerHTML='';cards=[];totalCards=products.length;curCard=0;
 
   products.forEach((p,i)=>{
-    // ── Route buy link through RCI click tracker ──────────────────────────
-    const clickUrl = p.buyLink ? buildClickUrl(p.buyLink, p, i+1) : null;
-    const buyHtml=clickUrl
-      ?`<a class="btn-buy" href="${clickUrl}" target="_blank" rel="noopener noreferrer">Shop This Gift →</a>`
+    const buyHtml=p.buyLink
+      ?`<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener noreferrer">Shop This Gift →</a>`
       :`<div class="pno-result">🔍 Try "${p.name}" at PB Tech, Farmers or Google Shopping</div>`;
     const badgeHtml=p.budgetLabel?`<div class="budget-badge">${p.budgetLabel}</div>`:'';
-    // Route store chips through click tracker too
-    const chipHtml=(p.stores||[]).map(s=>{
-      const chipClick = buildClickUrl(s.link, p, i+1, s.name);
-      return `<a class="chip" href="${chipClick}" target="_blank" rel="noopener noreferrer">${s.name}</a>`;
-    }).join('');
+    const chipHtml=(p.stores||[]).map(s=>`<a class="chip" href="${s.link}" target="_blank" rel="noopener noreferrer">${s.name}</a>`).join('');
     const imgHtml=p.imageUrl?`<img src="${p.imageUrl}" alt="${p.name}" onerror="this.parentElement.classList.add('no-image')"/>`:'';
     const card=document.createElement('div');
     card.className='pcard';
@@ -946,64 +921,6 @@ function resetInterests(){
 
 function comingSoon(){$('csMsg').style.display='block';setTimeout(()=>$('csMsg').style.display='none',3000);}
 window.addEventListener('DOMContentLoaded',()=>{$('n5').disabled=false;});
-// ── RCI CLICK TRACKER ─────────────────────────────────────────────────────────
-function buildClickUrl(destUrl, product, position, overrideStore) {
-  const params = new URLSearchParams({
-    url:     encodeURIComponent(destUrl),
-    product: encodeURIComponent(product.name || ''),
-    store:   encodeURIComponent(overrideStore || product.bestStoreName || ''),
-    type:    encodeURIComponent(product.type || ''),
-    vibe:    encodeURIComponent(A.q3 || ''),
-    budget:  encodeURIComponent(A.budgetTier || ''),
-    occasion:encodeURIComponent(A.occ || ''),
-    who:     encodeURIComponent(A.q2 || ''),
-    pos:     String(position || ''),
-  });
-  return `${location.origin}/api/click?${params.toString()}`;
-}
-
-// ── SHARE RESULTS ─────────────────────────────────────────────────────────────
-async function shareResults(){
-  const nameStr = A.firstName && A.firstName !== 'Friend' ? ` for ${A.firstName}` : '';
-  const vibeStr = A.q3 ? ` (${A.q3} vibe)` : '';
-  const shareText = `🧞 Check out ShopGenieAI — AI-powered gift recommendations for Kiwis!${nameStr}${vibeStr}`;
-  const shareUrl  = 'https://shopgenieai.com';
-
-  // Mobile: use Web Share API if available
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: 'ShopGenieAI', text: shareText, url: shareUrl });
-      return;
-    } catch (e) {
-      // User cancelled or share failed — fall through to clipboard
-      if (e.name === 'AbortError') return;
-    }
-  }
-
-  // Desktop fallback: copy link to clipboard
-  try {
-    await navigator.clipboard.writeText(shareUrl);
-    showShareToast('📋 Link copied to clipboard!');
-  } catch {
-    // Last resort — select a temp input
-    const tmp = document.createElement('input');
-    tmp.value = shareUrl;
-    document.body.appendChild(tmp);
-    tmp.select();
-    document.execCommand('copy');
-    document.body.removeChild(tmp);
-    showShareToast('📋 Link copied to clipboard!');
-  }
-}
-
-function showShareToast(msg){
-  const t = $('shareToast');
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
-
 // ── FEEDBACK MODAL ─────────────────────────────────────────────────────────
 const fbRatings = { overall: 0, relevance: 0, price: 0, links: 0, ux: 0 };
 
