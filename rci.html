@@ -254,7 +254,7 @@ async function loadData() {
     const isoSince = since.toISOString();
 
     const resp = await fetch(
-      `${SUPABASE_URL}/rest/v1/clicks?select=*&timestamp=gte.${isoSince}&order=timestamp.desc&limit=500`,
+      `${SUPABASE_URL}/rest/v1/clicks?select=*&order=id.desc&limit=500`,
       { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}`, 'Cache-Control': 'no-cache' }, cache: 'no-store' }
     );
     if (!resp.ok) throw new Error('Fetch failed: ' + resp.status);
@@ -269,7 +269,13 @@ async function loadData() {
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render() {
-  const filtered = vibeFilter === 'all' ? allClicks : allClicks.filter(c => c.vibe === vibeFilter);
+  const since = new Date();
+  since.setDate(since.getDate() - (rangeDays >= 9999 ? 3650 : rangeDays));
+  let filtered = allClicks.filter(c => {
+    if (!c.timestamp) return true; // include null-timestamp rows
+    return new Date(c.timestamp) >= since;
+  });
+  if (vibeFilter !== 'all') filtered = filtered.filter(c => c.vibe === vibeFilter);
   renderStats(filtered);
   renderVibeFilters();
   renderBarChart('chartProducts', topN(filtered, 'product', 8));
