@@ -551,7 +551,8 @@ export default async function handler(req, res) {
   const safeName = (firstName || '').replace(/[^a-zA-Z\s\-\']/g, '').trim().slice(0, 30) || '';
 
   const allInputs = `${shoppingFor} ${whoFor} ${vibe} ${occasion} ${interests}`.toLowerCase();
-  if (INAPPROPRIATE_TERMS.some(t => allInputs.includes(t))) {
+  const inappropriateRegex = new RegExp(`\\b(${INAPPROPRIATE_TERMS.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`);
+  if (inappropriateRegex.test(allInputs)) {
     const msg = INAPPROPRIATE_MESSAGES[Math.floor(Math.random() * INAPPROPRIATE_MESSAGES.length)];
     return res.status(400).json({ error: 'INAPPROPRIATE', message: msg });
   }
