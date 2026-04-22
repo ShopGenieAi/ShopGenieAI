@@ -39,7 +39,7 @@ export default async function handler(req, res) {
 
   // ── Build click data ───────────────────────────────────────────────────────
   const clickData = {
-    timestamp:  new Date().toISOString(),
+    ts:         new Date().toISOString(),
     product:    product  ? decodeURIComponent(product)  : null,
     store:      store    ? decodeURIComponent(store)    : null,
     type:       type     ? decodeURIComponent(type)     : null,
