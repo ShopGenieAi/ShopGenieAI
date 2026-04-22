@@ -254,7 +254,7 @@ async function loadData() {
     const isoSince = since.toISOString();
 
     const resp = await fetch(
-      `${SUPABASE_URL}/rest/v1/clicks?select=*&order=id.desc&limit=500`,
+      `${SUPABASE_URL}/rest/v1/clicks?select=*&order=ts.desc&limit=500`,
       { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}`, 'Cache-Control': 'no-cache' }, cache: 'no-store' }
     );
     if (!resp.ok) throw new Error('Fetch failed: ' + resp.status);
@@ -272,8 +272,8 @@ function render() {
   const since = new Date();
   since.setDate(since.getDate() - (rangeDays >= 9999 ? 3650 : rangeDays));
   let filtered = allClicks.filter(c => {
-    if (!c.timestamp) return true; // include null-timestamp rows
-    return new Date(c.timestamp) >= since;
+    if (!c.ts) return true;
+    return new Date(c.ts) >= since;
   });
   if (vibeFilter !== 'all') filtered = filtered.filter(c => c.vibe === vibeFilter);
   renderStats(filtered);
@@ -338,7 +338,7 @@ function renderTable(data) {
     return;
   }
   document.getElementById('clicksTable').innerHTML = data.slice(0,200).map((r,i) => {
-    const t = r.timestamp ? new Date(r.timestamp) : null;
+    const t = r.ts ? new Date(r.ts) : null;
     const timeStr = t ? (t.toLocaleDateString('en-NZ',{day:'numeric',month:'short'}) + ' ' +
       t.toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'})) : '—';
     const budgetLabel = BUDGET_LABELS[r.budget] || r.budget || '—';
