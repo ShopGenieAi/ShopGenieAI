@@ -352,11 +352,11 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
         <div class="pill" onclick="pickPill(this,'q4occ')">Christmas</div>
         <div class="pill" onclick="pickPill(this,'q4occ')">Anniversary</div>
         <div class="pill" onclick="pickPill(this,'q4occ')">Valentine's Day</div>
-        <div class="pill" onclick="pickPill(this,'q4occ')">Mother's Day</div>
-        <div class="pill" onclick="pickPill(this,'q4occ')">Father's Day</div>
+        <div class="pill" onclick="pickPill(this,'q4occ')">Mothers Day</div>
+        <div class="pill" onclick="pickPill(this,'q4occ')">Fathers Day</div>
         <div class="pill" onclick="pickPill(this,'q4occ')">Wedding / Engagement</div>
-        <div class="pill" onclick="pickPill(this,'q4occ')">New Baby</div>
-        <div class="pill" onclick="pickPill(this,'q4occ')">Graduation</div>
+        <div class="pill" onclick="pickPill(this,'q4occ')">Baby Shower</div>
+        <div class="pill" onclick="pickPill(this,'q4occ')">Get Well Soon</div>
         <div class="pill" onclick="pickPill(this,'q4occ')">Just Because</div>
       </div>
       <div class="step-nav">
@@ -823,8 +823,11 @@ function renderCards(products){
   $('dots').innerHTML='';cards=[];totalCards=products.length;curCard=0;
 
   products.forEach((p,i)=>{
-    const buyHtml=p.buyLink
-      ?`<a class="btn-buy" href="${p.buyLink}" target="_blank" rel="noopener noreferrer">Shop This Gift →</a>`
+    const clickUrl=p.buyLink
+      ?`/api/click?url=${encodeURIComponent(p.buyLink)}&product=${encodeURIComponent(p.name)}&store=${encodeURIComponent(p.bestStoreName||'')}&vibe=${encodeURIComponent(A.q3||'')}&budget=${encodeURIComponent(p.budgetLabel||'')}&occasion=${encodeURIComponent(A.occ||'')}&who=${encodeURIComponent(A.q2||'')}&pos=${i+1}&type=${encodeURIComponent(p.type||'')}`
+      :null;
+    const buyHtml=clickUrl
+      ?`<a class="btn-buy" href="${clickUrl}" target="_blank" rel="noopener noreferrer">Shop This Gift →</a>`
       :`<div class="pno-result">🔍 Try "${p.name}" at PB Tech, Farmers or Google Shopping</div>`;
     const badgeHtml=p.budgetLabel?`<div class="budget-badge">${p.budgetLabel}</div>`:'';
     const chipHtml=(p.stores||[]).map(s=>`<a class="chip" href="${s.link}" target="_blank" rel="noopener noreferrer">${s.name}</a>`).join('');
