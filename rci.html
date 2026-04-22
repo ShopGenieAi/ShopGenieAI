@@ -254,8 +254,8 @@ async function loadData() {
     const isoSince = since.toISOString();
 
     const resp = await fetch(
-      `${SUPABASE_URL}/rest/v1/clicks?select=*&ts=gte.${isoSince}&order=ts.desc&limit=500`,
-      { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
+      `${SUPABASE_URL}/rest/v1/clicks?select=*&ts=gte.${isoSince}&order=ts.desc&limit=500&_=${Date.now()}`,
+      { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}`, 'Cache-Control': 'no-cache' } }
     );
     if (!resp.ok) throw new Error('Fetch failed: ' + resp.status);
     allClicks = await resp.json();
