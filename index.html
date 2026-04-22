@@ -99,7 +99,7 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 .dots span{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:dotPulse 1.4s ease-in-out infinite}
 .dots span:nth-child(2){animation-delay:.2s}
 .dots span:nth-child(3){animation-delay:.4s}
-.fact-card{background:var(--white);border-radius:14px;border:2px solid var(--gold);padding:18px 20px;max-width:460px;margin:0 auto;text-align:left}
+.fact-card{background:var(--white);border-radius:14px;border:2px solid var(--gold);padding:18px 20px;max-width:460px;margin:0 auto;text-align:center}
 .fact-label{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .fact-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:dotPulse 1s ease-in-out infinite}
 .fact-text{font-size:.9rem;color:var(--brown);line-height:1.6}
@@ -577,29 +577,39 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 const MAX_REFRESHES = 3;
 
 const FACTS = [
-  "🥝 New Zealand has more cats per capita than any other country. Probably all demanding expensive gifts.",
-  "🐑 There are 6 sheep for every person in NZ. None of them know what they want for Christmas.",
-  "🧀 NZ was the first country to give women the right to vote in 1893. Still waiting on the right to skip queues at Briscoes.",
-  "🦜 The Kea is the world's only alpine parrot — and they will absolutely steal your car keys. And your gift.",
-  "🌋 New Zealand sits on the Ring of Fire. Not the hot sauce, though Kiwis would put it on everything.",
-  "🏔️ NZ has more golf courses per capita than any other country. Confirming that dads everywhere are the same.",
-  "🍞 The humble meat pie sells over 70 million units per year in NZ. That's roughly 15 per person. No judgement.",
-  "🌿 NZ was one of the last places on Earth settled by humans. Worth the wait, tbh.",
-  "🎬 The Lord of the Rings trilogy was filmed in NZ. The Genie is still waiting for its cameo.",
-  "🦴 The Moa was a giant flightless bird reaching 3.6m tall. Would have been impossible to gift wrap.",
-  "🏄 NZ has 15,000km of coastline. That's a lot of beach towels that could've been great gifts.",
-  "🌊 Wellington is the windiest city in the world. The Genie's hat has blown off 3 times today.",
-  "🎵 Crowded House is from NZ. Don't tell Australia — they've already claimed enough of our legends.",
-  "🦎 The Tuatara is a living fossil barely changed in 200 million years. Like your uncle's taste in gifts.",
-  "🌏 NZ is 2,000km from its nearest neighbour Australia. Still closer than The Warehouse on a Saturday.",
-  "🚀 Ernest Rutherford, who split the atom, was born in NZ. He did not use this power to speed up delivery.",
-  "🐬 Hector's dolphin, found only in NZ, is the world's smallest dolphin. Still bigger than the last present you got.",
-  "⏰ NZ was one of the first countries to enter each new year. The Genie has been celebrating since 1893.",
-  "🏉 NZ invented the haka — still the best pre-match intimidation tactic in history.",
-  "🎸 Split Enz and Crowded House both called NZ home. Australia tried to claim them. NZ said no.",
+  "🥝 New Zealand has more cats per capita than any other country. They all want premium gifts and will judge you for anything less.",
+  "🐑 There are 6 sheep for every person in NZ. None of them have ever once asked for a practical gift.",
+  "🧀 NZ was the first country to give women the right to vote in 1893. Men still can't figure out what to buy them.",
+  "🦜 The Kea parrot will dismantle your car for fun. Imagine what it'd do to a badly wrapped present.",
+  "🏔️ NZ has more golf courses per capita than any other country. Dad gift sorted. You're welcome.",
+  "🍖 New Zealanders eat more ice cream per capita than almost anyone on Earth. So if in doubt, just get ice cream.",
+  "🎬 The Lord of the Rings was filmed in NZ. Peter Jackson still hasn't returned the country to its original condition.",
+  "🦴 The Moa stood 3.6 metres tall and is now extinct. Historians believe it was gift-wrapped once and never recovered.",
+  "🌊 Wellington is the windiest city in the world. Every umbrella ever bought there has lasted exactly one use.",
+  "🎵 Crowded House is from NZ. Australia claimed them. NZ claimed them back. It's ongoing. Send help.",
+  "🦎 The Tuatara hasn't evolved in 200 million years. Basically your uncle at Christmas.",
+  "🌏 NZ is 2,000km from Australia. Still easier to get to than The Warehouse car park on Christmas Eve.",
+  "🚀 Ernest Rutherford split the atom and was born in NZ. He did not use this to speed up courier delivery.",
+  "🐬 Hector's dolphin is the world's smallest dolphin. Still a better gift idea than a scented candle.",
+  "🏉 The All Blacks have a win rate of over 75%. Your gift recommendations are about to beat that.",
+  "🍞 NZ sells 70 million meat pies a year. That's 15 per person. No one is talking about this enough.",
+  "🎸 Split Enz once performed in full face paint and giant platform shoes. Still less awkward than buying a gift card.",
+  "🌋 NZ sits on the Ring of Fire. The Genie is completely fine with this and not stressed at all.",
+  "🐧 The Little Blue Penguin is the world's smallest penguin. It is also NZ's most reliable Christmas shopper.",
+  "🏄 NZ has 15,000km of coastline. That's a lot of places to pretend you forgot someone's birthday.",
+  "🎪 NZ once had a Minister of Fun. The role was abolished. Coincidence? The Genie thinks not.",
+  "🧁 Pavlova was invented in NZ. Australia disagrees. This is not up for debate. Moving on.",
+  "🐝 NZ has no native land snakes. Making it the only country where the most dangerous thing is forgetting an anniversary.",
+  "🛸 More UFO sightings are reported per capita in NZ than almost anywhere else. The Genie has no comment.",
+  "🎯 The Genie has now considered over 1 million gift combinations. Only three of them involved a gift card. Barely.",
+  "🧲 NZ exports over 600,000 tonnes of butter a year. Your gift idea is probably better than butter. Probably.",
+  "🌿 NZ was settled by humans only 700 years ago. It took them 699 years to invent online shopping.",
+  "🏊 NZ won more Olympic gold medals per capita than any other country at the 2024 Paris Games. Overachievers.",
+  "🦅 The Haast's Eagle had a wingspan of 3 metres and is now extinct. It could have delivered gifts but chose violence instead.",
+  "🎭 Russell Crowe is from NZ. Australia claimed him too. NZ is considering a strongly worded letter.",
 ];
 let factIdx=0,factTimer=null;
-function startFacts(){factIdx=Math.floor(Math.random()*FACTS.length);rotateFact();factTimer=setInterval(rotateFact,6000);}
+function startFacts(){factIdx=Math.floor(Math.random()*FACTS.length);rotateFact();factTimer=setInterval(rotateFact,9000);}
 function rotateFact(){const el=document.getElementById('factText');if(!el)return;el.style.animation='none';el.offsetHeight;el.style.animation='factSlide .4s ease both';el.textContent=FACTS[factIdx++%FACTS.length];}
 function stopFacts(){if(factTimer){clearInterval(factTimer);factTimer=null;}}
 
