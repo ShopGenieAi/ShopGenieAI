@@ -254,7 +254,7 @@ async function loadData() {
     const isoSince = since.toISOString();
 
     const resp = await fetch(
-      `${SUPABASE_URL}/rest/v1/clicks?select=*&or=(ts.gte.${isoSince},ts.is.null)&order=ts.desc.nullslast&limit=500`,
+      `${SUPABASE_URL}/rest/v1/clicks?select=*&timestamp=gte.${isoSince}&order=timestamp.desc&limit=500`,
       { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}`, 'Cache-Control': 'no-cache' }, cache: 'no-store' }
     );
     if (!resp.ok) throw new Error('Fetch failed: ' + resp.status);
@@ -332,10 +332,9 @@ function renderTable(data) {
     return;
   }
   document.getElementById('clicksTable').innerHTML = data.slice(0,200).map((r,i) => {
-    const t = r.ts ? new Date(r.ts) : null;
-    const timeStr = t
-      ? t.toLocaleDateString('en-NZ',{day:'numeric',month:'short'}) + ' ' + t.toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'})
-      : '(no timestamp)';
+    const t = r.timestamp ? new Date(r.timestamp) : null;
+    const timeStr = t ? (t.toLocaleDateString('en-NZ',{day:'numeric',month:'short'}) + ' ' +
+      t.toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'})) : '—';
     const budgetLabel = BUDGET_LABELS[r.budget] || r.budget || '—';
     const storeShort = (r.store||'—').replace('Google Shopping NZ','Google 🛒');
     return `<tr>
