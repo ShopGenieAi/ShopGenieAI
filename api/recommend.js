@@ -355,11 +355,14 @@ function buildShoppingChips(richSearchTerm) {
 // ── BRAVE IMAGE SEARCH ────────────────────────────────────────────────────────
 async function getBraveImage(searchTerm, braveKey) {
   if (!braveKey) return null;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000); // 5s hard timeout
   try {
     const res = await fetch(
       `https://api.search.brave.com/res/v1/images/search?q=${encodeURIComponent(searchTerm + ' product')}&count=3&safesearch=strict`,
-      { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey } }
+      { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey }, signal: controller.signal }
     );
+    clearTimeout(timeout);
     if (!res.ok) return null;
     const data = await res.json();
     for (const r of (data?.results || [])) {
@@ -368,6 +371,7 @@ async function getBraveImage(searchTerm, braveKey) {
     }
     return null;
   } catch (e) {
+    clearTimeout(timeout);
     console.error('Brave image error:', e.message);
     return null;
   }
@@ -736,6 +740,7 @@ Session: ${Date.now().toString(36)}`;
     });
     if (!claudeRes.ok) throw new Error(`Claude API error: ${claudeRes.status}`);
     const claudeData = await claudeRes.json();
+    if (!claudeData?.content?.[0]?.text) throw new Error(`Unexpected Claude response shape: ${JSON.stringify(claudeData).slice(0, 200)}`);
     let raw = claudeData.content[0].text.trim();
 
     // ── JSON sanitiser ──────────────────────────────────────────────────────
@@ -774,21 +779,27 @@ Session: ${Date.now().toString(36)}`;
   }
 
   // ── STEP 2: Normalise + build links + images ───────────────────────────────
-  const enriched = await Promise.all(products.map(async (product) => {
-    const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
-    const richSearchTerm  = (product.name + ' ' + (product.searchQuery || '')).toLowerCase().trim();
+  let enriched;
+  try {
+    enriched = await Promise.all(products.map(async (product) => {
+      const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
+      const richSearchTerm  = (product.name + ' ' + (product.searchQuery || '')).toLowerCase().trim();
 
-    const { url: buyLink, storeName: bestStoreName } = buildBuyLink(
-      cleanSearchTerm, product.name, product.type, budgetTier, budgetMin, budgetMax, interests
-    );
+      const { url: buyLink, storeName: bestStoreName } = buildBuyLink(
+        cleanSearchTerm, product.name, product.type, budgetTier, budgetMin, budgetMax, interests
+      );
 
-    const stores   = buildShoppingChips(richSearchTerm);
-    const imageUrl = await getBraveImage(richSearchTerm, BRAVE_KEY);
+      const stores   = buildShoppingChips(richSearchTerm);
+      const imageUrl = await getBraveImage(richSearchTerm, BRAVE_KEY).catch(() => null);
 
-    console.log(`"${product.name}" | ${bestStoreName}: "${cleanSearchTerm}" | Tier: ${budgetTier} | Gender: ${gender} | Sport: ${sport || 'none'} | Child: ${isForChild}`);
+      console.log(`"${product.name}" | ${bestStoreName}: "${cleanSearchTerm}" | Tier: ${budgetTier} | Gender: ${gender} | Sport: ${sport || 'none'} | Child: ${isForChild}`);
 
-    return { name: product.name, type: product.type, reason: product.reason, budgetLabel, bestStoreName, buyLink, imageUrl, stores };
-  }));
+      return { name: product.name, type: product.type, reason: product.reason, budgetLabel, bestStoreName, buyLink, imageUrl, stores };
+    }));
+  } catch (enrichErr) {
+    console.error('Enrichment error:', enrichErr.message);
+    return res.status(500).json({ error: 'Failed to build product links. Please try again.' });
+  }
 
   // ── STEP 3a: Brevo contact logging — always log tester/user ────────────────
   // Logs every submission to Brevo contacts so Mark can track who used the app
