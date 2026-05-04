@@ -309,6 +309,8 @@ const TASKS = [
 
   // ── PARKED 🅿️ — Good ideas, revisit later ──────────────────────────────────
   {id:'park-1',phase:'parked',title:'Trademark filing — IPONZ Class 42 + Class 35',tag:'infra',note:'Recommended but not yet confirmed as done. File under Class 42 (software/AI services) and Class 35 (retail/commerce). Protects the ShopGenieAI brand before public launch.'},
+  {id:'park-2',phase:'parked',title:'Direct product page URLs — exact product landing (not search page)',tag:'api',note:'Currently Shop This Gift lands on Google Shopping NZ search results (real NZ prices, real NZ retailers — good enough for now). End goal: land user on the exact individual product page. Requires either: (a) Apify actor that can extract JS-rendered product URLs from Google Shopping, or (b) direct retailer affiliate API feeds (Mighty Ape, PB Tech etc). Prerequisite: affiliate partnerships + real traffic volume to justify cost.'},
+  {id:'park-3',phase:'parked',title:'Commission Factory affiliate verification — HTML meta tag method failing',tag:'infra',note:'Meta tag added to index.html and CF verification file added to repo root. Vercel serving file correctly but CF bot returning connection error repeatedly. Likely Vercel bot protection blocking CF crawler. Fix: contact CF support for manual verification, or try DNS TXT record method. Low priority until affiliate deals are needed.'},
 ];
 
 const TAG_CLASS = {ui:'tag-ui',api:'tag-api',backend:'tag-backend',data:'tag-data',infra:'tag-infra'};
