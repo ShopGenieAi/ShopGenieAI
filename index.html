@@ -5,6 +5,12 @@
 <meta name="commission-factory-verification" content="8284114c9b1b491b949e8d9534dfd1b5" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>ShopGenieAI — Gift Recommendations for New Zealanders</title>
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#c8922a"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="ShopGenieAI"/>
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/ShopGenieAi/ShopGenieAI/main/logo.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -164,6 +170,10 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 .btn-refresh{background:none;border:2px solid var(--gold);font-family:var(--fb);font-size:.84rem;font-weight:600;color:var(--gold);padding:9px 20px;border-radius:50px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
 .btn-refresh:hover{background:rgba(200,146,42,.08);transform:translateY(-1px)}
 .btn-refresh:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-share{background:none;border:2px solid var(--sage);font-family:var(--fb);font-size:.84rem;font-weight:600;color:var(--sage);padding:9px 20px;border-radius:50px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-share:hover{background:rgba(122,158,126,.10);transform:translateY(-1px)}
+.share-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#3d2b1a;color:#fff;font-family:var(--fb);font-size:.85rem;font-weight:500;padding:10px 22px;border-radius:50px;box-shadow:0 6px 28px rgba(61,43,26,.28);opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:9999;white-space:nowrap}
+.share-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #lockout{display:none;animation:fadeUp .5s ease both}
 .lk-card{background:var(--white);border-radius:var(--r);padding:40px 28px;box-shadow:0 4px 24px rgba(61,43,26,.10);border:2px solid var(--gold);text-align:center;max-width:480px;margin:0 auto}
 .lk-title{font-family:var(--fd);font-size:1.55rem;font-weight:900;color:var(--brown);margin-bottom:12px;line-height:1.2}
@@ -484,6 +494,7 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
   <div class="act-row">
     <button class="btn-restart" onclick="restart()">↩ Start over</button>
     <button class="btn-refresh" id="btnRef" onclick="doRefresh()">🔀 Refresh 3 Products</button>
+    <button class="btn-share" id="btnShare" onclick="shareResults()">📤 Share Picks</button>
     <button class="btn-feedback" onclick="window.open('https://form.jotform.com/261111533128041','_blank')">💬 Give Feedback</button>
   </div>
 </section>
@@ -563,6 +574,7 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 
 </main>
 <footer>Made in Aotearoa 🇳🇿 · Powered by AI · ShopGenieAI © 2025</footer>
+<div class="share-toast" id="shareToast">✅ Copied to clipboard!</div>
 
 <script>
 const MAX_REFRESHES = 3;
@@ -924,6 +936,38 @@ function resetInterests(){
 
 function comingSoon(){$('csMsg').style.display='block';setTimeout(()=>$('csMsg').style.display='none',3000);}
 window.addEventListener('DOMContentLoaded',()=>{$('n5').disabled=false;});
+
+// ── SHARE RESULTS ─────────────────────────────────────────────────────────────
+function shareResults() {
+  if (!lastProducts || lastProducts.length === 0) return;
+  const nameStr = A.firstName && A.firstName !== 'Friend' ? ` for ${A.firstName}` : '';
+  const whoStr  = A.q2 ? ` · For: ${A.q2}` : '';
+  const picks   = lastProducts.map((p, i) => `${i+1}. ${p.name}`).join('\n');
+  const text    = `🧞 ShopGenieAI gift picks${nameStr}${whoStr}\n\n${picks}\n\nFind yours at shopgenieai.com`;
+
+  if (navigator.share) {
+    // Native share sheet on mobile (iOS & Android)
+    navigator.share({ title: 'My ShopGenieAI Gift Picks', text, url: 'https://shopgenieai.com' })
+      .catch(() => {}); // user cancelled — no problem
+  } else {
+    // Desktop fallback — copy to clipboard
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = $('shareToast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2800);
+    }).catch(() => {
+      // Last resort — prompt copy
+      window.prompt('Copy your picks:', text);
+    });
+  }
+}
+
+// ── PWA SERVICE WORKER REGISTRATION ──────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
 // ── FEEDBACK MODAL ─────────────────────────────────────────────────────────
 const fbRatings = { overall: 0, relevance: 0, price: 0, links: 0, ux: 0 };
 

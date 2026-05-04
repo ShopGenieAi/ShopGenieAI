@@ -1,0 +1,26 @@
+{
+  "name": "ShopGenieAI",
+  "short_name": "ShopGenie",
+  "description": "AI-powered gift recommendations for New Zealanders",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf6f0",
+  "theme_color": "#c8922a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/ShopGenieAi/ShopGenieAI/main/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/ShopGenieAi/ShopGenieAI/main/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "lifestyle"],
+  "lang": "en-NZ"
+}

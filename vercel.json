@@ -6,6 +6,14 @@
       "use": "@vercel/static"
     },
     {
+      "src": "manifest.json",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "sw.js",
+      "use": "@vercel/static"
+    },
+    {
       "src": "tester.html",
       "use": "@vercel/static"
     },
@@ -50,6 +58,15 @@
     {
       "src": "/api/click",
       "dest": "/api/click.js"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "/manifest.json"
+    },
+    {
+      "src": "/sw.js",
+      "dest": "/sw.js",
+      "headers": { "Service-Worker-Allowed": "/" }
     },
     {
       "src": "/tester",
