@@ -366,7 +366,6 @@ function render(){
     const pending = tasks.filter(t => getTaskState(t.id).status !== 'done');
     const done    = tasks.filter(t => getTaskState(t.id).status === 'done');
     const sorted  = [...pending, ...done];
-    let displayNum = 1;
     let dividerShown = false;
 
     sorted.forEach(t => {
@@ -374,6 +373,8 @@ function render(){
       const isDone    = ts.status === 'done';
       const isBlocked = ts.status === 'blocked';
       const cls = isDone ? 'done' : isBlocked ? 'blocked' : '';
+      // Permanent number = original position within THIS phase (never reorders)
+      const displayNum = allPhase.indexOf(t) + 1;
 
       if(isDone && !dividerShown && pending.length > 0){
         html += `<hr class="done-divider"/><div class="done-divider-label">✅ Signed off</div>`;
@@ -399,7 +400,6 @@ function render(){
           ${sigHtml}${noteHtml}
         </div>
       </div>`;
-      displayNum++;
     });
     html += '</div></div>';
   });
