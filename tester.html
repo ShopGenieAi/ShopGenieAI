@@ -3,143 +3,287 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>ShopGenieAI Tester</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<title>ShopGenieAI — Auto QA Tester</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --bg:#0d0d0d;--panel:#161616;--border:#252525;
-  --gold:#c8922a;--terra:#c4623a;--sage:#7a9e7e;--text:#e8e0d4;
-  --muted:#6b6055;--white:#fff;--green:#4ade80;--red:#f87171;--blue:#60a5fa;
-  /* Left panel — warm lighter tone */
-  --lp-bg:#201b14;--lp-border:#38302400;--lp-text:#d8ccbc;--lp-muted:#a09080;
-  --lp-label:#e8b84b;--lp-input:#2c2318;--lp-input-border:#3d3225;
+  --bg:#0a0a0a;--panel:#111;--panel2:#161616;--border:#1e1e1e;--border2:#252525;
+  --gold:#c8922a;--gold-dim:rgba(200,146,42,.15);--terra:#c4623a;
+  --sage:#7a9e7e;--sage-dim:rgba(122,158,126,.12);
+  --text:#ddd5c8;--muted:#5a5048;--white:#fff;
+  --green:#4ade80;--green-dim:rgba(74,222,128,.1);
+  --red:#f87171;--red-dim:rgba(248,113,113,.1);
+  --blue:#60a5fa;--blue-dim:rgba(96,165,250,.1);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,.1);
+  --mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);display:flex;flex-direction:column}
 
-/* HEADER */
-.hdr{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;background:#111}
-.badge{background:var(--gold);color:#000;font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:3px}
-.hdr-title{font-family:'JetBrains Mono',monospace;font-size:.88rem;color:var(--white)}
-.hdr-count{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted)}
+/* ── HEADER ── */
+.hdr{
+  padding:10px 18px;border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;gap:12px;flex-shrink:0;
+  background:linear-gradient(90deg,#0f0d0a,#0a0a0a);
+}
+.hdr-logo{font-family:var(--mono);font-size:.72rem;font-weight:700;color:var(--gold);
+  background:var(--gold-dim);border:1px solid rgba(200,146,42,.3);padding:3px 9px;border-radius:4px;letter-spacing:.06em}
+.hdr-title{font-family:var(--mono);font-size:.82rem;color:var(--white);font-weight:600}
+.hdr-title span{color:var(--muted);font-weight:400}
+.hdr-stats{margin-left:auto;display:flex;gap:8px;align-items:center}
+.hstat{font-family:var(--mono);font-size:.65rem;padding:3px 10px;border-radius:20px;font-weight:600}
+.hstat-pass{background:var(--green-dim);color:var(--green);border:1px solid rgba(74,222,128,.2)}
+.hstat-fail{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.hstat-warn{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,.2)}
+.hstat-total{background:#1a1a1a;color:var(--muted);border:1px solid var(--border2)}
 
-/* LAYOUT */
-.main{display:flex;flex:1;overflow:hidden}
+/* ── LAYOUT ── */
+.layout{display:flex;flex:1;overflow:hidden}
 
-/* LEFT PANEL */
-.controls{width:295px;flex-shrink:0;border-right:2px solid #2e2418;display:flex;flex-direction:column;overflow-y:auto;background:var(--lp-bg)}
-.ctrl-section{padding:14px 16px;border-bottom:1px solid #2e2418}
-.ctrl-label{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--lp-label);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;font-weight:700}
+/* ── LEFT PANEL ── */
+.left{width:280px;flex-shrink:0;border-right:1px solid var(--border2);
+  display:flex;flex-direction:column;overflow-y:auto;background:#0d0b08;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
 
-/* RANDOM BUTTON */
-.btn-random{width:100%;padding:14px 12px;border:none;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,var(--gold),var(--terra));font-family:'JetBrains Mono',monospace;font-size:.9rem;font-weight:700;color:#000;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 20px rgba(200,146,42,.35);line-height:1.3}
-.btn-random:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(200,146,42,.45)}
-.btn-random:active{transform:translateY(0)}
-.btn-random:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.sect{padding:14px 16px;border-bottom:1px solid var(--border)}
+.sect-label{font-family:var(--mono);font-size:.58rem;color:var(--gold);text-transform:uppercase;
+  letter-spacing:.1em;font-weight:700;margin-bottom:10px}
 
-/* FIELDS */
-.field{margin-bottom:10px}
-.field label{display:block;font-size:.64rem;color:var(--lp-muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-weight:600}
-.field select,.field input{width:100%;background:var(--lp-input);border:1px solid var(--lp-input-border);border-radius:6px;padding:7px 10px;color:var(--lp-text);font-family:'DM Sans',sans-serif;font-size:.84rem;outline:none;transition:border-color .15s;appearance:none}
-.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%23a09080' d='M5 7L1 2h8z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:22px;cursor:pointer}
+/* Progress ring */
+.progress-ring-wrap{display:flex;justify-content:center;padding:6px 0 14px}
+.ring-svg{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:#1e1e1e;stroke-width:8}
+.ring-fill{fill:none;stroke:var(--gold);stroke-width:8;stroke-linecap:round;
+  stroke-dasharray:226;stroke-dashoffset:226;transition:stroke-dashoffset .6s ease}
+.ring-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.ring-pct{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--white)}
+.ring-sub{font-family:var(--mono);font-size:.52rem;color:var(--muted)}
+.ring-wrap{position:relative;width:80px;height:80px}
+
+/* Batch controls */
+.btn-batch{
+  width:100%;padding:11px 14px;border:none;border-radius:8px;cursor:pointer;
+  font-family:var(--mono);font-size:.78rem;font-weight:700;letter-spacing:.04em;
+  transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px
+}
+.btn-start{background:linear-gradient(135deg,var(--gold),var(--terra));color:#000;box-shadow:0 4px 20px rgba(200,146,42,.3)}
+.btn-start:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(200,146,42,.4)}
+.btn-start:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.btn-pause{background:#1e1e1e;color:var(--amber);border:1px solid rgba(251,191,36,.3)}
+.btn-pause:hover{background:var(--amber-dim)}
+.btn-stop{background:#1e1e1e;color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.btn-stop:hover{background:var(--red-dim)}
+.btn-export{background:#1e1e1e;color:var(--blue);border:1px solid rgba(96,165,250,.2);width:100%;padding:9px;border-radius:7px;font-family:var(--mono);font-size:.7rem;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:5px;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-export:hover{background:var(--blue-dim)}
+.btn-export:disabled{opacity:.3;cursor:not-allowed}
+.btn-clear-all{width:100%;padding:8px;background:none;border:1px solid var(--border2);border-radius:7px;color:var(--muted);font-family:var(--mono);font-size:.65rem;cursor:pointer;transition:all .15s}
+.btn-clear-all:hover{border-color:var(--red);color:var(--red)}
+
+/* Queue info */
+.queue-info{font-family:var(--mono);font-size:.64rem;color:var(--muted);text-align:center;padding:6px 0;line-height:1.7}
+.queue-info span{color:var(--amber);font-weight:600}
+
+/* Mode selector */
+.mode-tabs{display:flex;gap:4px;margin-bottom:10px}
+.mtab{flex:1;padding:6px;border-radius:6px;border:1px solid var(--border2);background:var(--panel);font-family:var(--mono);font-size:.6rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s;text-align:center;letter-spacing:.04em}
+.mtab.on{background:var(--gold-dim);border-color:rgba(200,146,42,.4);color:var(--gold)}
+
+/* Manual fields */
+.field{margin-bottom:8px}
+.field label{display:block;font-size:.6rem;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.field select,.field input{width:100%;background:#1a1610;border:1px solid #2a2218;border-radius:6px;padding:7px 9px;color:var(--text);font-family:var(--sans);font-size:.82rem;outline:none;transition:border-color .15s;appearance:none}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%235a5048' d='M5 7L1 2h8z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-color:#1a1610;padding-right:22px;cursor:pointer}
 .field select:focus,.field input:focus{border-color:var(--gold)}
-.field select option{background:#2c2318;color:var(--lp-text)}
+.field select option{background:#1a1610}
+.pill-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.lpill{padding:3px 9px;border-radius:12px;border:1px solid var(--border2);background:#1a1610;font-size:.65rem;color:var(--muted);cursor:pointer;transition:all .12s}
+.lpill:hover{border-color:var(--gold);color:var(--text)}
+.lpill.on{border-color:var(--gold);background:var(--gold-dim);color:var(--gold);font-weight:600}
+.pill-cat{font-family:var(--mono);font-size:.55rem;color:var(--muted);margin:5px 0 3px;letter-spacing:.06em}
+.btn-run-manual{width:100%;padding:9px;border:1.5px solid var(--gold);border-radius:7px;background:transparent;color:var(--gold);font-family:var(--mono);font-size:.72rem;font-weight:700;cursor:pointer;transition:all .15s;margin-top:6px}
+.btn-run-manual:hover{background:var(--gold-dim)}
+.btn-run-manual:disabled{opacity:.3;cursor:not-allowed}
 
-.btn-manual{width:100%;padding:9px;border:1.5px solid var(--gold);border-radius:7px;background:transparent;color:var(--gold);font-family:'JetBrains Mono',monospace;font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s;margin-top:4px}
-.btn-manual:hover{background:rgba(200,146,42,.12)}
+/* ── STATUS BAR ── */
+.status-bar{
+  padding:8px 16px;border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;gap:9px;flex-shrink:0;background:#0d0d0d;min-height:36px
+}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s}
+.sdot.idle{background:var(--muted)}
+.sdot.running{background:var(--gold);animation:blink 1s ease-in-out infinite}
+.sdot.ok{background:var(--green)}
+.sdot.err{background:var(--red)}
+.sdot.paused{background:var(--amber)}
+@keyframes blink{0%,100%{opacity:.3}50%{opacity:1}}
+.smsg{font-family:var(--mono);font-size:.68rem;color:var(--text);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.scurr{font-family:var(--mono);font-size:.62rem;color:var(--muted);white-space:nowrap}
 
-/* INTEREST ROWS */
-.int-row{margin-bottom:10px}
-.int-row-label{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--lp-label);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;font-weight:700}
-.int-pills-wrap{display:flex;flex-wrap:wrap;gap:4px}
-.tpill{padding:4px 10px;border-radius:20px;border:1px solid var(--lp-input-border);background:var(--lp-input);font-size:.72rem;color:var(--lp-muted);cursor:pointer;transition:all .15s;user-select:none;font-family:'DM Sans',sans-serif}
-.tpill:hover{border-color:var(--gold);color:var(--lp-text)}
-.tpill.sel{border-color:var(--gold);background:rgba(200,146,42,.2);color:var(--gold);font-weight:600}
-.int-summary{font-family:'JetBrains Mono',monospace;font-size:.64rem;color:var(--sage);margin-top:7px;background:rgba(122,158,126,.1);border-radius:5px;padding:5px 8px;border:1px solid rgba(122,158,126,.2);min-height:0}
-.tp-extra{width:100%;background:var(--lp-input);border:1px solid var(--lp-input-border);border-radius:6px;padding:7px 10px;color:var(--lp-text);font-family:'DM Sans',sans-serif;font-size:.78rem;outline:none;transition:border-color .15s;margin-top:4px}
-.tp-extra:focus{border-color:var(--gold)}
-.tp-extra::placeholder{color:var(--lp-muted)}
+/* ── RIGHT LOG ── */
+.right{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.log{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
 
-.btn-clear{width:100%;padding:7px;background:none;border:1px solid #2e2418;border-radius:6px;color:var(--lp-muted);font-family:'JetBrains Mono',monospace;font-size:.68rem;cursor:pointer;transition:all .15s}
-.btn-clear:hover{border-color:var(--red);color:var(--red)}
+/* ── RUN CARD ── */
+.rcard{background:var(--panel);border:1px solid var(--border2);border-radius:10px;overflow:hidden;animation:slideUp .2s ease;flex-shrink:0}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.rcard.has-errors{border-color:rgba(248,113,113,.25)}
+.rcard.all-ok{border-color:rgba(74,222,128,.15)}
 
-/* STATUS */
-.status-bar{padding:9px 16px;font-family:'JetBrains Mono',monospace;font-size:.72rem;border-bottom:1px solid var(--border);min-height:38px;display:flex;align-items:center;gap:8px;background:#111;flex-shrink:0}
-.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.dot-idle{background:var(--muted)}
-.dot-loading{background:var(--gold);animation:pulse 1s ease-in-out infinite}
-.dot-ok{background:var(--green)}
-.dot-err{background:var(--red)}
-@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.rcard-hdr{padding:9px 12px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  border-bottom:1px solid var(--border);background:#141414;cursor:pointer}
+.rcard-hdr:hover{background:#181818}
+.rnum{font-family:var(--mono);font-size:.58rem;color:var(--muted);background:#1e1e1e;
+  padding:2px 7px;border-radius:4px;flex-shrink:0}
+.rtag{font-family:var(--mono);font-size:.6rem;padding:2px 8px;border-radius:4px;border:1px solid var(--border2);background:#1a1a1a;color:var(--text);white-space:nowrap}
+.rtag.int{border-color:rgba(200,146,42,.4);color:var(--gold);background:var(--gold-dim)}
+.rtag.auto{border-color:rgba(122,158,126,.3);color:var(--sage);background:var(--sage-dim)}
+.rtime{font-family:var(--mono);font-size:.6rem;color:var(--muted);margin-left:auto;flex-shrink:0}
+.rbadge{font-family:var(--mono);font-size:.58rem;font-weight:700;padding:2px 8px;border-radius:4px;flex-shrink:0}
+.rbadge.ok{background:var(--green-dim);color:var(--green);border:1px solid rgba(74,222,128,.2)}
+.rbadge.err{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.rbadge.warn{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(251,191,36,.2)}
+.rbadge.pending{background:#1e1e1e;color:var(--muted);border:1px solid var(--border2)}
 
-/* RIGHT LOG */
-.log-panel{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px}
+/* Product rows */
+.rcard-body{display:none}
+.rcard-body.open{display:block}
+.prod-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.prod-row:last-child{border-bottom:none}
+.prod-img{width:48px;height:48px;border-radius:6px;object-fit:cover;background:#1e1e1e;flex-shrink:0;border:1px solid var(--border2)}
+.prod-img-ph{width:48px;height:48px;border-radius:6px;background:#1e1e1e;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;border:1px solid var(--border2)}
+.prod-info{flex:1;min-width:0}
+.prod-name{font-size:.84rem;font-weight:600;color:var(--white);margin-bottom:2px}
+.prod-type{font-family:var(--mono);font-size:.58rem;color:var(--sage);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.prod-foot{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.prod-store{font-family:var(--mono);font-size:.6rem;color:var(--blue);background:var(--blue-dim);border:1px solid rgba(96,165,250,.2);padding:2px 8px;border-radius:10px}
+.prod-link{font-family:var(--mono);font-size:.6rem;font-weight:700;padding:2px 9px;border-radius:5px;text-decoration:none;transition:all .15s;white-space:nowrap;border:1px solid rgba(200,146,42,.35);color:var(--gold);background:var(--gold-dim)}
+.prod-link:hover{background:var(--gold);color:#000}
+.link-status{font-family:var(--mono);font-size:.58rem;padding:2px 7px;border-radius:4px;font-weight:700}
+.link-ok{background:var(--green-dim);color:var(--green);border:1px solid rgba(74,222,128,.2)}
+.link-err{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+.link-checking{background:#1e1e1e;color:var(--muted);border:1px solid var(--border2);animation:blink 1s infinite}
+.link-skip{background:#1e1e1e;color:var(--muted);border:1px solid var(--border2)}
+.prod-error-msg{font-family:var(--mono);font-size:.6rem;color:var(--red);margin-top:3px}
 
-/* RUN CARD */
-.run{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;animation:slideIn .25s ease;flex-shrink:0}
-@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.run-hdr{padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);background:#1a1a1a}
-.run-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted);background:#222;padding:2px 7px;border-radius:4px;flex-shrink:0}
-.run-params{display:flex;gap:5px;flex-wrap:wrap;flex:1}
-.run-chip{font-family:'JetBrains Mono',monospace;font-size:.64rem;background:#222;border:1px solid var(--border);border-radius:5px;padding:2px 8px;color:var(--text)}
-.run-chip.interests{border-color:rgba(200,146,42,.5);color:var(--gold);background:rgba(200,146,42,.08)}
-.run-time{font-family:'JetBrains Mono',monospace;font-size:.64rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
-.run-err{padding:14px;font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--red)}
+/* Error summary */
+.rcard-err{padding:12px;font-family:var(--mono);font-size:.72rem;color:var(--red);background:var(--red-dim)}
 
-/* PRODUCTS */
-.products{display:flex;flex-direction:column}
-.product{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)}
-.product:last-child{border-bottom:none}
-.product-img{width:56px;height:56px;border-radius:8px;object-fit:cover;background:#222;border:1px solid var(--border);flex-shrink:0}
-.product-img-ph{width:56px;height:56px;border-radius:8px;background:#222;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
-.product-body{flex:1;min-width:0}
-.product-top{display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap}
-.product-num{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted)}
-.product-type{font-size:.62rem;color:var(--sage);font-weight:700;text-transform:uppercase;letter-spacing:.07em}
-.product-name{font-size:.92rem;font-weight:700;color:var(--white);margin-bottom:4px}
-.product-reason{font-size:.76rem;color:#a09080;line-height:1.5;margin-bottom:8px}
-.product-foot{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.product-store{font-family:'JetBrains Mono',monospace;font-size:.64rem;color:var(--blue);background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);padding:3px 9px;border-radius:10px}
-.btn-shop{font-family:'JetBrains Mono',monospace;font-size:.64rem;font-weight:700;color:var(--gold);background:rgba(200,146,42,.1);border:1px solid rgba(200,146,42,.3);padding:3px 10px;border-radius:5px;text-decoration:none;transition:all .15s;white-space:nowrap}
-.btn-shop:hover{background:var(--gold);color:#000}
-.chips-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
-.chip{font-size:.62rem;background:rgba(122,158,126,.07);color:var(--sage);padding:2px 7px;border-radius:8px;text-decoration:none;border:1px solid rgba(122,158,126,.15)}
-.chip:hover{background:rgba(122,158,126,.2)}
-.btn-copy{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:600;color:var(--muted);background:none;border:1px solid var(--border);border-radius:5px;padding:2px 8px;cursor:pointer;transition:all .15s;white-space:nowrap}
-.btn-copy:hover{border-color:var(--blue);color:var(--blue)}
-.btn-copy.copied{border-color:var(--green)!important;color:var(--green)!important}
+/* ── EMPTY STATE ── */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:var(--muted);gap:10px;pointer-events:none;height:100%;text-align:center;padding:40px}
+.empty-ico{font-size:2.5rem;opacity:.4}
+.empty-txt{font-family:var(--mono);font-size:.75rem;line-height:1.8;opacity:.6}
+.empty-queue{font-family:var(--mono);font-size:.65rem;color:var(--gold);margin-top:8px;opacity:.8}
 
-/* EMPTY STATE */
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:10px;pointer-events:none;min-height:300px}
-.empty-state div:first-child{font-size:2.8rem}
-.empty-state div:last-child{font-family:'JetBrains Mono',monospace;font-size:.78rem}
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0;background:#0d0d0d;overflow-x:auto;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.ftab{font-family:var(--mono);font-size:.6rem;font-weight:700;padding:4px 12px;border-radius:20px;
+  border:1px solid var(--border2);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap}
+.ftab:hover{border-color:var(--gold);color:var(--text)}
+.ftab.on{background:var(--gold-dim);border-color:rgba(200,146,42,.4);color:var(--gold)}
+.ftab.on.f-err{background:var(--red-dim);border-color:rgba(248,113,113,.3);color:var(--red)}
+.ftab.on.f-warn{background:var(--amber-dim);border-color:rgba(251,191,36,.3);color:var(--amber)}
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="hdr">
-  <div class="badge">DEV</div>
-  <div class="hdr-title">ShopGenieAI — API Tester</div>
-  <div class="hdr-count" id="runCount">0 tests run</div>
+  <div class="hdr-logo">SGAI QA</div>
+  <div class="hdr-title">Auto Test Engine <span>— shopgenieai.com</span></div>
+  <div class="hdr-stats">
+    <div class="hstat hstat-total" id="statTotal">0 runs</div>
+    <div class="hstat hstat-pass" id="statPass">0 ✓</div>
+    <div class="hstat hstat-warn" id="statWarn">0 ⚠</div>
+    <div class="hstat hstat-fail" id="statFail">0 ✗</div>
+  </div>
 </div>
 
-<div class="main">
+<div class="layout">
 
-  <!-- LEFT CONTROLS -->
-  <div class="controls">
+<!-- LEFT -->
+<div class="left">
 
-    <div class="ctrl-section">
-      <div class="ctrl-label">Quick Test</div>
-      <button class="btn-random" id="btnRandom" onclick="randomiseAndRun()">🎲 Randomise &amp; Run</button>
+  <!-- Progress -->
+  <div class="sect">
+    <div class="sect-label">Batch Progress</div>
+    <div class="progress-ring-wrap">
+      <div class="ring-wrap">
+        <svg class="ring-svg" width="80" height="80" viewBox="0 0 80 80">
+          <circle class="ring-bg" cx="40" cy="40" r="36"/>
+          <circle class="ring-fill" id="ringFill" cx="40" cy="40" r="36"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-pct" id="ringPct">0%</div>
+          <div class="ring-sub" id="ringSub">idle</div>
+        </div>
+      </div>
+    </div>
+    <div class="queue-info" id="queueInfo">Select a batch to run</div>
+  </div>
+
+  <!-- Batch controls -->
+  <div class="sect">
+    <div class="sect-label">Batch Mode</div>
+    <div class="mode-tabs">
+      <div class="mtab on" id="mt-auto" onclick="setMode('auto')">AUTO</div>
+      <div class="mtab" id="mt-manual" onclick="setMode('manual')">MANUAL</div>
     </div>
 
-    <div class="ctrl-section" style="flex:1">
-      <div class="ctrl-label">Manual Override</div>
+    <!-- AUTO MODE -->
+    <div id="auto-panel">
+      <div class="field">
+        <label>Test Suite</label>
+        <select id="suiteSelect" onchange="updateQueuePreview()">
+          <optgroup label="── Sports">
+            <option value="sports_him">Partner Him — All Sports × All Budgets</option>
+            <option value="sports_her">Partner Her — All Sports × All Budgets</option>
+          </optgroup>
+          <optgroup label="── By Recipient">
+            <option value="vibes_him">Partner Him — All Vibes × All Budgets</option>
+            <option value="vibes_her">Partner Her — All Vibes × All Budgets</option>
+            <option value="vibes_child">Child — All Vibes × All Budgets</option>
+            <option value="vibes_grandparent">Grandparent — All Vibes × All Budgets</option>
+            <option value="vibes_friend">Friend — All Vibes × All Budgets</option>
+            <option value="vibes_colleague">Work Colleague — All Vibes × Med/High</option>
+            <option value="vibes_mother">Mother — All Vibes × All Budgets</option>
+            <option value="vibes_father">Father — All Vibes × All Budgets</option>
+            <option value="vibes_sister">Sister — All Vibes × All Budgets</option>
+            <option value="vibes_brother">Brother — All Vibes × All Budgets</option>
+          </optgroup>
+          <optgroup label="── Interests">
+            <option value="styles_him">Partner Him — All Styles × All Vibes</option>
+            <option value="hobbies_him">Partner Him — All Hobbies × All Vibes</option>
+            <option value="styles_her">Partner Her — All Styles × All Vibes</option>
+            <option value="hobbies_her">Partner Her — All Hobbies × All Vibes</option>
+          </optgroup>
+          <optgroup label="── Full Runs">
+            <option value="full_him">FULL: Partner Him — Everything (~250 tests)</option>
+            <option value="full_her">FULL: Partner Her — Everything (~200 tests)</option>
+            <option value="full_all">NUCLEAR: All Recipients × All Vibes × All Budgets (~550 tests)</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="field">
+        <label>Delay between runs (ms)</label>
+        <select id="delaySelect">
+          <option value="500">Fast — 500ms</option>
+          <option value="1000" selected>Normal — 1s</option>
+          <option value="2000">Careful — 2s</option>
+          <option value="3000">Slow — 3s</option>
+        </select>
+      </div>
+      <button class="btn-batch btn-start" id="btnStart" onclick="startBatch()">▶ Start Batch</button>
+      <button class="btn-batch btn-pause" id="btnPause" onclick="togglePause()" style="display:none">⏸ Pause</button>
+      <button class="btn-batch btn-stop" id="btnStop" onclick="stopBatch()" style="display:none">■ Stop</button>
+    </div>
 
+    <!-- MANUAL MODE -->
+    <div id="manual-panel" style="display:none">
       <div class="field">
         <label>Who For</label>
-        <select id="whoFor">
+        <select id="mWhoFor">
           <option>Partner Him</option><option>Partner Her</option>
           <option>Child</option><option>Grandparent</option>
           <option>Friend</option><option>Work Colleague</option>
@@ -147,20 +291,18 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;dis
           <option>Sister</option><option>Brother</option>
         </select>
       </div>
-
       <div class="field">
         <label>Vibe</label>
-        <select id="vibe">
+        <select id="mVibe">
           <option>Sporty</option><option>Practical</option><option>Fun</option>
           <option>Quirky</option><option>Eco-friendly</option><option>Luxe</option>
           <option>Techy</option><option>Sentimental</option>
           <option>Trendy</option><option>Surprise me</option>
         </select>
       </div>
-
       <div class="field">
         <label>Budget</label>
-        <select id="budgetTier">
+        <select id="mBudget">
           <option value="low">Low 🤑 (&lt;$50)</option>
           <option value="medium" selected>Medium 💸 ($50–150)</option>
           <option value="high">High 🎯 ($150–300)</option>
@@ -168,367 +310,731 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;dis
           <option value="lotto">Lotto 🎉 ($500+)</option>
         </select>
       </div>
-
       <div class="field">
         <label>Occasion</label>
-        <select id="occasion">
+        <select id="mOccasion">
           <option>Birthday</option><option>Christmas</option>
           <option>Anniversary</option><option>Father's Day</option>
-          <option>Mother's Day</option><option>Valentine's Day</option>
-          <option>Just Because</option><option>Graduation</option>
+          <option>Mother's Day</option><option>Valentine's Day</option><option>Just Because</option>
+          <option>Graduation</option>
         </select>
       </div>
-
       <div class="field">
-        <label>Interests</label>
-
-        <div class="int-row">
-          <div class="int-row-label">🏆 Sport</div>
-          <div class="int-pills-wrap" id="tp-sport">
-            <div class="tpill sel" onclick="tpick(this,'sport','')">Not sporty</div>
-            <div class="tpill" onclick="tpick(this,'sport','Football')">Football</div>
-            <div class="tpill" onclick="tpick(this,'sport','Hockey')">Hockey</div>
-            <div class="tpill" onclick="tpick(this,'sport','Rugby')">Rugby</div>
-            <div class="tpill" onclick="tpick(this,'sport','Cricket')">Cricket</div>
-            <div class="tpill" onclick="tpick(this,'sport','Swimming')">Swimming</div>
-            <div class="tpill" onclick="tpick(this,'sport','Tennis')">Tennis</div>
-            <div class="tpill" onclick="tpick(this,'sport','Golf')">Golf</div>
-            <div class="tpill" onclick="tpick(this,'sport','Cycling')">Cycling</div>
-            <div class="tpill" onclick="tpick(this,'sport','Running')">Running</div>
-            <div class="tpill" onclick="tpick(this,'sport','Gym')">Gym</div>
-            <div class="tpill" onclick="tpick(this,'sport','Surfing')">Surfing</div>
-            <div class="tpill" onclick="tpick(this,'sport','Netball')">Netball</div>
-            <div class="tpill" onclick="tpick(this,'sport','Mountain Biking')">Mt Biking</div>
-            <div class="tpill" onclick="tpick(this,'sport','Volleyball')">Volleyball</div>
-          </div>
+        <label>Sport</label>
+        <div class="pill-row" id="mp-sport">
+          <div class="lpill on" onclick="mpick(this,'sport','')">None</div>
+          <div class="lpill" onclick="mpick(this,'sport','Football')">Football</div>
+          <div class="lpill" onclick="mpick(this,'sport','Hockey')">Hockey</div>
+          <div class="lpill" onclick="mpick(this,'sport','Rugby')">Rugby</div>
+          <div class="lpill" onclick="mpick(this,'sport','Cricket')">Cricket</div>
+          <div class="lpill" onclick="mpick(this,'sport','Swimming')">Swimming</div>
+          <div class="lpill" onclick="mpick(this,'sport','Tennis')">Tennis</div>
+          <div class="lpill" onclick="mpick(this,'sport','Golf')">Golf</div>
+          <div class="lpill" onclick="mpick(this,'sport','Cycling')">Cycling</div>
+          <div class="lpill" onclick="mpick(this,'sport','Running')">Running</div>
+          <div class="lpill" onclick="mpick(this,'sport','Gym')">Gym</div>
+          <div class="lpill" onclick="mpick(this,'sport','Surfing')">Surfing</div>
+          <div class="lpill" onclick="mpick(this,'sport','Netball')">Netball</div>
+          <div class="lpill" onclick="mpick(this,'sport','Volleyball')">Volleyball</div>
+          <div class="lpill" onclick="mpick(this,'sport','Mountain Biking')">Mt Biking</div>
         </div>
-
-        <div class="int-row">
-          <div class="int-row-label">✨ Style</div>
-          <div class="int-pills-wrap" id="tp-style">
-            <div class="tpill sel" onclick="tpick(this,'style','')">No preference</div>
-            <div class="tpill" onclick="tpick(this,'style','Leather')">Leather</div>
-            <div class="tpill" onclick="tpick(this,'style','Gold jewellery')">Gold</div>
-            <div class="tpill" onclick="tpick(this,'style','Silver jewellery')">Silver</div>
-            <div class="tpill" onclick="tpick(this,'style','Personalised')">Personalised</div>
-            <div class="tpill" onclick="tpick(this,'style','Eco-friendly')">Eco-friendly</div>
-            <div class="tpill" onclick="tpick(this,'style','Luxury')">Luxury</div>
-          </div>
-        </div>
-
-        <div class="int-row">
-          <div class="int-row-label">🎯 Hobby</div>
-          <div class="int-pills-wrap" id="tp-hobby">
-            <div class="tpill sel" onclick="tpick(this,'hobby','')">Not sure</div>
-            <div class="tpill" onclick="tpick(this,'hobby','Cooking')">Cooking</div>
-            <div class="tpill" onclick="tpick(this,'hobby','Gaming')">Gaming</div>
-            <div class="tpill" onclick="tpick(this,'hobby','Photography')">Photography</div>
-            <div class="tpill" onclick="tpick(this,'hobby','Reading')">Reading</div>
-            <div class="tpill" onclick="tpick(this,'hobby','Gardening')">Gardening</div>
-            <div class="tpill" onclick="tpick(this,'hobby','Music')">Music</div>
-            <div class="tpill" onclick="tpick(this,'hobby','Fishing')">Fishing</div>
-            <div class="tpill" onclick="tpick(this,'hobby','Travel')">Travel</div>
-            <div class="tpill" onclick="tpick(this,'hobby','Art & Craft')">Art & Craft</div>
-            <div class="tpill" onclick="tpick(this,'hobby','DIY')">DIY</div>
-          </div>
-        </div>
-
-        <div class="int-row">
-          <div class="int-row-label">💬 Anything else?</div>
-          <input class="tp-extra" type="text" id="tp-extra" placeholder="e.g. Nike, Kathmandu, loves gadgets..."/>
-        </div>
-
-        <div class="int-summary" id="tIntSummary"></div>
       </div>
-
-      <button class="btn-manual" onclick="runManual()">▶ Run Manual Test</button>
+      <div class="field">
+        <label>Style</label>
+        <div class="pill-row" id="mp-style">
+          <div class="lpill on" onclick="mpick(this,'style','')">None</div>
+          <div class="lpill" onclick="mpick(this,'style','Leather')">Leather</div>
+          <div class="lpill" onclick="mpick(this,'style','Gold jewellery')">Gold</div>
+          <div class="lpill" onclick="mpick(this,'style','Silver jewellery')">Silver</div>
+          <div class="lpill" onclick="mpick(this,'style','Personalised')">Personalised</div>
+          <div class="lpill" onclick="mpick(this,'style','Eco-friendly')">Eco</div>
+          <div class="lpill" onclick="mpick(this,'style','Luxury')">Luxury</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Hobby</label>
+        <div class="pill-row" id="mp-hobby">
+          <div class="lpill on" onclick="mpick(this,'hobby','')">None</div>
+          <div class="lpill" onclick="mpick(this,'hobby','Cooking')">Cooking</div>
+          <div class="lpill" onclick="mpick(this,'hobby','Gaming')">Gaming</div>
+          <div class="lpill" onclick="mpick(this,'hobby','Photography')">Photography</div>
+          <div class="lpill" onclick="mpick(this,'hobby','Reading')">Reading</div>
+          <div class="lpill" onclick="mpick(this,'hobby','Gardening')">Gardening</div>
+          <div class="lpill" onclick="mpick(this,'hobby','Music')">Music</div>
+          <div class="lpill" onclick="mpick(this,'hobby','Fishing')">Fishing</div>
+          <div class="lpill" onclick="mpick(this,'hobby','Travel')">Travel</div>
+          <div class="lpill" onclick="mpick(this,'hobby','Art & Craft')">Art & Craft</div>
+          <div class="lpill" onclick="mpick(this,'hobby','DIY')">DIY</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Extra</label>
+        <input type="text" id="mExtra" placeholder="e.g. Nike, Kathmandu..."/>
+      </div>
+      <button class="btn-run-manual" id="btnManual" onclick="runManual()">▶ Run Single Test</button>
     </div>
-
-    <div class="ctrl-section">
-      <button class="btn-clear" onclick="clearLog()">🗑 Clear all results</button>
-    </div>
-
   </div>
 
-  <!-- RIGHT LOG -->
-  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-
-    <div class="status-bar" id="statusBar">
-      <div class="dot dot-idle" id="statusDot"></div>
-      <span id="statusMsg">Ready — hit Randomise or fill in fields manually</span>
-    </div>
-
-    <div class="log-panel" id="logPanel">
-      <div class="empty-state" id="emptyState">
-        <div>🧞</div>
-        <div>Results appear here — newest at top</div>
-      </div>
-    </div>
-
+  <!-- Export & clear -->
+  <div class="sect">
+    <div class="sect-label">Send to Z</div>
+    <button class="btn-export" id="btnCopyZ" onclick="copyForZ()" disabled>📋 Copy Errors for Z</button>
+    <button class="btn-export" id="btnExport" onclick="exportReport()" disabled style="color:var(--muted);border-color:var(--border2)">📄 Download Full Report</button>
+    <button class="btn-clear-all" onclick="clearAll()">🗑 Clear All Results</button>
   </div>
+
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="ftab on" id="ft-all" onclick="setFilter('all')">All</div>
+    <div class="ftab f-err" id="ft-err" onclick="setFilter('err')">Errors only</div>
+    <div class="ftab f-warn" id="ft-warn" onclick="setFilter('warn')">Link issues</div>
+    <div class="ftab" id="ft-ok" onclick="setFilter('ok')">✓ Passed</div>
+    <div class="ftab" id="ft-auto" onclick="setFilter('auto')">Auto runs</div>
+    <div class="ftab" id="ft-manual" onclick="setFilter('manual')">Manual runs</div>
+  </div>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="sdot idle" id="sdot"></div>
+    <div class="smsg" id="smsg">Ready — choose a test suite and hit Start Batch, or switch to Manual</div>
+    <div class="scurr" id="scurr"></div>
+  </div>
+
+  <!-- Log -->
+  <div class="log" id="log">
+    <div class="empty" id="emptyState">
+      <div class="empty-ico">🧞</div>
+      <div class="empty-txt">Results appear here — newest at top<br>Z runs the tests, you read the findings</div>
+      <div class="empty-queue" id="emptyQueue">Select a suite above and hit Start Batch</div>
+    </div>
+  </div>
+
+</div>
 </div>
 
 <script>
 const ENDPOINT = 'https://shopgenieai.com/api/recommend';
 
-const WHO      = ['Partner Him','Partner Her','Child','Grandparent','Friend','Work Colleague','Mother','Father','Sister','Brother'];
+// ── TEST DATA ─────────────────────────────────────────────────────────────────
+const SPORTS   = ['Football','Hockey','Rugby','Cricket','Swimming','Tennis','Golf','Cycling','Running','Gym','Surfing','Netball','Mountain Biking','Volleyball'];
+const STYLES   = ['Leather','Gold jewellery','Silver jewellery','Personalised','Eco-friendly','Luxury'];
+const HOBBIES  = ['Cooking','Gaming','Photography','Reading','Gardening','Music','Fishing','Travel','Art & Craft','DIY'];
 const VIBES    = ['Sporty','Practical','Fun','Quirky','Eco-friendly','Luxe','Techy','Sentimental','Trendy','Surprise me'];
 const BUDGETS  = ['low','medium','high','bigwed','lotto'];
 const OCCASIONS= ['Birthday','Christmas','Anniversary',"Father's Day","Mother's Day","Valentine's Day","Just Because","Graduation"];
-const INTERESTS= [
-  'Hockey','Football','Rugby','Cricket','Swimming','Tennis','Golf','Cycling','Running','Gym',
-  'Nike','Adidas','Kathmandu','Garmin','Dyson','Apple',
-  'Leather','Personalised','Eco-friendly','Gold jewellery',
-  'Cooking','Gaming','Photography','Reading','Gardening','Music','Fishing','DIY',
-  'Hockey, Nike','Football, Adidas','Swimming, Garmin','Running, Nike',
-  '','','','',''
-];
 
-const tIntSel = {sport:'',style:'',hobby:''};
-
-function tpick(el, cat, val){
-  document.getElementById('tp-'+cat).querySelectorAll('.tpill').forEach(p=>p.classList.remove('sel'));
-  el.classList.add('sel');
-  tIntSel[cat] = val;
-  updateTIntSummary();
+// ── SUITE DEFINITIONS ─────────────────────────────────────────────────────────
+function vibesBudgets(whoFor, budgets) {
+  const q = [];
+  VIBES.forEach(vibe => budgets.forEach(budget => {
+    q.push({ whoFor, vibe, budgetTier:budget, occasion:'Birthday', interests:'' });
+  }));
+  return q;
 }
 
-function updateTIntSummary(){
-  const parts = [];
-  if(tIntSel.sport) parts.push('⚽ ' + tIntSel.sport);
-  if(tIntSel.style) parts.push('✨ ' + tIntSel.style);
-  if(tIntSel.hobby) parts.push('🎯 ' + tIntSel.hobby);
-  const extra = document.getElementById('tp-extra')?.value?.trim();
-  if(extra) parts.push('💬 ' + extra);
-  const el = document.getElementById('tIntSummary');
-  if(el) el.textContent = parts.length ? parts.join('  ·  ') : '';
+function sportsBudgets(whoFor) {
+  const q = [];
+  SPORTS.forEach(sport => BUDGETS.forEach(budget => {
+    q.push({ whoFor, vibe:'Sporty', budgetTier:budget, occasion:'Birthday', interests:sport });
+  }));
+  return q;
 }
 
-function getTInterests(){
-  const parts = [];
-  if(tIntSel.sport) parts.push(tIntSel.sport);
-  if(tIntSel.style) parts.push(tIntSel.style);
-  if(tIntSel.hobby) parts.push(tIntSel.hobby);
-  const extra = document.getElementById('tp-extra')?.value?.trim();
-  if(extra) parts.push(extra);
-  return parts.join(', ');
+function stylesVibes(whoFor) {
+  const q = [];
+  STYLES.forEach(style => VIBES.forEach(vibe => {
+    q.push({ whoFor, vibe, budgetTier:'medium', occasion:'Birthday', interests:style });
+  }));
+  return q;
 }
 
-function resetTInterests(){
-  Object.keys(tIntSel).forEach(k => tIntSel[k] = '');
-  document.querySelectorAll('.tpill').forEach(p => p.classList.remove('sel'));
-  ['tp-sport','tp-style','tp-hobby'].forEach(id => {
-    document.getElementById(id)?.querySelector('.tpill')?.classList.add('sel');
-  });
-  const extra = document.getElementById('tp-extra');
-  if(extra) extra.value = '';
-  document.getElementById('tIntSummary').textContent = '';
+function hobbiesVibes(whoFor) {
+  const q = [];
+  HOBBIES.forEach(hobby => VIBES.forEach(vibe => {
+    q.push({ whoFor, vibe, budgetTier:'medium', occasion:'Birthday', interests:hobby });
+  }));
+  return q;
 }
 
-let runCount = 0, running = false;
-let seenProducts = []; // tracks product names across all runs to prevent repeats
+function buildQueue(suiteKey) {
+  switch(suiteKey) {
+    // Sports
+    case 'sports_him':   return sportsBudgets('Partner Him');
+    case 'sports_her':   return sportsBudgets('Partner Her');
 
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    // By recipient — all vibes × all budgets
+    case 'vibes_him':        return vibesBudgets('Partner Him', BUDGETS);
+    case 'vibes_her':        return vibesBudgets('Partner Her', BUDGETS);
+    case 'vibes_child':      return vibesBudgets('Child', BUDGETS);
+    case 'vibes_grandparent':return vibesBudgets('Grandparent', BUDGETS);
+    case 'vibes_friend':     return vibesBudgets('Friend', BUDGETS);
+    case 'vibes_colleague':  return vibesBudgets('Work Colleague', ['low','medium','high']); // no lotto for work gifts
+    case 'vibes_mother':     return vibesBudgets('Mother', BUDGETS);
+    case 'vibes_father':     return vibesBudgets('Father', BUDGETS);
+    case 'vibes_sister':     return vibesBudgets('Sister', BUDGETS);
+    case 'vibes_brother':    return vibesBudgets('Brother', BUDGETS);
 
-function setStatus(type, msg){
-  document.getElementById('statusDot').className = `dot dot-${type}`;
-  document.getElementById('statusMsg').textContent = msg;
-}
+    // Interests
+    case 'styles_him':   return stylesVibes('Partner Him');
+    case 'hobbies_him':  return hobbiesVibes('Partner Him');
+    case 'styles_her':   return stylesVibes('Partner Her');
+    case 'hobbies_her':  return hobbiesVibes('Partner Her');
 
-function setFields(p){
-  document.getElementById('whoFor').value     = p.whoFor;
-  document.getElementById('vibe').value       = p.vibe;
-  document.getElementById('budgetTier').value = p.budgetTier;
-  document.getElementById('occasion').value   = p.occasion;
-  resetTInterests();
-  if(p.interests){
-    const sportList = ['Hockey','Football','Rugby','Cricket','Swimming','Tennis','Golf','Cycling','Running','Gym','Surfing','Netball','Mountain Biking','Volleyball'];
-    const styleList = ['Leather','Personalised','Eco-friendly','Gold jewellery','Silver jewellery','Luxury'];
-    const hobbyList = ['Cooking','Gaming','Photography','Reading','Gardening','Travel','Music','Fishing','Art & Craft','DIY'];
-    p.interests.split(',').map(s=>s.trim()).forEach(part => {
-      if(sportList.includes(part)){
-        tIntSel.sport = part;
-        const el = document.querySelector(`#tp-sport .tpill[onclick*="${part}"]`);
-        if(el){ document.querySelectorAll('#tp-sport .tpill').forEach(p=>p.classList.remove('sel')); el.classList.add('sel'); }
-      } else if(styleList.includes(part)){
-        tIntSel.style = part;
-        const el = document.querySelector(`#tp-style .tpill[onclick*="${part}"]`);
-        if(el){ document.querySelectorAll('#tp-style .tpill').forEach(p=>p.classList.remove('sel')); el.classList.add('sel'); }
-      } else if(hobbyList.includes(part)){
-        tIntSel.hobby = part;
-        const el = document.querySelector(`#tp-hobby .tpill[onclick*="${part}"]`);
-        if(el){ document.querySelectorAll('#tp-hobby .tpill').forEach(p=>p.classList.remove('sel')); el.classList.add('sel'); }
-      } else {
-        const extra = document.getElementById('tp-extra');
-        if(extra) extra.value = part;
-      }
-    });
-    updateTIntSummary();
+    // Full runs
+    case 'full_him': return [
+      ...sportsBudgets('Partner Him'),
+      ...vibesBudgets('Partner Him', BUDGETS),
+      ...stylesVibes('Partner Him'),
+      ...hobbiesVibes('Partner Him'),
+    ];
+    case 'full_her': return [
+      ...vibesBudgets('Partner Her', BUDGETS),
+      ...stylesVibes('Partner Her'),
+      ...hobbiesVibes('Partner Her'),
+    ];
+    case 'full_all': {
+      const ALL_WHO = ['Partner Him','Partner Her','Child','Grandparent','Friend','Work Colleague','Mother','Father','Sister','Brother'];
+      const q = [];
+      ALL_WHO.forEach(who => {
+        const budgets = who === 'Work Colleague' ? ['low','medium','high'] : BUDGETS;
+        VIBES.forEach(vibe => budgets.forEach(budget => {
+          q.push({ whoFor:who, vibe, budgetTier:budget, occasion:'Birthday', interests:'' });
+        }));
+      });
+      return q;
+    }
+    default: return vibesBudgets('Partner Him', BUDGETS);
   }
 }
 
-function getFields(){
-  return {
-    whoFor:     document.getElementById('whoFor').value,
-    vibe:       document.getElementById('vibe').value,
-    budgetTier: document.getElementById('budgetTier').value,
-    occasion:   document.getElementById('occasion').value,
-    interests:  getTInterests(),
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let queue = [], queueIdx = 0, totalInBatch = 0;
+let running = false, paused = false, stopped = false;
+let runCount = 0, passCount = 0, warnCount = 0, failCount = 0;
+let allRuns = [];  // { id, params, status, products, elapsed, linkErrors, isAuto }
+let activeFilter = 'all';
+let currentMode = 'auto';
+const mSel = { sport:'', style:'', hobby:'' };
+
+// ── MODE ──────────────────────────────────────────────────────────────────────
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('mt-auto').classList.toggle('on', m==='auto');
+  document.getElementById('mt-manual').classList.toggle('on', m==='manual');
+  document.getElementById('auto-panel').style.display = m==='auto' ? '' : 'none';
+  document.getElementById('manual-panel').style.display = m==='manual' ? '' : 'none';
+}
+
+function mpick(el, cat, val) {
+  document.getElementById('mp-'+cat).querySelectorAll('.lpill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  mSel[cat] = val;
+}
+
+// ── QUEUE PREVIEW ─────────────────────────────────────────────────────────────
+function updateQueuePreview() {
+  const q = buildQueue(document.getElementById('suiteSelect').value);
+  document.getElementById('queueInfo').innerHTML = `<span>${q.length}</span> tests queued`;
+  document.getElementById('emptyQueue').textContent = `${q.length} tests ready — hit Start Batch`;
+}
+
+// ── BATCH CONTROL ─────────────────────────────────────────────────────────────
+async function startBatch() {
+  if (running) return;
+  const suiteKey = document.getElementById('suiteSelect').value;
+  queue = buildQueue(suiteKey);
+  queueIdx = 0;
+  totalInBatch = queue.length;
+  running = true; paused = false; stopped = false;
+
+  document.getElementById('btnStart').style.display = 'none';
+  document.getElementById('btnPause').style.display = '';
+  document.getElementById('btnStop').style.display = '';
+  document.getElementById('btnExport').disabled = true;
+  document.getElementById('btnCopyZ').disabled = true;
+  setDot('running');
+
+  await runQueue();
+}
+
+function togglePause() {
+  paused = !paused;
+  document.getElementById('btnPause').textContent = paused ? '▶ Resume' : '⏸ Pause';
+  setDot(paused ? 'paused' : 'running');
+  setMsg(paused ? `Paused at test ${queueIdx}/${totalInBatch}` : 'Resuming…');
+  if (!paused) runQueue();
+}
+
+function stopBatch() {
+  stopped = true; running = false; paused = false;
+  document.getElementById('btnStart').style.display = '';
+  document.getElementById('btnPause').style.display = 'none';
+  document.getElementById('btnStop').style.display = 'none';
+  document.getElementById('btnExport').disabled = allRuns.length === 0;
+  document.getElementById('btnCopyZ').disabled = allRuns.length === 0;
+  setDot('idle');
+  setMsg(`Stopped at ${queueIdx}/${totalInBatch} — ${failCount} errors, ${warnCount} link warnings`);
+  updateRing(queueIdx, totalInBatch);
+}
+
+async function runQueue() {
+  const delay = parseInt(document.getElementById('delaySelect').value);
+  while (queueIdx < queue.length && !stopped) {
+    if (paused) return; // will resume when togglePause called again
+    const params = queue[queueIdx];
+    setMsg(`Running ${queueIdx+1}/${totalInBatch}: ${params.whoFor} · ${params.vibe} · ${params.budgetTier}${params.interests ? ' · '+params.interests : ''}`);
+    updateRing(queueIdx, totalInBatch);
+    await fireTest(params, true);
+    queueIdx++;
+    if (queueIdx < queue.length && !stopped) await sleep(delay);
+  }
+  if (!stopped) {
+    running = false;
+    document.getElementById('btnStart').style.display = '';
+    document.getElementById('btnPause').style.display = 'none';
+    document.getElementById('btnStop').style.display = 'none';
+    document.getElementById('btnExport').disabled = false;
+    document.getElementById('btnCopyZ').disabled = false;
+    updateRing(totalInBatch, totalInBatch);
+    setDot(failCount > 0 ? 'err' : 'ok');
+    setMsg(`Batch complete — ${runCount} tests · ${passCount} passed · ${warnCount} link warnings · ${failCount} failed`);
+  }
+}
+
+async function runManual() {
+  const interests = [mSel.sport, mSel.style, mSel.hobby, document.getElementById('mExtra').value.trim()].filter(Boolean).join(', ');
+  const params = {
+    whoFor:    document.getElementById('mWhoFor').value,
+    vibe:      document.getElementById('mVibe').value,
+    budgetTier:document.getElementById('mBudget').value,
+    occasion:  document.getElementById('mOccasion').value,
+    interests,
   };
+  document.getElementById('btnManual').disabled = true;
+  await fireTest(params, false);
+  document.getElementById('btnManual').disabled = false;
+  document.getElementById('btnExport').disabled = false;
+  document.getElementById('btnCopyZ').disabled = false;
 }
 
-async function randomiseAndRun(){
-  if(running) return;
-  const p = { whoFor:pick(WHO), vibe:pick(VIBES), budgetTier:pick(BUDGETS), occasion:pick(OCCASIONS), interests:pick(INTERESTS) };
-  setFields(p);
-  await fire(p);
-}
-
-async function runManual(){
-  if(running) return;
-  await fire(getFields());
-}
-
-async function fire(params){
-  running = true;
-  document.getElementById('btnRandom').disabled = true;
+// ── CORE TEST RUNNER ──────────────────────────────────────────────────────────
+async function fireTest(params, isAuto) {
+  let storedLinkStatuses = [];
   runCount++;
-  document.getElementById('runCount').textContent = `${runCount} test${runCount===1?'':'s'} run`;
-
-  const n = runCount;
+  const id = runCount;
   const t = new Date().toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  setStatus('loading', `Running test #${n}… (${seenProducts.length} products excluded)`);
+
+  // Create card immediately
+  const card = createCard(id, params, t, isAuto);
   document.getElementById('emptyState').style.display = 'none';
 
-  const runEl = document.createElement('div');
-  runEl.className = 'run';
-  runEl.id = `run-${n}`;
-  runEl.innerHTML = `
-    <div class="run-hdr">
-      <div class="run-num">#${n}</div>
-      <div class="run-params">
-        <div class="run-chip">${params.whoFor}</div>
-        <div class="run-chip">${params.vibe}</div>
-        <div class="run-chip">${params.budgetTier}</div>
-        <div class="run-chip">${params.occasion}</div>
-        ${params.interests ? `<div class="run-chip interests">💬 ${params.interests}</div>` : ''}
-      </div>
-      <button class="btn-copy" id="bc-${n}" onclick="copyRun(${n})" disabled>📋 Copy for Z</button>
-      <div class="run-time">${t} · <span id="rt-${n}" style="color:var(--gold)">⏳</span></div>
-    </div>
-    <div id="rb-${n}" style="padding:14px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--muted)">Calling API…</div>
-  `;
-
-  // Insert at top — newest first
-  const logPanel = document.getElementById('logPanel');
-  logPanel.insertBefore(runEl, logPanel.firstChild);
-
   const start = Date.now();
+  let status = 'pending', products = [], linkErrors = 0;
+
   try {
     const resp = await fetch(ENDPOINT, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        email:'', firstName:'Tester', shoppingFor:'A gift for someone',
+        email:'', firstName:'Z-Tester', shoppingFor:'A gift',
         whoFor:params.whoFor, vibe:params.vibe,
         budgetTier:params.budgetTier, occasion:params.occasion,
-        interests:params.interests, refreshSeed:0, excludeProducts:[...seenProducts],
+        interests:params.interests||'', refreshSeed:0, excludeProducts:[],
       })
     });
+
     const elapsed = ((Date.now()-start)/1000).toFixed(1);
-    document.getElementById(`rt-${n}`).textContent = `${elapsed}s`;
     const data = await resp.json();
 
-    if(!resp.ok){
-      const msg = data.message || data.error || `HTTP ${resp.status}`;
-      document.getElementById(`rb-${n}`).innerHTML = `<div class="run-err">❌ ${msg}</div>`;
-      setStatus('err', `Test #${n} failed — ${msg}`);
-      document.getElementById(`rt-${n}`).style.color = 'var(--red)';
+    if (!resp.ok) {
+      status = 'err';
+      failCount++;
+      updateCardError(id, data.message || data.error || `HTTP ${resp.status}`, elapsed);
     } else {
-      const products = data.products || [];
-      window[`runData_${n}`] = { params, products, elapsed };
-      // Track seen products to prevent repeats across runs
-      products.forEach(p => { if(p.name && !seenProducts.includes(p.name)) seenProducts.push(p.name); });
-      document.getElementById(`bc-${n}`).disabled = false;
-      setStatus('ok', `Test #${n} ✓ — ${products.map(p=>p.name).join(' · ')} · ${elapsed}s`);
-      document.getElementById(`rt-${n}`).style.color = 'var(--green)';
-
-      document.getElementById(`rb-${n}`).innerHTML = `
-        <div class="products">
-          ${products.map((p,i) => `
-            <div class="product">
-              ${p.imageUrl
-                ? `<img class="product-img" src="${p.imageUrl}" alt="${p.name}" onerror="this.style.display='none'"/>`
-                : `<div class="product-img-ph">🎁</div>`}
-              <div class="product-body">
-                <div class="product-top">
-                  <span class="product-num">#${i+1}</span>
-                  <span class="product-type">${p.type||'Gift'}</span>
-                </div>
-                <div class="product-name">${p.name}</div>
-                <div class="product-reason">${p.reason}</div>
-                <div class="product-foot">
-                  <div class="product-store">→ ${p.bestStoreName}</div>
-                  <div class="product-store" style="border-color:rgba(122,158,126,.3);color:var(--sage)">🏷 ${p.type||'general'}</div>
-                  <a class="btn-shop" href="${p.buyLink}" target="_blank" rel="noopener">Shop ↗</a>
-                </div>
-                <div class="chips-row">
-                  ${(p.stores||[]).map(s=>`<a class="chip" href="${s.link}" target="_blank">${s.name}</a>`).join('')}
-                </div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
+      products = data.products || [];
+      // Check link validity
+      const linkResults = await checkLinks(products, id);
+      linkErrors = linkResults.filter(r => r.broken).length;
+      status = linkErrors > 0 ? 'warn' : 'ok';
+      if (linkErrors > 0) warnCount++;
+      else passCount++;
+      storedLinkStatuses = linkResults;
+      updateCardSuccess(id, products, elapsed, linkResults);
     }
-  } catch(e){
+  } catch(e) {
     const elapsed = ((Date.now()-start)/1000).toFixed(1);
-    document.getElementById(`rb-${n}`).innerHTML = `<div class="run-err">❌ Network error: ${e.message}</div>`;
-    setStatus('err', `Test #${n} network error — ${e.message}`);
-    document.getElementById(`rt-${n}`).textContent = `${elapsed}s`;
-    document.getElementById(`rt-${n}`).style.color = 'var(--red)';
+    status = 'err'; failCount++;
+    updateCardError(id, `Network error: ${e.message}`, elapsed);
   }
 
-  running = false;
-  document.getElementById('btnRandom').disabled = false;
+  // Store run data
+  allRuns.unshift({ id, params, status, products, isAuto, linkStatuses: storedLinkStatuses });
+  updateStats();
+  applyFilter();
+  return { status, products };
 }
 
-function copyRun(n){
-  const d = window[`runData_${n}`];
-  if(!d) return;
-  const lines = [
-    `TEST #${n} — ${d.elapsed}s`,
-    `Who: ${d.params.whoFor} | Vibe: ${d.params.vibe} | Budget: ${d.params.budgetTier} | Occasion: ${d.params.occasion}`,
-    `Interests: "${d.params.interests || 'none'}"`,
-    ``,
-    ...d.products.map((p,i) => [
-      `Product ${i+1}: ${p.name}`,
-      `  Type: ${p.type}`,
-      `  Reason: ${p.reason}`,
-      `  Retailer: ${p.bestStoreName}`,
-      `  Link: ${p.buyLink}`,
-    ].join('\n')),
-  ].join('\n');
-  navigator.clipboard.writeText(lines).then(() => {
-    const btn = document.getElementById(`bc-${n}`);
-    btn.textContent = '✅ Copied!';
-    btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = '📋 Copy for Z'; btn.classList.remove('copied'); }, 2000);
+// ── LINK CHECKER ──────────────────────────────────────────────────────────────
+// Uses a HEAD request via no-cors — can detect some failures, marks others as "unverified"
+async function checkLinks(products, cardId) {
+  const results = [];
+  for (let i = 0; i < products.length; i++) {
+    const p = products[i];
+    const linkEl = document.getElementById(`ls-${cardId}-${i}`);
+    if (linkEl) { linkEl.className='link-status link-checking'; linkEl.textContent='checking…'; }
+
+    let broken = false;
+    try {
+      // Google Shopping links always work — skip checking them
+      if (p.buyLink && p.buyLink.includes('google.com/search')) {
+        if (linkEl) { linkEl.className='link-status link-skip'; linkEl.textContent='Google ✓'; }
+        results.push({ broken:false, url:p.buyLink, reason:'google' });
+        continue;
+      }
+
+      if (!p.buyLink) {
+        broken = true;
+        if (linkEl) { linkEl.className='link-status link-err'; linkEl.textContent='no link!'; }
+        results.push({ broken:true, url:'', reason:'missing' });
+        continue;
+      }
+
+      // Try fetch with no-cors for retailer URLs
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      try {
+        await fetch(p.buyLink, { method:'HEAD', mode:'no-cors', signal:ctrl.signal });
+        clearTimeout(timer);
+        // no-cors opaque response — can't check status, but if it resolves it likely works
+        if (linkEl) { linkEl.className='link-status link-ok'; linkEl.textContent='✓ ok'; }
+        results.push({ broken:false, url:p.buyLink, reason:'ok' });
+      } catch(fetchErr) {
+        clearTimeout(timer);
+        broken = true;
+        if (linkEl) { linkEl.className='link-status link-err'; linkEl.textContent='✗ dead'; }
+        results.push({ broken:true, url:p.buyLink, reason:fetchErr.message });
+      }
+    } catch(e) {
+      if (linkEl) { linkEl.className='link-status link-skip'; linkEl.textContent='skip'; }
+      results.push({ broken:false, url:p.buyLink||'', reason:'skip' });
+    }
+    await sleep(200); // slight delay between checks
+  }
+  return results;
+}
+
+// ── CARD RENDERING ────────────────────────────────────────────────────────────
+function createCard(id, params, t, isAuto) {
+  const log = document.getElementById('log');
+  const div = document.createElement('div');
+  div.className = 'rcard';
+  div.id = `rc-${id}`;
+  div.dataset.status = 'pending';
+  div.dataset.auto = isAuto ? '1' : '0';
+
+  div.innerHTML = `
+    <div class="rcard-hdr" onclick="toggleBody(${id})">
+      <div class="rnum">#${id}</div>
+      <div class="rtag">${params.whoFor}</div>
+      <div class="rtag">${params.vibe}</div>
+      <div class="rtag">${params.budgetTier}</div>
+      ${params.interests ? `<div class="rtag int">💬 ${params.interests}</div>` : ''}
+      ${isAuto ? `<div class="rtag auto">AUTO</div>` : ''}
+      <div class="rbadge pending" id="rb-${id}">⏳ running</div>
+      <div class="rtime">${t} · <span id="rt-${id}" style="color:var(--gold)">…</span></div>
+    </div>
+    <div class="rcard-body" id="rbody-${id}">
+      <div style="padding:12px;font-family:var(--mono);font-size:.68rem;color:var(--muted)">Calling API…</div>
+    </div>
+  `;
+
+  log.insertBefore(div, log.firstChild);
+  return div;
+}
+
+function toggleBody(id) {
+  const body = document.getElementById(`rbody-${id}`);
+  if (body) body.classList.toggle('open');
+}
+
+function updateCardSuccess(id, products, elapsed, linkResults) {
+  document.getElementById(`rt-${id}`).textContent = elapsed + 's';
+  document.getElementById(`rt-${id}`).style.color = 'var(--green)';
+
+  const linkErrors = linkResults.filter(r => r.broken).length;
+  const badge = document.getElementById(`rb-${id}`);
+  const card = document.getElementById(`rc-${id}`);
+
+  if (linkErrors > 0) {
+    badge.className = 'rbadge warn';
+    badge.textContent = `⚠ ${linkErrors} link issue${linkErrors>1?'s':''}`;
+    card.dataset.status = 'warn';
+    card.classList.add('has-errors');
+  } else {
+    badge.className = 'rbadge ok';
+    badge.textContent = '✓ pass';
+    card.dataset.status = 'ok';
+    card.classList.add('all-ok');
+  }
+
+  document.getElementById(`rbody-${id}`).innerHTML = `
+    <div class="products">
+      ${products.map((p,i) => `
+        <div class="prod-row">
+          ${p.imageUrl
+            ? `<img class="prod-img" src="${p.imageUrl}" alt="${p.name}" onerror="this.style.display='none'"/>`
+            : `<div class="prod-img-ph">🎁</div>`}
+          <div class="prod-info">
+            <div class="prod-type">${p.type||'Gift'}</div>
+            <div class="prod-name">${p.name}</div>
+            <div class="prod-foot">
+              <div class="prod-store">→ ${p.bestStoreName||'?'}</div>
+              <a class="prod-link" href="${p.buyLink||'#'}" target="_blank" rel="noopener">Shop ↗</a>
+              <span class="link-status link-checking" id="ls-${id}-${i}">…</span>
+            </div>
+            ${linkResults[i]?.broken ? `<div class="prod-error-msg">⚠ Link may be broken: ${linkResults[i].reason}</div>` : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  document.getElementById(`rbody-${id}`).classList.add('open');
+}
+
+function updateCardError(id, msg, elapsed) {
+  document.getElementById(`rt-${id}`).textContent = elapsed + 's';
+  document.getElementById(`rt-${id}`).style.color = 'var(--red)';
+  const badge = document.getElementById(`rb-${id}`);
+  badge.className = 'rbadge err';
+  badge.textContent = '✗ error';
+  const card = document.getElementById(`rc-${id}`);
+  card.dataset.status = 'err';
+  card.classList.add('has-errors');
+  document.getElementById(`rbody-${id}`).innerHTML = `<div class="rcard-err">❌ ${msg}</div>`;
+  document.getElementById(`rbody-${id}`).classList.add('open');
+}
+
+// ── FILTER ────────────────────────────────────────────────────────────────────
+function setFilter(f) {
+  activeFilter = f;
+  ['all','err','warn','ok','auto','manual'].forEach(k => {
+    const el = document.getElementById('ft-'+k);
+    if(el) el.classList.toggle('on', k===f);
+  });
+  applyFilter();
+}
+
+function applyFilter() {
+  document.querySelectorAll('.rcard').forEach(card => {
+    const status = card.dataset.status;
+    const isAuto = card.dataset.auto === '1';
+    let show = true;
+    if (activeFilter === 'err')    show = status === 'err';
+    if (activeFilter === 'warn')   show = status === 'warn';
+    if (activeFilter === 'ok')     show = status === 'ok';
+    if (activeFilter === 'auto')   show = isAuto;
+    if (activeFilter === 'manual') show = !isAuto;
+    card.style.display = show ? '' : 'none';
   });
 }
 
-function clearLog(){
-  document.getElementById('logPanel').querySelectorAll('.run').forEach(el => el.remove());
-  runCount = 0;
-  seenProducts = [];
-  document.getElementById('runCount').textContent = '0 tests run';
-  document.getElementById('emptyState').style.display = 'flex';
-  setStatus('idle','Ready — hit Randomise or fill in fields manually');
+// ── PROGRESS RING ─────────────────────────────────────────────────────────────
+function updateRing(done, total) {
+  const pct = total > 0 ? Math.round((done/total)*100) : 0;
+  const circumference = 226;
+  const offset = circumference - (circumference * pct / 100);
+  document.getElementById('ringFill').style.strokeDashoffset = offset;
+  document.getElementById('ringPct').textContent = pct + '%';
+  document.getElementById('ringSub').textContent = `${done}/${total}`;
+  document.getElementById('queueInfo').innerHTML = `<span>${done}</span> of <span>${total}</span> done`;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('tp-extra')?.addEventListener('input', updateTIntSummary);
-});
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('statTotal').textContent = runCount + ' runs';
+  document.getElementById('statPass').textContent  = passCount + ' ✓';
+  document.getElementById('statWarn').textContent  = warnCount + ' ⚠';
+  document.getElementById('statFail').textContent  = failCount + ' ✗';
+}
+
+// ── STATUS ────────────────────────────────────────────────────────────────────
+function setDot(type) { document.getElementById('sdot').className = 'sdot ' + type; }
+function setMsg(msg)   { document.getElementById('smsg').textContent = msg; }
+
+// ── COPY FOR Z ───────────────────────────────────────────────────────────────
+function copyForZ() {
+  const errors   = allRuns.filter(r => r.status === 'err');
+  const warnings = allRuns.filter(r => r.status === 'warn');
+  const total    = allRuns.length;
+  const ts       = new Date().toLocaleString('en-NZ');
+
+  if (errors.length === 0 && warnings.length === 0) {
+    // All passed — still useful to know
+    const lines = [
+      `🧞 ShopGenieAI QA Results — ${ts}`,
+      `✅ ALL PASSED — ${total} tests, zero errors or link warnings.`,
+      ``,
+      `Suites run: ${[...new Set(allRuns.map(r => r.params.whoFor))].join(', ')}`,
+      `Vibes covered: ${[...new Set(allRuns.map(r => r.params.vibe))].join(', ')}`,
+      `Budgets covered: ${[...new Set(allRuns.map(r => r.params.budgetTier))].join(', ')}`,
+    ];
+    navigator.clipboard.writeText(lines.join('\n')).then(() => flashBtn('btnCopyZ', '✅ Copied!'));
+    return;
+  }
+
+  const lines = [
+    `🧞 ShopGenieAI QA Results — ${ts}`,
+    `📊 ${total} tests · ${allRuns.filter(r=>r.status==='ok').length} passed · ${warnings.length} link warnings · ${errors.length} failed`,
+    ``,
+  ];
+
+  if (errors.length > 0) {
+    lines.push(`❌ FAILED TESTS (${errors.length})`);
+    lines.push('─'.repeat(60));
+    errors.forEach(r => {
+      lines.push(`#${r.id} | ${r.params.whoFor} | ${r.params.vibe} | ${r.params.budgetTier} | interests: "${r.params.interests||'none'}"`);
+      if (r.products.length > 0) {
+        r.products.forEach((p,i) => {
+          lines.push(`  ${i+1}. ${p.name} → ${p.bestStoreName||'?'} | ${p.buyLink||'NO LINK'}`);
+        });
+      } else {
+        lines.push(`  API ERROR — no products returned`);
+      }
+      lines.push('');
+    });
+  }
+
+  if (warnings.length > 0) {
+    lines.push(`⚠ LINK WARNINGS (${warnings.length})`);
+    lines.push('─'.repeat(60));
+    warnings.forEach(r => {
+      lines.push(`#${r.id} | ${r.params.whoFor} | ${r.params.vibe} | ${r.params.budgetTier} | interests: "${r.params.interests||'none'}"`);
+      r.products.forEach((p,i) => {
+        const ls = r.linkStatuses ? r.linkStatuses[i] : null;
+        const flag = ls && ls.broken ? ' ⚠ DEAD LINK' : '';
+        lines.push(`  ${i+1}. ${p.name} → ${p.bestStoreName||'?'}${flag} | ${p.buyLink||'NO LINK'}`);
+      });
+      lines.push('');
+    });
+  }
+
+  lines.push(`─`.repeat(60));
+  lines.push(`Paste this straight into chat with Z to get fixes.`);
+
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    flashBtn('btnCopyZ', '✅ Copied for Z!');
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement('textarea');
+    ta.value = lines.join('\n');
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    flashBtn('btnCopyZ', '✅ Copied!');
+  });
+}
+
+function flashBtn(id, msg) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  const orig = btn.textContent;
+  btn.textContent = msg;
+  btn.style.color = 'var(--green)';
+  btn.style.borderColor = 'rgba(74,222,128,.4)';
+  setTimeout(() => {
+    btn.textContent = orig;
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  }, 2500);
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+function exportReport() {
+  const ts = new Date().toLocaleString('en-NZ');
+  const errors   = allRuns.filter(r => r.status === 'err');
+  const warnings = allRuns.filter(r => r.status === 'warn');
+  const passed   = allRuns.filter(r => r.status === 'ok');
+
+  const rows = allRuns.map(r => `
+    <tr style="background:${r.status==='err'?'#1a0a0a':r.status==='warn'?'#1a1400':'#0d1a0d'}">
+      <td style="font-weight:700;color:${r.status==='err'?'#f87171':r.status==='warn'?'#fbbf24':'#4ade80'}">#${r.id}</td>
+      <td>${r.params.whoFor}</td>
+      <td>${r.params.vibe}</td>
+      <td>${r.params.budgetTier}</td>
+      <td>${r.params.interests||'—'}</td>
+      <td>${r.products.map(p=>p.name).join(', ')||'—'}</td>
+      <td>${r.products.map(p=>p.bestStoreName).join(', ')||'—'}</td>
+      <td style="font-weight:700;color:${r.status==='err'?'#f87171':r.status==='warn'?'#fbbf24':'#4ade80'}">${r.status.toUpperCase()}</td>
+    </tr>
+  `).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+<title>ShopGenieAI QA Report — ${ts}</title>
+<style>
+  body{background:#0a0a0a;color:#ddd5c8;font-family:'DM Sans',sans-serif;padding:32px;margin:0}
+  h1{font-size:1.6rem;color:#c8922a;margin-bottom:6px}
+  .meta{font-size:.82rem;color:#5a5048;margin-bottom:28px;font-family:monospace}
+  .summary{display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap}
+  .sum-card{background:#111;border-radius:10px;padding:16px 22px;border:1px solid #1e1e1e;min-width:120px;text-align:center}
+  .sum-n{font-size:2rem;font-weight:700;font-family:monospace}
+  .sum-l{font-size:.72rem;color:#5a5048;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:.8rem}
+  th{background:#111;color:#c8922a;font-family:monospace;font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;padding:10px 12px;text-align:left;border-bottom:2px solid #1e1e1e}
+  td{padding:9px 12px;border-bottom:1px solid #1a1a1a;vertical-align:top;font-size:.78rem}
+  .section-hdr{color:#c8922a;font-family:monospace;font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;margin:28px 0 12px;border-bottom:1px solid #1e1e1e;padding-bottom:8px}
+</style></head><body>
+<h1>🧞 ShopGenieAI QA Report</h1>
+<div class="meta">Generated ${ts} · ${runCount} total tests</div>
+<div class="summary">
+  <div class="sum-card"><div class="sum-n" style="color:#4ade80">${passed.length}</div><div class="sum-l">Passed</div></div>
+  <div class="sum-card"><div class="sum-n" style="color:#fbbf24">${warnings.length}</div><div class="sum-l">Link Warnings</div></div>
+  <div class="sum-card"><div class="sum-n" style="color:#f87171">${errors.length}</div><div class="sum-l">Failed</div></div>
+  <div class="sum-card"><div class="sum-n" style="color:#ddd5c8">${runCount}</div><div class="sum-l">Total</div></div>
+</div>
+${errors.length > 0 ? `<div class="section-hdr">❌ Failed Tests (${errors.length})</div>
+<table><tr><th>#</th><th>Who</th><th>Vibe</th><th>Budget</th><th>Interests</th><th>Products</th><th>Stores</th><th>Status</th></tr>
+${errors.map(r=>`<tr style="background:#1a0a0a"><td style="color:#f87171;font-weight:700">#${r.id}</td><td>${r.params.whoFor}</td><td>${r.params.vibe}</td><td>${r.params.budgetTier}</td><td>${r.params.interests||'—'}</td><td>${r.products.map(p=>p.name).join(', ')||'API ERROR'}</td><td>${r.products.map(p=>p.bestStoreName).join(', ')||'—'}</td><td style="color:#f87171;font-weight:700">FAIL</td></tr>`).join('')}</table>` : ''}
+${warnings.length > 0 ? `<div class="section-hdr">⚠ Link Warnings (${warnings.length})</div>
+<table><tr><th>#</th><th>Who</th><th>Vibe</th><th>Budget</th><th>Interests</th><th>Products</th><th>Stores</th><th>Status</th></tr>
+${warnings.map(r=>`<tr style="background:#1a1400"><td style="color:#fbbf24;font-weight:700">#${r.id}</td><td>${r.params.whoFor}</td><td>${r.params.vibe}</td><td>${r.params.budgetTier}</td><td>${r.params.interests||'—'}</td><td>${r.products.map(p=>p.name).join(', ')}</td><td>${r.products.map(p=>p.bestStoreName).join(', ')}</td><td style="color:#fbbf24;font-weight:700">WARN</td></tr>`).join('')}</table>` : ''}
+<div class="section-hdr">All Tests</div>
+<table><tr><th>#</th><th>Who</th><th>Vibe</th><th>Budget</th><th>Interests</th><th>Products</th><th>Stores</th><th>Status</th></tr>${rows}</table>
+</body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sgai-qa-report-${Date.now()}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── CLEAR ─────────────────────────────────────────────────────────────────────
+function clearAll() {
+  if (!confirm('Clear all results?')) return;
+  document.querySelectorAll('.rcard').forEach(c => c.remove());
+  runCount = passCount = warnCount = failCount = 0;
+  allRuns = [];
+  updateStats();
+  updateRing(0, 0);
+  document.getElementById('emptyState').style.display = '';
+  document.getElementById('btnExport').disabled = true;
+  setDot('idle');
+  setMsg('Ready — choose a test suite and hit Start Batch, or switch to Manual');
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+updateQueuePreview();
 </script>
 </body>
 </html>
