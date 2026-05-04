@@ -357,23 +357,71 @@ function buildShoppingChips(richSearchTerm) {
   ];
 }
 
-// ── BRAVE IMAGE SEARCH ────────────────────────────────────────────────────────
+// ── APIFY GOOGLE SHOPPING NZ ─────────────────────────────────────────────────
+// Primary product lookup — returns real NZ product URL, price, image, seller
+async function getApifyProduct(searchTerm, apifyKey, budgetMin, budgetMax) {
+  if (!apifyKey) return null;
+  try {
+    const input = {
+      queries: searchTerm + ' NZ',
+      countryCode: 'nz',
+      maxResults: 5,
+      ...(budgetMin && budgetMin > 0 ? { minPrice: budgetMin } : {}),
+      ...(budgetMax && budgetMax < 9999 ? { maxPrice: budgetMax } : {}),
+    };
+
+    const res = await fetch(
+      `https://api.apify.com/v2/acts/nexgendata~google-shopping-scraper/run-sync-get-dataset-items?token=${apifyKey}&timeout=25`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }
+    );
+
+    if (!res.ok) {
+      console.error('Apify error:', res.status);
+      return null;
+    }
+
+    const items = await res.json();
+    if (!Array.isArray(items) || items.length === 0) return null;
+
+    for (const item of items) {
+      const productUrl = item?.url || item?.productUrl || item?.link || null;
+      const imageUrl   = item?.imageUrl || item?.thumbnail || item?.image || null;
+      const price      = item?.price || item?.priceText || null;
+      const seller     = item?.merchant || item?.seller || item?.store || null;
+      if (productUrl && productUrl.startsWith('http')) {
+        console.log(`🛍️ Apify hit: "${item?.title}" | ${seller} | ${price}`);
+        return { productUrl, imageUrl, price, seller, title: item?.title };
+      }
+    }
+
+    // Image-only fallback
+    const fallback = items[0];
+    const imageUrl = fallback?.imageUrl || fallback?.thumbnail || null;
+    if (imageUrl) return { productUrl: null, imageUrl, price: null, seller: null };
+    return null;
+  } catch (e) {
+    console.error('Apify error:', e.message);
+    return null;
+  }
+}
+
+// ── BRAVE IMAGE SEARCH (tier-2 fallback) ─────────────────────────────────────
 async function getBraveImage(searchTerm, braveKey) {
   if (!braveKey) return null;
   try {
     const res = await fetch(
-      `https://api.search.brave.com/res/v1/images/search?q=${encodeURIComponent(searchTerm + ' product')}&count=3&safesearch=strict`,
+      `https://api.search.brave.com/res/v1/images/search?q=${encodeURIComponent(searchTerm + ' product')}&count=5&safesearch=strict`,
       { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey } }
     );
     if (!res.ok) return null;
     const data = await res.json();
     for (const r of (data?.results || [])) {
       const url = r?.thumbnail?.src || r?.properties?.url || null;
-      if (url && !url.includes('logo') && !url.includes('icon')) return url;
+      if (url && !url.includes('logo') && !url.includes('icon') && !url.includes('placeholder')) return url;
     }
     return null;
   } catch (e) {
-    console.error('Brave image error:', e.message);
+    console.error('Brave fallback error:', e.message);
     return null;
   }
 }
@@ -564,6 +612,7 @@ export default async function handler(req, res) {
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   const BRAVE_KEY     = process.env.BRAVE_API_KEY;
+  const APIFY_KEY     = process.env.APIFY_API_KEY;
   const BREVO_KEY     = process.env.BREVO_API_KEY;
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'Missing Anthropic API key' });
 
@@ -916,15 +965,29 @@ Session: ${Date.now().toString(36)}`;
     const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
     const richSearchTerm  = (product.name + ' ' + (product.searchQuery || '')).toLowerCase().trim();
 
-    const { url: buyLink, storeName: bestStoreName } = buildBuyLink(
-      cleanSearchTerm, product.name, product.type, budgetTier, budgetMin, budgetMax, interests
-    );
+    // ── Try Apify Google Shopping NZ first ──────────────────────────────────
+    let buyLink, bestStoreName, imageUrl;
+    const apifyResult = await getApifyProduct(richSearchTerm, APIFY_KEY, budgetMin, budgetMax);
+
+    if (apifyResult?.productUrl) {
+      // Apify returned a real product URL — use it directly
+      buyLink       = apifyResult.productUrl;
+      bestStoreName = apifyResult.seller || 'Google Shopping NZ';
+      imageUrl      = apifyResult.imageUrl || await getBraveImage(richSearchTerm, BRAVE_KEY);
+      debugLog.push(`[Apify] HIT: "${product.name}" → ${bestStoreName} | ${apifyResult.price || 'no price'}`);
+    } else {
+      // Apify miss — fall back to routing logic + Brave image
+      const routeResult = buildBuyLink(cleanSearchTerm, product.name, product.type, budgetTier, budgetMin, budgetMax, interests);
+      buyLink       = routeResult.url;
+      bestStoreName = routeResult.storeName;
+      imageUrl      = apifyResult?.imageUrl || await getBraveImage(richSearchTerm, BRAVE_KEY);
+      debugLog.push(`[Apify] MISS: "${product.name}" — using routing fallback → ${bestStoreName}`);
+    }
 
     const stores   = buildShoppingChips(richSearchTerm);
-    const imageUrl = await getBraveImage(richSearchTerm, BRAVE_KEY);
 
     const detectedCat = detectProductCategory(product.name, product.type || '');
-    const logLine = `"${product.name}" | cat:${detectedCat} | store:${bestStoreName} | search:"${cleanSearchTerm}" | tier:${budgetTier} | gender:${gender} | sport:${sport||'none'} | child:${isForChild}`;
+    const logLine = `"${product.name}" | cat:${detectedCat} | store:${bestStoreName} | search:"${cleanSearchTerm}" | tier:${budgetTier} | apify:${apifyResult?'hit':'miss'}`;
     console.log(logLine);
     debugLog.push(`[Route] ${logLine}`);
 
