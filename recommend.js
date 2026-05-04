@@ -637,6 +637,54 @@ Every product MUST be genuinely available in NZ at the user's budget in 2026.
 - Match budget: budget smartwatch (Promate/Xiaomi ~$80 at PB Tech) for Low/Medium. Apple Watch for Lotto only.
 - If unsure whether a product exists at this price in NZ, choose something safer.
 
+RULE 2B — BUDGET TIER RETAILER UNIVERSE:
+Each budget tier has a retailer universe. Products must feel at home in that universe.
+
+LOW (under NZ$50) → The Warehouse, Kmart, Farmers basics, Trade Me, supermarket aisles.
+Think: everyday essentials, novelty items, basic accessories, starter kits.
+Brand examples: Warehouse brand, Kmart home brand, basic unbranded.
+
+MEDIUM (NZ$50–$150) → Farmers, Rebel Sport, Paper Plus, Whitcoulls, Briscoes, Torpedo7, JB Hi-Fi entry-level.
+Think: solid mid-range products, known NZ brands, good quality everyday items.
+Brand examples: Breville entry, Kathmandu basics, Garmin entry, Fitbit, Anker.
+
+HIGH (NZ$150–$300) → Farmers premium, Noel Leeming, JB Hi-Fi, Rebel Sport premium, Mecca, Sephora, Torpedo7 premium.
+Think: premium versions, branded names, quality that lasts, gift-worthy packaging.
+Brand examples: Garmin, Sony mid-range, KitchenAid entry, Dyson entry, Lululemon, Patagonia entry.
+
+BIG WEDNESDAY (NZ$300–$500) → Noel Leeming, Harvey Norman, Camera Warehouse, premium boutiques, brand flagships.
+Think: flagship models, premium gifts, luxury everyday items, top-of-range versions.
+Brand examples: Dyson flagship, Sony Alpha cameras, Apple Watch, Le Creuset, KitchenAid Pro, Bose, Bang & Olufsen entry.
+
+LOTTO (NZ$500+) → Harvey Norman, Camera Warehouse, Apple Store, luxury brand flagships, specialist premium retailers.
+Think: elite luxury, professional-grade, top-of-market, the absolute best version of anything.
+Brand examples: Apple (flagship), Sony Alpha mirrorless, Garmin Fenix, Dyson Airwrap, Le Creuset full sets, Bang & Olufsen, premium jewellery, Vitamix, Weber premium BBQ, DJI drone.
+
+RULE 2C — ANTI-DOWNGRADE (STRICTLY ENFORCED):
+At bigwed or lotto budget tier, you are BANNED from recommending:
+- Entry-level or budget versions of any product
+- Generic unbranded products (e.g. "Camera Bag" — say "Peak Design Camera Bag" or "Lowepro Pro Backpack")
+- Products that would embarrass a professional personal shopper at this price point
+- Anything that could be bought at The Warehouse or Kmart
+At bigwed/lotto: always name the specific premium brand and model. Never generic.
+
+RULE 2D — EXPERIENCE GIFTS AT HIGH BUDGETS:
+At bigwed or lotto tier, consider recommending an experience gift where relevant:
+- Photography → photography masterclass, scenic flight with camera time
+- Fitness → personal training package, spa & wellness day, premium gym membership
+- Travel → weekend getaway voucher, scenic helicopter experience
+- Food → premium chef's dining experience, cooking class with a chef
+- Music → concert tickets, music production masterclass
+Experience gifts are often the most memorable option at high budgets. Use them wisely.
+
+RULE 2E — OCCASION + BUDGET MUST WORK TOGETHER:
+Never let a high budget occasion get a low-effort product.
+- Wedding/Engagement at any budget → gifts must feel celebratory and meaningful, never generic
+- Anniversary at bigwed/lotto → must be luxury, personalised, or experiential
+- Birthday at lotto → must feel genuinely special, not just expensive
+- Christmas at bigwed/lotto → premium, gift-wrapped worthy, top-of-range
+The occasion sets the emotional bar. The budget sets the price bar. Both must be met.
+
 RULE 3 — NZ TERMINOLOGY: jandals, togs, jersey, sports hoodie, sports bag, torch, running shoes, drink bottle, shin pads.
 Always use "sports hoodie" not "technical hoodie". Use NZ terms at all times.
 
@@ -699,6 +747,13 @@ There are ALWAYS 3 meaningful sport-specific products available:
 - Mountain Biking → helmet, gloves, knee pads, bike lights, cycling jersey
 If you cannot think of 3 sport-specific products, look harder — they always exist.
 
+RULE 12 — THE EMBARRASSMENT TEST (FINAL CHECK BEFORE OUTPUT):
+Before returning your answer, ask yourself these 3 questions about EACH product:
+1. "Would a professional NZ personal shopper be embarrassed to recommend this at NZ$${budgetMin}–$${budgetMax}?"
+2. "Does this product match the stated interests — or is it just vibe filler?"
+3. "Is this the best, most specific version of this product for this budget — or did I go generic?"
+If any answer is YES/NO in the wrong direction — replace the product. Do not output until all 3 pass.
+
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
   "products": [
@@ -732,6 +787,9 @@ HARD BLOCK — FORBIDDEN (already shown): ${excludeProducts.length > 0 ? exclude
 SUGGESTED STARTING POINTS (use these as inspiration, but interests override everything): ${categorySuggestions}
 
 BUDGET: Every product MUST cost between NZ$${budgetMin} and NZ$${budgetMax} in New Zealand. HARD CEILING NZ$${budgetMax}.
+BUDGET TIER: ${budgetLabel} — think ${tier.hint}.
+${['bigwed','lotto'].includes(budgetTier) ? '🚨 PREMIUM TIER: Name specific premium brands and flagship models. Generic products are BANNED. No Warehouse, no Kmart, no entry-level versions. Every product must pass the embarrassment test.' : ''}
+${budgetTier === 'lotto' ? '💎 LOTTO TIER: Think Harvey Norman, Camera Warehouse, Apple flagship, luxury boutiques. Professional-grade or luxury ONLY. Consider experience gifts.' : ''}
 
 ${genderHint}
 ${sportHint}
