@@ -360,22 +360,35 @@ function buildShoppingChips(richSearchTerm) {
 // ── BRAVE IMAGE SEARCH ────────────────────────────────────────────────────────
 async function getBraveImage(searchTerm, braveKey) {
   if (!braveKey) return null;
-  try {
-    const res = await fetch(
-      `https://api.search.brave.com/res/v1/images/search?q=${encodeURIComponent(searchTerm + ' product')}&count=3&safesearch=strict`,
-      { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey } }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    for (const r of (data?.results || [])) {
-      const url = r?.thumbnail?.src || r?.properties?.url || null;
-      if (url && !url.includes('logo') && !url.includes('icon')) return url;
+
+  async function braveQuery(query) {
+    try {
+      const res = await fetch(
+        `https://api.search.brave.com/res/v1/images/search?q=${encodeURIComponent(query)}&count=5&safesearch=strict`,
+        { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey } }
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      for (const r of (data?.results || [])) {
+        const url = r?.thumbnail?.src || r?.properties?.url || null;
+        if (url && !url.includes('logo') && !url.includes('icon') && !url.includes('placeholder')) return url;
+      }
+      return null;
+    } catch (e) {
+      console.error('Brave image error:', e.message);
+      return null;
     }
-    return null;
-  } catch (e) {
-    console.error('Brave image error:', e.message);
-    return null;
   }
+
+  // Tier 1: full rich search term + "product"
+  const tier1 = await braveQuery(searchTerm + ' product');
+  if (tier1) return tier1;
+
+  // Tier 2: strip to first 2–3 words (generic product type fallback)
+  const genericTerm = searchTerm.split(' ').slice(0, 3).join(' ');
+  console.log(`🖼️ Brave tier-1 miss — trying generic: "${genericTerm}"`);
+  const tier2 = await braveQuery(genericTerm + ' gift NZ');
+  return tier2 || null;
 }
 
 // ── KIDS VIBE POOLS ───────────────────────────────────────────────────────────
@@ -768,6 +781,25 @@ Session: ${Date.now().toString(36)}`;
     }
     products = parsed.products;
     if (!Array.isArray(products) || products.length === 0) throw new Error('No products returned');
+
+    // ── PRODUCT NAME VALIDATION (Task 7) ────────────────────────────────────
+    // Reject invented compound names — Claude sometimes generates descriptive
+    // multi-word strings that aren't real product names (e.g. "Compression Muscle
+    // Recovery Roller Set", "Advanced Hydration Performance Flask").
+    // Rule: if name is 5+ words AND contains a known filler adjective pattern,
+    // strip back to the core 2–3 word product type.
+    const FILLER_ADJECTIVES = /\b(advanced|premium|professional|high-performance|compression|hydration|performance|recovery|multi-function|multi-purpose|heavy-duty|ergonomic|ultra|elite|deluxe|enhanced|innovative|smart|custom)\b/i;
+    products = products.map(p => {
+      if (!p.name) return p;
+      const words = p.name.trim().split(/\s+/);
+      if (words.length >= 5 && FILLER_ADJECTIVES.test(p.name)) {
+        // Keep last 2–3 words which are usually the actual product type
+        const cleaned = words.slice(-3).join(' ');
+        console.log(`🏷️ Name validation: "${p.name}" → "${cleaned}"`);
+        return { ...p, name: cleaned };
+      }
+      return p;
+    });
   } catch (err) {
     console.error('Claude error:', err);
     console.error('Debug log:', debugLog.join('\n'));
