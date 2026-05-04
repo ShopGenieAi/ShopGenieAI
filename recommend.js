@@ -360,35 +360,22 @@ function buildShoppingChips(richSearchTerm) {
 // ── BRAVE IMAGE SEARCH ────────────────────────────────────────────────────────
 async function getBraveImage(searchTerm, braveKey) {
   if (!braveKey) return null;
-
-  async function braveQuery(query) {
-    try {
-      const res = await fetch(
-        `https://api.search.brave.com/res/v1/images/search?q=${encodeURIComponent(query)}&count=5&safesearch=strict`,
-        { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey } }
-      );
-      if (!res.ok) return null;
-      const data = await res.json();
-      for (const r of (data?.results || [])) {
-        const url = r?.thumbnail?.src || r?.properties?.url || null;
-        if (url && !url.includes('logo') && !url.includes('icon') && !url.includes('placeholder')) return url;
-      }
-      return null;
-    } catch (e) {
-      console.error('Brave image error:', e.message);
-      return null;
+  try {
+    const res = await fetch(
+      `https://api.search.brave.com/res/v1/images/search?q=${encodeURIComponent(searchTerm + ' product')}&count=3&safesearch=strict`,
+      { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    for (const r of (data?.results || [])) {
+      const url = r?.thumbnail?.src || r?.properties?.url || null;
+      if (url && !url.includes('logo') && !url.includes('icon')) return url;
     }
+    return null;
+  } catch (e) {
+    console.error('Brave image error:', e.message);
+    return null;
   }
-
-  // Tier 1: full rich search term + "product"
-  const tier1 = await braveQuery(searchTerm + ' product');
-  if (tier1) return tier1;
-
-  // Tier 2: strip to first 2–3 words (generic product type fallback)
-  const genericTerm = searchTerm.split(' ').slice(0, 3).join(' ');
-  console.log(`🖼️ Brave tier-1 miss — trying generic: "${genericTerm}"`);
-  const tier2 = await braveQuery(genericTerm + ' gift NZ');
-  return tier2 || null;
 }
 
 // ── KIDS VIBE POOLS ───────────────────────────────────────────────────────────
@@ -667,10 +654,13 @@ RULE 6 — GENDER AWARENESS:
 Match products to the recipient's gender. If shopping for a male, ONLY suggest masculine or gender-neutral products.
 Never suggest womens handbags, feminine skincare, makeup, womens clothing, hair accessories, or female-coded items for a male recipient.
 
-RULE 7 — INTERESTS ARE MANDATORY:
-If the user has provided interests (hobbies, sports, brands etc), you MUST include at least 1 product that directly relates to those interests.
-If they say "shin pads" — one product must be shin pads. If they say "hockey" — one product must be hockey gear.
-Do NOT ignore the interests field. It is the most important personalisation signal.
+RULE 7 — INTERESTS ARE MANDATORY (STRICTLY ENFORCED):
+Interests are the SINGLE MOST IMPORTANT signal — they override the vibe pool entirely.
+- 1 interest provided → MINIMUM 2 of the 3 products must directly relate to that interest.
+- 2+ interests provided → ALL 3 products must each connect to at least one of those interests.
+- ZERO filler products allowed when interests are provided. Any product with no connection to stated interests is BANNED.
+- "Personalised" as an interest means ALL 3 products must have a personalised/custom angle.
+- Never use the vibe pool to justify ignoring stated interests. The interests win every time.
 
 RULE 8 — CUSTOM/PERSONALISED:
 For personalised/custom products (star maps, custom portraits, name jewellery), use a simple search term like "personalised star map print".
@@ -681,6 +671,16 @@ Swimming, yoga, running, cycling, sport, and fitness do NOT imply a drink bottle
 Same rule applies to: generic sports socks (unless "socks" mentioned), generic caps/beanies (unless mentioned), generic towels (unless mentioned).
 Always pick the most relevant and interesting gift — not the most obvious word association.
 
+RULE 11 — NO UNRELATED FILLER (ZERO TOLERANCE):
+Before finalising each product, ask yourself: "Does this connect to the stated interests OR the vibe?"
+If a product has ZERO connection to the stated interests and is just a generic vibe filler — it is BANNED.
+Banned filler examples when interests are provided:
+- Interest: Photography → Reusable Shopping Bag BANNED
+- Interest: Gaming → Scented Candle BANNED
+- Interest: Fishing → Generic Notebook BANNED
+- Interest: Rugby → Luxury Hand Cream BANNED
+- Interest: Personalised → Generic Mug BANNED
+There are ALWAYS 3 genuinely relevant products. Find them. Never settle for filler.
 
 RULE 10 — NO LAZY HOODIE FILLER:
 When a specific sport is identified in interests, ALL 3 products MUST be specific to that sport. A sports hoodie is NOT a sport-specific product — it is generic activewear filler. Never use a sports hoodie, generic jersey, or generic activewear as a filler third product when a specific sport has been identified.
@@ -735,7 +735,7 @@ BUDGET: Every product MUST cost between NZ$${budgetMin} and NZ$${budgetMax} in N
 
 ${genderHint}
 ${sportHint}
-${interests && interests.trim() ? `INTERESTS OVERRIDE: The user typed "${interests.trim()}" — at least 1 product MUST directly relate to this. Do not ignore it.` : ''}
+${interests && interests.trim() ? `INTERESTS (MANDATORY — HIGHEST PRIORITY): "${interests.trim()}"\n⚠️ MINIMUM 2 of 3 products MUST directly relate to these interests. A product with zero connection to these interests is BANNED. Do not use the vibe pool to ignore this.` : 'No interests specified — use vibe pool only.'}
 ${isForChild ? 'CHILD GIFT: ONLY age-appropriate kids products. NO adult fitness gear, NO adult accessories, NO adult lifestyle items.' : ''}
 ${refreshInstruction ? `STRATEGY: ${refreshInstruction}` : ''}
 Session: ${Date.now().toString(36)}`;
@@ -781,25 +781,6 @@ Session: ${Date.now().toString(36)}`;
     }
     products = parsed.products;
     if (!Array.isArray(products) || products.length === 0) throw new Error('No products returned');
-
-    // ── PRODUCT NAME VALIDATION (Task 7) ────────────────────────────────────
-    // Reject invented compound names — Claude sometimes generates descriptive
-    // multi-word strings that aren't real product names (e.g. "Compression Muscle
-    // Recovery Roller Set", "Advanced Hydration Performance Flask").
-    // Rule: if name is 5+ words AND contains a known filler adjective pattern,
-    // strip back to the core 2–3 word product type.
-    const FILLER_ADJECTIVES = /\b(advanced|premium|professional|high-performance|compression|hydration|performance|recovery|multi-function|multi-purpose|heavy-duty|ergonomic|ultra|elite|deluxe|enhanced|innovative|smart|custom)\b/i;
-    products = products.map(p => {
-      if (!p.name) return p;
-      const words = p.name.trim().split(/\s+/);
-      if (words.length >= 5 && FILLER_ADJECTIVES.test(p.name)) {
-        // Keep last 2–3 words which are usually the actual product type
-        const cleaned = words.slice(-3).join(' ');
-        console.log(`🏷️ Name validation: "${p.name}" → "${cleaned}"`);
-        return { ...p, name: cleaned };
-      }
-      return p;
-    });
   } catch (err) {
     console.error('Claude error:', err);
     console.error('Debug log:', debugLog.join('\n'));
@@ -813,6 +794,63 @@ Session: ${Date.now().toString(36)}`;
       searchQuery: prefixKids(p.searchQuery || p.name),
     }));
     console.log('🧒 Child detected — prefixed all searchQuery with "kids"');
+  }
+
+  // ── STEP 1.6: Interest relevance validation ───────────────────────────────
+  // Code-level safety net — catches filler products Claude returns despite prompt rules.
+  // If interests were provided, every product must share at least one keyword with
+  // the interests OR the vibe. Filler products are flagged and replaced with a
+  // generic interest-anchored fallback so users never see irrelevant results.
+  if (interests && interests.trim()) {
+    const interestTokens = interests.toLowerCase()
+      .split(/[\s,\/\+\-&]+/)
+      .map(t => t.trim())
+      .filter(t => t.length > 2);
+
+    // Common generic filler words that signal an unrelated product
+    const FILLER_SIGNALS = [
+      'shopping bag','reusable bag','tote bag','canvas bag',
+      'scented candle','candle set','bath bomb','bath set',
+      'generic mug','novelty mug','printed mug',
+      'notebook','journal','planner',
+      'hand cream','body lotion','moisturiser',
+      'socks','generic socks',
+      'phone case','generic phone',
+    ];
+
+    const vibeTokens = (vibe || '').toLowerCase().split(/\s+/);
+
+    products = products.map((p, idx) => {
+      const productLower = (p.name + ' ' + (p.type || '') + ' ' + (p.reason || '')).toLowerCase();
+
+      // Check if product relates to interests
+      const matchesInterest = interestTokens.some(token => productLower.includes(token));
+
+      // Check if it's a known filler signal
+      const isFiller = FILLER_SIGNALS.some(filler => productLower.includes(filler));
+
+      if (!matchesInterest && isFiller) {
+        // Replace with an interest-anchored fallback
+        const primaryInterest = interestTokens[0] || interests.trim().split(' ')[0];
+        const fallbackName = `${primaryInterest.charAt(0).toUpperCase() + primaryInterest.slice(1)} Gift Set`;
+        console.log(`⚠️ Relevance check: "${p.name}" flagged as unrelated filler — replaced with "${fallbackName}"`);
+        debugLog.push(`[Relevance] FILLER REPLACED: "${p.name}" → "${fallbackName}" (interest: ${primaryInterest})`);
+        return {
+          ...p,
+          name: fallbackName,
+          searchQuery: primaryInterest + ' gift',
+          reason: `A great gift for someone who loves ${primaryInterest} — personalised to their passion.`,
+        };
+      }
+
+      if (!matchesInterest) {
+        // Log the miss but don't replace — might still be vibe-relevant
+        console.log(`⚠️ Relevance check: "${p.name}" has no interest keyword match (interests: ${interests})`);
+        debugLog.push(`[Relevance] WEAK MATCH: "${p.name}" — no interest keyword found`);
+      }
+
+      return p;
+    });
   }
 
   // ── STEP 2: Normalise + build links + images ───────────────────────────────
