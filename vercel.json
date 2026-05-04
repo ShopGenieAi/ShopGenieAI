@@ -14,6 +14,10 @@
       "use": "@vercel/static"
     },
     {
+      "src": "commission-factory-8284114c9b1b491b949e8d9534dfd1b5.html",
+      "use": "@vercel/static"
+    },
+    {
       "src": "api/recommend.js",
       "use": "@vercel/node"
     },
@@ -62,6 +66,10 @@
     {
       "src": "/rci.html",
       "dest": "/rci.html"
+    },
+    {
+      "src": "/commission-factory-8284114c9b1b491b949e8d9534dfd1b5.html",
+      "dest": "/commission-factory-8284114c9b1b491b949e8d9534dfd1b5.html"
     },
     {
       "src": "/(.*)",
