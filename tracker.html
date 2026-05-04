@@ -54,6 +54,13 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
 .badge-v2{background:var(--v2)}
 .badge-v3{background:var(--v3)}
 .badge-v4{background:var(--v4)}
+.badge-parked{background:#6b7280}
+.btn-move{font-size:.72rem;color:#7a6855;background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:2px 8px;font-family:'DM Sans',sans-serif;transition:all .18s}
+.btn-move:hover{border-color:var(--gold);color:var(--brown)}
+.move-menu{position:fixed;background:white;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 28px rgba(61,43,26,.15);z-index:200;padding:6px;min-width:160px;display:none}
+.move-menu.open{display:block}
+.move-opt{padding:7px 12px;border-radius:7px;font-size:.82rem;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--brown);transition:background .15s}
+.move-opt:hover{background:var(--cream)}
 .phase-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;
   color:var(--brown)}
 .phase-count{margin-left:auto;font-size:.8rem;color:#9a8878;font-weight:500}
@@ -195,6 +202,7 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
     <button class="tab t-v2" onclick="filter('v2')">Current session</button>
     <button class="tab t-v3" onclick="filter('v3')">v3 — Build the App</button>
     <button class="tab t-v4" onclick="filter('v4')">v4 — Future</button>
+    <button class="tab" onclick="filter('parked')" style="border-color:#6b7280;color:#6b7280">Parked 🅿️</button>
     <button class="tab t-all" onclick="filter('done')" style="border-color:var(--sage);color:var(--sage)" id="tabDone">Signed off</button>
     <button class="tab t-all" onclick="filter('blocked')" style="border-color:#d4a017;color:#d4a017" id="tabBlock">Blocked</button>
   </div>
@@ -282,10 +290,9 @@ const TASKS = [
   {id:'v3-28',phase:'v3',title:'Performance audit — API response time under realistic load',tag:'backend',note:'Measure Claude Haiku + Brave image response times. Target: results in under 10s on a NZ mobile connection. Identify bottlenecks before public launch. Check Vercel function timeout limits.'},
 
   // GROWTH & REVENUE FOUNDATION
-  {id:'v3-11',phase:'v3',title:'RCI — Retailer Click Intelligence (outbound click tracking)',tag:'data',note:'✅ Shipped. All buy buttons + store chips route through /api/click before redirect. Logs to Vercel + Supabase clicks table. Captures: product, store, type, vibe, budget, occasion, who-for, card position, timestamp.'},
-  {id:'v3-12',phase:'v3',title:'RCI Dashboard — /rci internal analytics page',tag:'ui',note:'✅ Shipped. Password-protected dashboard at shopgenieai.com/rci. Stat cards, bar charts (top products, stores, vibes, budgets), full click log table. Supabase backend, vibe filters, date range selector, auto-refreshes every 60s.'},
-  {id:'v3-13',phase:'v3',title:'Share results button — native share sheet on mobile, clipboard on desktop',tag:'ui',note:'✅ Shipped. Share button on results page. Mobile: native OS share sheet (WhatsApp, iMessage etc). Desktop: copies shopgenieai.com to clipboard with toast pop-up confirmation.'},
-  {id:'v3-14',phase:'v3',title:'Brevo email — Google Shopping chips as clickable links',tag:'backend',note:'Currently the 3 Google Shopping chips (Shop NZ / Compare Prices / Top Rated) show as plain text in the Brevo email. Wire up as proper hyperlinks using the retailer search URLs already generated in recommend.js.'},
+  {id:'v3-13',phase:'v3',title:'RCI — Retailer Click Intelligence (outbound click tracking)',tag:'data',note:'Track every Shop This Gift click. Route through /api/click?to=<url>&product=<n>&retailer=<store>&tier=<budget>&vibe=<vibe> before redirect. Log: timestamp, product, retailer domain, budget tier, vibe, whoFor. Zero UX impact — redirect is instant. Lays groundwork for affiliate revenue pitch: "We sent 847 clicks to PB Tech last month."'},
+  {id:'v3-29',phase:'v3',title:'Share results button — let users share their 3 picks',tag:'ui',note:'After results load, add a Share button that generates a shareable summary (copy link or native share sheet on mobile). Massive organic growth lever — people share gift ideas with the person buying for them. Low effort, high impact.'},
+  {id:'v3-30',phase:'v3',title:'PWA conversion — Add to Home Screen on iPhone & Android',tag:'infra',note:'Add manifest.json + service worker so ShopGenieAI installs like a native app from the browser. Full screen, no browser bar, app icon on home screen. No App Store approval needed. Prerequisite step before native iOS/Android app build in v4.'},
 
   {id:'v4-1',phase:'v4',title:'Breadcrumb extraction + semantic similarity verification',tag:'backend',note:'Puppeteer/Playwright scraper extracts breadcrumb nav, vector embedding comparison for category match'},
   {id:'v4-2',phase:'v4',title:'Product comparison engine — Price + Shipping + Category accuracy score',tag:'backend',note:'Score each result: price fit, retailer trust, category accuracy, shipping speed'},
@@ -297,11 +304,16 @@ const TASKS = [
   {id:'v4-8',phase:'v4',title:'Q6 autocomplete — two-speed AI system (local + Haiku)',tag:'ui',note:'Instant local matches from 55-category list + 350ms debounce Haiku API for dynamic suggestions'},
   {id:'v4-9',phase:'v4',title:'Affiliate / commission integration with NZ retailers',tag:'backend',note:'Revenue model: commission on referred purchases. Requires retailer partnership agreements'},
   {id:'v4-10',phase:'v4',title:'User accounts — save past gift recommendations',tag:'backend',note:'Allow users to log in and retrieve past searches without re-entering email'},
+  {id:'v4-11',phase:'v4',title:'RCI Dashboard — /rci internal analytics page',tag:'ui',note:'Moved from v3. Password-protected dashboard at shopgenieai.com/rci. Stat cards, bar charts (top products, stores, vibes, budgets), full click log table. Requires user accounts + Supabase backend. Revisit when app has real traffic.'},
+  {id:'v4-12',phase:'v4',title:'Brevo email — Google Shopping chips as clickable links',tag:'backend',note:'Moved from v3. The 3 Google Shopping chips (Shop NZ / Compare Prices / Top Rated) show as plain text in Brevo email. Wire up as proper hyperlinks. Lower priority once in-app cards are the primary delivery method.'},
+
+  // ── PARKED 🅿️ — Good ideas, revisit later ──────────────────────────────────
+  {id:'park-1',phase:'parked',title:'Trademark filing — IPONZ Class 42 + Class 35',tag:'infra',note:'Recommended but not yet confirmed as done. File under Class 42 (software/AI services) and Class 35 (retail/commerce). Protects the ShopGenieAI brand before public launch.'},
 ];
 
 const TAG_CLASS = {ui:'tag-ui',api:'tag-api',backend:'tag-backend',data:'tag-data',infra:'tag-infra'};
 const TAG_LABEL = {ui:'UI',api:'API/Prompt',backend:'Backend',data:'Data',infra:'Infra'};
-const PHASE_LABEL = {v3:'v3 — Build the App 🚀',v2:'v2 — Completed ✅',v4:'v4 — Future Vision'};
+const PHASE_LABEL = {v3:'v3 — Build the App 🚀',v2:'v2 — Completed ✅',v4:'v4 — Future Vision 🔭',parked:'Parked 🅿️ — Good Ideas, Revisit Later'};
 
 let state = {};
 let sigTarget = null;
@@ -326,22 +338,22 @@ function filter(f){
 
 function render(){
   const list = document.getElementById('taskList');
-  const phases = ['v3','v2','v4'];
+  const phases = ['v3','v2','v4','parked'];
   let html = '';
 
   phases.forEach(phase => {
     let tasks = TASKS.filter(t => t.phase===phase);
-    if(activeFilter==='v2'||activeFilter==='v3'||activeFilter==='v4')
+    if(activeFilter==='v2'||activeFilter==='v3'||activeFilter==='v4'||activeFilter==='parked')
       tasks = tasks.filter(t=>t.phase===activeFilter);
     if(activeFilter==='done') tasks = tasks.filter(t=>getTaskState(t.id).status==='done');
     if(activeFilter==='blocked') tasks = tasks.filter(t=>getTaskState(t.id).status==='blocked');
-    if((activeFilter==='v2'&&phase!=='v2')||(activeFilter==='v3'&&phase!=='v3')||(activeFilter==='v4'&&phase!=='v4')) return;
+    if((activeFilter==='v2'&&phase!=='v2')||(activeFilter==='v3'&&phase!=='v3')||(activeFilter==='v4'&&phase!=='v4')||(activeFilter==='parked'&&phase!=='parked')) return;
     if(tasks.length===0 && (activeFilter==='done'||activeFilter==='blocked')) return;
     if(tasks.length===0) return;
 
     const allPhase = TASKS.filter(t=>t.phase===phase);
     const doneCount = allPhase.filter(t=>getTaskState(t.id).status==='done').length;
-    const badgeCls = {v2:'badge-v2',v3:'badge-v3',v4:'badge-v4'}[phase];
+    const badgeCls = {v2:'badge-v2',v3:'badge-v3',v4:'badge-v4',parked:'badge-parked'}[phase]||'badge-v4';
     html += `<div class="phase" data-phase="${phase}">
       <div class="phase-hdr">
         <span class="phase-badge ${badgeCls}">${phase.toUpperCase()}</span>
@@ -354,12 +366,7 @@ function render(){
     const pending = tasks.filter(t => getTaskState(t.id).status !== 'done');
     const done    = tasks.filter(t => getTaskState(t.id).status === 'done');
     const sorted  = [...pending, ...done];
-
-    // Number pending tasks only — done tasks show a tick, number never shifts
-    const pendingNums = {};
-    let numCounter = 1;
-    tasks.forEach(t => { pendingNums[t.id] = numCounter++; });
-
+    let displayNum = 1;
     let dividerShown = false;
 
     sorted.forEach(t => {
@@ -377,7 +384,7 @@ function render(){
       const noteHtml = ts.note && isDone ? `<div class="task-note">💬 "${ts.note}"</div>` : '';
       const blockBtn   = !isDone && !isBlocked ? `<button class="btn-block" onclick="event.stopPropagation();markBlocked('${t.id}')">Mark blocked</button>` : '';
       const unblockBtn = isBlocked ? `<button class="btn-block" onclick="event.stopPropagation();unblock('${t.id}')">Unblock</button>` : '';
-      const displayNum = isDone ? '✓' : pendingNums[t.id];
+      const moveBtn    = !isDone ? `<button class="btn-move" onclick="event.stopPropagation();openMove('${t.id}',this)">Move to… ↗</button>` : '';
 
       html += `<div class="task ${cls}" onclick="clickTask('${t.id}','${t.title.replace(/'/g,"\'")}')">
         <div class="check"><span class="check-tick">✓</span><span class="check-block">!</span></div>
@@ -386,12 +393,13 @@ function render(){
           <div class="task-title">${t.title}</div>
           <div class="task-meta">
             <span class="task-tag ${TAG_CLASS[t.tag]||'tag-ui'}">${TAG_LABEL[t.tag]||t.tag}</span>
-            ${blockBtn}${unblockBtn}
+            ${blockBtn}${unblockBtn}${moveBtn}
           </div>
           ${t.note?`<div class="task-note">${t.note}</div>`:''}
           ${sigHtml}${noteHtml}
         </div>
       </div>`;
+      displayNum++;
     });
     html += '</div></div>';
   });
@@ -457,13 +465,71 @@ function updateProgress(){
     const all  = TASKS.filter(t=>t.phase===ph);
     const done = all.filter(t=>getTaskState(t.id).status==='done').length;
     const pct  = all.length ? Math.round((done/all.length)*100) : 0;
-    document.getElementById('p'+ph).style.width = pct+'%';
-    document.getElementById('p'+ph+'t').textContent = pct+'%';
+    const el = document.getElementById('p'+ph);
+    const elt = document.getElementById('p'+ph+'t');
+    if(el) el.style.width = pct+'%';
+    if(elt) elt.textContent = pct+'%';
   });
 }
 
 // Init
 loadState();
+render();
+
+// ── MOVE TASK ─────────────────────────────────────────────────────────────────
+let moveMenu = null;
+let moveTargetId = null;
+
+function openMove(id, btn) {
+  closeMove();
+  moveTargetId = id;
+  const task = TASKS.find(t=>t.id===id);
+  if(!task) return;
+  const phases = [{key:'v3',label:'v3 — Build the App 🚀'},{key:'v4',label:'v4 — Future Vision 🔭'},{key:'parked',label:'Parked 🅿️ — Revisit Later'}];
+  const menu = document.createElement('div');
+  menu.className = 'move-menu open';
+  menu.innerHTML = `<div style="font-size:.7rem;color:#b5a190;font-weight:600;padding:4px 12px 6px;text-transform:uppercase;letter-spacing:.06em">Move to…</div>`
+    + phases.filter(p=>p.key!==task.phase).map(p=>
+        `<div class="move-opt" onclick="moveTask('${id}','${p.key}')">${p.label}</div>`
+      ).join('');
+  document.body.appendChild(menu);
+  moveMenu = menu;
+  const rect = btn.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + window.scrollY + 4) + 'px';
+  menu.style.left = (rect.left + window.scrollX) + 'px';
+  setTimeout(()=>document.addEventListener('click', closeMove, {once:true}), 0);
+}
+
+function closeMove() {
+  if(moveMenu){ moveMenu.remove(); moveMenu=null; }
+  moveTargetId = null;
+}
+
+function moveTask(id, newPhase) {
+  const task = TASKS.find(t=>t.id===id);
+  if(!task) return;
+  const oldPhase = task.phase;
+  task.phase = newPhase;
+  // Persist move in localStorage
+  const moves = JSON.parse(localStorage.getItem('sgai_moves')||'{}');
+  moves[id] = newPhase;
+  localStorage.setItem('sgai_moves', JSON.stringify(moves));
+  closeMove();
+  render();
+  console.log(`📦 Moved task "${task.title}" from ${oldPhase} → ${newPhase}`);
+}
+
+// Apply any saved moves on load
+function applyMoves(){
+  try {
+    const moves = JSON.parse(localStorage.getItem('sgai_moves')||'{}');
+    Object.entries(moves).forEach(([id,phase])=>{
+      const task = TASKS.find(t=>t.id===id);
+      if(task) task.phase = phase;
+    });
+  } catch(e){}
+}
+applyMoves();
 render();
 </script>
 </body>
