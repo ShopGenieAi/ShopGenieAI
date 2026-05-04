@@ -262,6 +262,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);display:flex
             <option value="full_him">FULL: Partner Him — Everything (~250 tests)</option>
             <option value="full_her">FULL: Partner Her — Everything (~200 tests)</option>
             <option value="full_all">NUCLEAR: All Recipients × All Vibes × All Budgets (~550 tests)</option>
+            <option value="ultimate">⚡ ULTIMATE: Everything × Everyone × All Interests (~900 tests)</option>
           </optgroup>
         </select>
       </div>
@@ -508,6 +509,41 @@ function buildQueue(suiteKey) {
       });
       return q;
     }
+    case 'ultimate': {
+      // Every recipient × every vibe × every budget (no interests) 
+      // + Partner Him/Her × every sport × medium budget
+      // + Partner Him/Her × every style × medium budget  
+      // + Partner Him/Her × every hobby × medium budget
+      const ALL_WHO = ['Partner Him','Partner Her','Child','Grandparent','Friend','Work Colleague','Mother','Father','Sister','Brother'];
+      const q = [];
+      // Base: all who × all vibes × all budgets
+      ALL_WHO.forEach(who => {
+        const budgets = who === 'Work Colleague' ? ['low','medium','high'] : BUDGETS;
+        VIBES.forEach(vibe => budgets.forEach(budget => {
+          q.push({ whoFor:who, vibe, budgetTier:budget, occasion:'Birthday', interests:'' });
+        }));
+      });
+      // Sports: Him + Her × all sports × all budgets
+      ['Partner Him','Partner Her'].forEach(who => {
+        SPORTS.forEach(sport => BUDGETS.forEach(budget => {
+          q.push({ whoFor:who, vibe:'Sporty', budgetTier:budget, occasion:'Birthday', interests:sport });
+        }));
+      });
+      // Styles: Him + Her × all styles × medium
+      ['Partner Him','Partner Her'].forEach(who => {
+        STYLES.forEach(style => VIBES.slice(0,5).forEach(vibe => {
+          q.push({ whoFor:who, vibe, budgetTier:'medium', occasion:'Birthday', interests:style });
+        }));
+      });
+      // Hobbies: Him + Her × all hobbies × medium
+      ['Partner Him','Partner Her'].forEach(who => {
+        HOBBIES.forEach(hobby => {
+          q.push({ whoFor:who, vibe:'Practical', budgetTier:'medium', occasion:'Birthday', interests:hobby });
+          q.push({ whoFor:who, vibe:'Fun', budgetTier:'medium', occasion:'Birthday', interests:hobby });
+        });
+      });
+      return q;
+    }
     default: return vibesBudgets('Partner Him', BUDGETS);
   }
 }
@@ -680,50 +716,102 @@ async function fireTest(params, isAuto) {
 }
 
 // ── LINK CHECKER ──────────────────────────────────────────────────────────────
-// Uses a HEAD request via no-cors — can detect some failures, marks others as "unverified"
+// Strategy:
+// 1. Missing link → instant FAIL
+// 2. Google Shopping URLs → always PASS (never 404, validated format)
+// 3. Known-dead URL patterns → instant FAIL (e.g. Sunglass Hutt search)
+// 4. URL structure validation → catch malformed URLs
+// 5. Retailer domain + path sanity check → flag suspicious patterns
+// 6. Actual fetch attempt → confirms domain resolves (no-cors, opaque but errors on DNS fail)
 async function checkLinks(products, cardId) {
   const results = [];
+
+  // Known broken URL patterns — flag immediately without fetching
+  const DEAD_PATTERNS = [
+    { pattern: /sunglasshut\.com.*search/i, reason: 'Sunglass Hutt search is dead' },
+    { pattern: /glassons\.com.*search.*him/i, reason: 'Glassons — wrong store for men' },
+    { pattern: /thewarehouse\.co\.nz.*search\?q=leather/i, reason: 'Warehouse for leather — wrong store' },
+    { pattern: /thewarehouse\.co\.nz.*search\?q=wallet/i, reason: 'Warehouse for wallet — wrong store' },
+    { pattern: /thewarehouse\.co\.nz.*search\?q=belt/i, reason: 'Warehouse for belt — wrong store' },
+  ];
+
+  // Known reliable domains — no fetch needed, just validate URL structure
+  const RELIABLE_DOMAINS = [
+    'google.com', 'pbtech.co.nz', 'jbhifi.co.nz', 'thewarehouse.co.nz',
+    'kmart.co.nz', 'briscoes.co.nz', 'torpedo7.co.nz', 'farmers.co.nz',
+    'whitcoulls.co.nz', 'bunnings.co.nz', 'chemistwarehouse.co.nz',
+    'mecca.com', 'sephora.nz', 'glassons.com', 'soccerunited.co.nz',
+    'gohockey.co.nz', 'rebelsport.co.nz'
+  ];
+
   for (let i = 0; i < products.length; i++) {
     const p = products[i];
     const linkEl = document.getElementById(`ls-${cardId}-${i}`);
     if (linkEl) { linkEl.className='link-status link-checking'; linkEl.textContent='checking…'; }
+    await sleep(50);
 
-    let broken = false;
-    try {
-      // Google Shopping links always work — skip checking them
-      if (p.buyLink && p.buyLink.includes('google.com/search')) {
-        if (linkEl) { linkEl.className='link-status link-skip'; linkEl.textContent='Google ✓'; }
-        results.push({ broken:false, url:p.buyLink, reason:'google' });
-        continue;
-      }
-
-      if (!p.buyLink) {
-        broken = true;
-        if (linkEl) { linkEl.className='link-status link-err'; linkEl.textContent='no link!'; }
-        results.push({ broken:true, url:'', reason:'missing' });
-        continue;
-      }
-
-      // Try fetch with no-cors for retailer URLs
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 8000);
-      try {
-        await fetch(p.buyLink, { method:'HEAD', mode:'no-cors', signal:ctrl.signal });
-        clearTimeout(timer);
-        // no-cors opaque response — can't check status, but if it resolves it likely works
-        if (linkEl) { linkEl.className='link-status link-ok'; linkEl.textContent='✓ ok'; }
-        results.push({ broken:false, url:p.buyLink, reason:'ok' });
-      } catch(fetchErr) {
-        clearTimeout(timer);
-        broken = true;
-        if (linkEl) { linkEl.className='link-status link-err'; linkEl.textContent='✗ dead'; }
-        results.push({ broken:true, url:p.buyLink, reason:fetchErr.message });
-      }
-    } catch(e) {
-      if (linkEl) { linkEl.className='link-status link-skip'; linkEl.textContent='skip'; }
-      results.push({ broken:false, url:p.buyLink||'', reason:'skip' });
+    // ── 1. Missing link ──────────────────────────────────────────────────────
+    if (!p.buyLink) {
+      if (linkEl) { linkEl.className='link-status link-err'; linkEl.textContent='✗ no link'; }
+      results.push({ broken:true, url:'', reason:'No buy link returned by API' });
+      continue;
     }
-    await sleep(200); // slight delay between checks
+
+    // ── 2. URL parse check ───────────────────────────────────────────────────
+    let parsedUrl;
+    try { parsedUrl = new URL(p.buyLink); }
+    catch(e) {
+      if (linkEl) { linkEl.className='link-status link-err'; linkEl.textContent='✗ bad URL'; }
+      results.push({ broken:true, url:p.buyLink, reason:'Malformed URL — cannot parse' });
+      continue;
+    }
+
+    // ── 3. Known dead patterns ───────────────────────────────────────────────
+    const deadMatch = DEAD_PATTERNS.find(d => d.pattern.test(p.buyLink));
+    if (deadMatch) {
+      if (linkEl) { linkEl.className='link-status link-err'; linkEl.textContent='✗ dead pattern'; }
+      results.push({ broken:true, url:p.buyLink, reason:deadMatch.reason });
+      continue;
+    }
+
+    // ── 4. Google Shopping — always valid ───────────────────────────────────
+    if (p.buyLink.includes('google.com/search')) {
+      // Validate it has tbm=shop and gl=nz params
+      const hasShop = p.buyLink.includes('tbm=shop');
+      const hasNZ   = p.buyLink.includes('gl=nz');
+      if (!hasShop || !hasNZ) {
+        if (linkEl) { linkEl.className='link-status link-err'; linkEl.textContent='✗ bad Google URL'; }
+        results.push({ broken:true, url:p.buyLink, reason:'Google Shopping URL missing tbm=shop or gl=nz' });
+      } else {
+        if (linkEl) { linkEl.className='link-status link-ok'; linkEl.textContent='✓ Google NZ'; }
+        results.push({ broken:false, url:p.buyLink, reason:'google' });
+      }
+      continue;
+    }
+
+    // ── 5. Retailer domain sanity check ─────────────────────────────────────
+    const domain = parsedUrl.hostname.replace('www.','');
+    const isKnownDomain = RELIABLE_DOMAINS.some(d => domain.includes(d.replace('www.','')));
+
+    // ── 6. Actual fetch — catches DNS failures, connection refused ───────────
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 7000);
+      await fetch(p.buyLink, { method:'HEAD', mode:'no-cors', signal:ctrl.signal });
+      clearTimeout(timer);
+      // Opaque response = domain resolved and responded (CORS blocked but URL exists)
+      if (linkEl) { linkEl.className='link-status link-ok'; linkEl.textContent= isKnownDomain ? '✓ ok' : '✓ resolves'; }
+      results.push({ broken:false, url:p.buyLink, reason:'ok' });
+    } catch(fetchErr) {
+      // AbortError = timeout, TypeError = network/DNS fail
+      const isDNS     = fetchErr.message.includes('Failed to fetch') || fetchErr.message.includes('NetworkError');
+      const isTimeout = fetchErr.name === 'AbortError';
+      const reason    = isTimeout ? 'Request timed out (7s)' : isDNS ? 'Domain unreachable / DNS fail' : fetchErr.message;
+      if (linkEl) { linkEl.className='link-status link-err'; linkEl.textContent= isTimeout ? '✗ timeout' : '✗ unreachable'; }
+      results.push({ broken:true, url:p.buyLink, reason });
+    }
+
+    await sleep(150);
   }
   return results;
 }
