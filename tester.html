@@ -261,8 +261,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);display:flex
           <optgroup label="── Full Runs">
             <option value="full_him">FULL: Partner Him — Everything (~250 tests)</option>
             <option value="full_her">FULL: Partner Her — Everything (~200 tests)</option>
-            <option value="full_all">NUCLEAR: All Recipients × All Vibes × All Budgets (~550 tests)</option>
-            <option value="ultimate">⚡ ULTIMATE: Everything × Everyone × All Interests (~900 tests)</option>
+            <option value="ultimate">💣 NUKE: Everything × Everyone × All Interests (~900 tests)</option>
           </optgroup>
         </select>
       </div>
@@ -498,17 +497,6 @@ function buildQueue(suiteKey) {
       ...stylesVibes('Partner Her'),
       ...hobbiesVibes('Partner Her'),
     ];
-    case 'full_all': {
-      const ALL_WHO = ['Partner Him','Partner Her','Child','Grandparent','Friend','Work Colleague','Mother','Father','Sister','Brother'];
-      const q = [];
-      ALL_WHO.forEach(who => {
-        const budgets = who === 'Work Colleague' ? ['low','medium','high'] : BUDGETS;
-        VIBES.forEach(vibe => budgets.forEach(budget => {
-          q.push({ whoFor:who, vibe, budgetTier:budget, occasion:'Birthday', interests:'' });
-        }));
-      });
-      return q;
-    }
     case 'ultimate': {
       // Every recipient × every vibe × every budget (no interests) 
       // + Partner Him/Her × every sport × medium budget

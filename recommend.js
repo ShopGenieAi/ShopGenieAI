@@ -997,6 +997,52 @@ Session: ${Date.now().toString(36)}`;
   }
 
   // ── STEP 2: Normalise + build links + images ───────────────────────────────
+  // ── STEP 2.5: SAFETY NET — catches anything Claude or Apify slips through ──
+  // This is the last line of defence. Even if Claude ignores Rules 13+14,
+  // even if Apify returns a dead retailer URL — this function nukes it and
+  // replaces with Google Shopping NZ. No dead links ever reach the user.
+  function sanitiseProduct(name, buyLink, storeName) {
+    const BANNED_DOMAINS = [
+      'sunglasshut.com',
+      'farmers.co.nz',
+    ];
+    const BANNED_PRODUCT_KEYWORDS = [
+      // Sunglasses — banned unless fishing/cycling/skiing/water sports
+      // (Claude should catch this but safety net catches any that slip through)
+    ];
+
+    // Check if buyLink contains a banned domain
+    const hasBannedDomain = BANNED_DOMAINS.some(d => (buyLink || '').toLowerCase().includes(d));
+
+    // Check if Apify returned a URL from a banned domain as the product URL
+    if (hasBannedDomain) {
+      const safeUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' NZ')}&tbm=shop&gl=nz&hl=en`;
+      console.log(`[SAFETY NET] Banned domain caught: "${name}" was going to ${storeName} — redirected to Google Shopping NZ`);
+      return { buyLink: safeUrl, bestStoreName: 'Google Shopping NZ' };
+    }
+
+    // Check if it's a leather product going to The Warehouse
+    const isLeather = /\bleather\b/i.test(name);
+    const isWarehouse = (buyLink || '').includes('thewarehouse.co.nz');
+    if (isLeather && isWarehouse) {
+      const safeUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' NZ')}&tbm=shop&gl=nz&hl=en`;
+      console.log(`[SAFETY NET] Leather→Warehouse caught: "${name}" — redirected to Google Shopping NZ`);
+      return { buyLink: safeUrl, bestStoreName: 'Google Shopping NZ' };
+    }
+
+    // Check if it's a sunglasses product (any variant) going anywhere other than Google Shopping
+    const isSunglasses = /sunglass|sunglasses|polarised|polarized|sunnies|\bgoggles\b/i.test(name);
+    const isNonFishingContext = !/fishing|cycling|ski|water sport/i.test((content.interests || '') + name);
+    if (isSunglasses && !(buyLink || '').includes('google.com')) {
+      const safeUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' NZ')}&tbm=shop&gl=nz&hl=en`;
+      console.log(`[SAFETY NET] Sunglasses caught: "${name}" going to ${storeName} — redirected to Google Shopping NZ`);
+      return { buyLink: safeUrl, bestStoreName: 'Google Shopping NZ' };
+    }
+
+    // All good — pass through unchanged
+    return { buyLink, bestStoreName: storeName };
+  }
+
   const enriched = await Promise.all(products.map(async (product) => {
     const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
     const richSearchTerm  = (product.name + ' ' + (product.searchQuery || '')).toLowerCase().trim();
@@ -1019,6 +1065,11 @@ Session: ${Date.now().toString(36)}`;
       imageUrl      = apifyResult?.imageUrl || await getBraveImage(richSearchTerm, BRAVE_KEY);
       debugLog.push(`[Apify] MISS: "${product.name}" — using routing fallback → ${bestStoreName}`);
     }
+
+    // ── Apply safety net — catches banned domains + leather→Warehouse + sunglasses ──
+    const sanitised = sanitiseProduct(product.name, buyLink, bestStoreName);
+    buyLink       = sanitised.buyLink;
+    bestStoreName = sanitised.bestStoreName;
 
     const stores   = buildShoppingChips(richSearchTerm);
 
