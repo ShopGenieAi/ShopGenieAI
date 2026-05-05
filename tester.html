@@ -728,20 +728,30 @@ async function checkLinks(products, cardId) {
 
   // Known broken URL patterns — flag immediately without fetching
   const DEAD_PATTERNS = [
-    { pattern: /sunglasshut\.com.*search/i, reason: 'Sunglass Hutt search is dead' },
-    { pattern: /glassons\.com.*search.*him/i, reason: 'Glassons — wrong store for men' },
-    { pattern: /thewarehouse\.co\.nz.*search\?q=leather/i, reason: 'Warehouse for leather — wrong store' },
-    { pattern: /thewarehouse\.co\.nz.*search\?q=wallet/i, reason: 'Warehouse for wallet — wrong store' },
-    { pattern: /thewarehouse\.co\.nz.*search\?q=belt/i, reason: 'Warehouse for belt — wrong store' },
+    // Confirmed dead store search URLs (QA tested 5/5/26)
+    { pattern: /sunglasshut\.com/i,           reason: 'Sunglass Hutt — all search URLs dead' },
+    { pattern: /farmers\.co\.nz/i,           reason: 'Farmers — all search URLs dead' },
+    // Warehouse: leather products never stock correctly there
+    { pattern: /thewarehouse\.co\.nz.*[?&]q=leather/i,   reason: 'Warehouse for leather — wrong store, use Google Shopping NZ' },
+    { pattern: /thewarehouse\.co\.nz.*[?&]q=.*leather/i, reason: 'Warehouse for leather product — wrong store' },
+    { pattern: /thewarehouse\.co\.nz.*[?&]q=wallet/i,    reason: 'Warehouse for wallet — wrong store' },
+    { pattern: /thewarehouse\.co\.nz.*[?&]q=.*wallet/i,  reason: 'Warehouse for wallet product — wrong store' },
+    { pattern: /thewarehouse\.co\.nz.*[?&]q=belt/i,      reason: 'Warehouse for belt — wrong store' },
+    // Glassons gender issues
+    { pattern: /glassons\.com.*search.*\bmen\b/i,        reason: 'Glassons — women's store, wrong for male recipients' },
+    { pattern: /glassons\.com.*search.*\bhim\b/i,        reason: 'Glassons — women's store, wrong for male recipients' },
   ];
 
   // Known reliable domains — no fetch needed, just validate URL structure
   const RELIABLE_DOMAINS = [
+    // Verified working NZ retailer search URLs
     'google.com', 'pbtech.co.nz', 'jbhifi.co.nz', 'thewarehouse.co.nz',
-    'kmart.co.nz', 'briscoes.co.nz', 'torpedo7.co.nz', 'farmers.co.nz',
+    'kmart.co.nz', 'briscoes.co.nz', 'torpedo7.co.nz',
     'whitcoulls.co.nz', 'bunnings.co.nz', 'chemistwarehouse.co.nz',
     'mecca.com', 'sephora.nz', 'glassons.com', 'soccerunited.co.nz',
-    'gohockey.co.nz', 'rebelsport.co.nz'
+    'gohockey.co.nz', 'rebelsport.co.nz',
+    // farmers.co.nz REMOVED — search URLs confirmed dead (QA 5/5/26)
+    // sunglasshut.com REMOVED — search URLs confirmed dead (QA 5/5/26)
   ];
 
   for (let i = 0; i < products.length; i++) {
