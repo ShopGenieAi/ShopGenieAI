@@ -4,7 +4,7 @@
 // KEY CHANGES:
 // 1. INTERESTS → REQUIRED: Interests field now drives at least 1 product directly
 // 2. GOOGLE SHOPPING UNIVERSAL: Sport/footwear/eyewear all use Google Shopping NZ
-//    (reliable, surfaces Rebel Sport, Sunglass Hut, Number One Shoes etc)
+//    (reliable, surfaces Rebel Sport, Oscar Wylee, Number One Shoes, Specsavers etc)
 //    Direct retailer links reserved for retailers with verified working search URLs
 // 3. CORRECT SEARCH URLS: All retailer URLs verified and fixed
 // 4. GENDER AWARENESS: Male recipients never get female-coded products
@@ -454,7 +454,7 @@ const KIDS_VIBE_POOLS = {
   'Sporty': {
     low:    ['kids football','kids frisbee','skipping rope','kids swim goggles','kids sports socks','kids drink bottle','kids headband','kids volleyball'],
     medium: ['kids bike helmet','kids football boots','kids shin pads','kids sports bag','kids running shoes','kids sports watch','kids swimming goggles','kids cricket set'],
-    high:   ['kids smartwatch','kids activity tracker','kids bike','kids scooter','kids sports sunglasses','kids wetsuit','kids tennis racket','kids skateboard'],
+    high:   ['kids smartwatch','kids activity tracker','kids bike','kids scooter','kids helmet','kids wetsuit','kids tennis racket','kids skateboard'],
     bigwed: ['kids GPS watch','kids electric scooter','kids trampoline','kids mountain bike','kids surfboard'],
     lotto:  ['premium kids bike','kids golf set','kids horse riding gear','premium kids trampoline'],
   },
@@ -502,8 +502,8 @@ const KIDS_VIBE_POOLS = {
   },
   'Trendy': {
     low:    ['kids bucket hat','kids scrunchie set','kids hair accessories','kids fun socks'],
-    medium: ['kids quality sunglasses','kids trendy backpack','kids fashion watch','kids belt bag'],
-    high:   ['kids designer sunglasses','kids quality sneakers','kids trendy clothing set'],
+    medium: ['kids trendy backpack','kids fashion watch','kids belt bag','kids bluetooth speaker'],
+    high:   ['kids quality sneakers','kids trendy clothing set','kids smartwatch'],
     bigwed: ['kids premium sneakers','kids designer backpack'],
     lotto:  ['kids designer outfit','kids premium sneakers','kids luxury accessories'],
   },
@@ -528,7 +528,7 @@ const ADULT_VIBE_POOLS = {
   'Sporty': {
     low:    ['foam roller','resistance bands','skipping rope','sports socks','swim goggles','volleyball','football','frisbee','sports drink bottle'],
     medium: ['yoga mat','sports bag','protein shaker','hydration pack','bike helmet','running cap','compression socks','football boots','shin pads'],
-    high:   ['massage gun','activity tracker','sports hoodie','trail running shoes','cycling shorts','sports sunglasses','recovery slides'],
+    high:   ['massage gun','activity tracker','sports hoodie','trail running shoes','cycling shorts','foam roller','recovery slides'],
     bigwed: ['gps running watch','noise cancelling headphones','smart watch','premium running shoes','wireless earbuds'],
     lotto:  ['premium smart watch','garmin fenix','polar vantage','premium headphones'],
   },
@@ -549,8 +549,8 @@ const ADULT_VIBE_POOLS = {
   'Luxe': {
     low:    ['scented candle','silk scrunchie set','luxury soap','quality notebook'],
     medium: ['perfume','leather wallet','quality jewellery','silk pillowcase','scented candle set'],
-    high:   ['luxury skincare set','quality sunglasses','cashmere throw','designer wallet'],
-    bigwed: ['perfume gift set','cashmere throw','quality jewellery','designer sunglasses'],
+    high:   ['luxury skincare set','premium watch','cashmere throw','designer wallet'],
+    bigwed: ['perfume gift set','cashmere throw','quality jewellery','luxury leather bag'],
     lotto:  ['dyson airwrap','luxury perfume','designer handbag','luxury watch'],
   },
   'Practical': {
@@ -576,9 +576,9 @@ const ADULT_VIBE_POOLS = {
   },
   'Trendy': {
     low:    ['scrunchie set','hair accessories set','nail art kit','fashion earrings','bucket hat'],
-    medium: ['tote bag','fashion jewellery','trendy backpack','quality sunglasses','belt bag'],
-    high:   ['quality sunglasses','premium sneakers','leather tote bag','quality watch'],
-    bigwed: ['designer sunglasses','premium sneakers','quality leather bag'],
+    medium: ['tote bag','fashion jewellery','trendy backpack','leather card holder','belt bag'],
+    high:   ['premium sneakers','leather tote bag','quality watch','wireless earbuds'],
+    bigwed: ['designer watch','premium sneakers','quality leather bag'],
     lotto:  ['designer bag','luxury sneakers','premium jewellery'],
   },
   'Quirky': {
@@ -590,7 +590,7 @@ const ADULT_VIBE_POOLS = {
   },
   'Surprise me': {
     low:    ['novelty socks','scented candle','phone case','funny book','card game'],
-    medium: ['board game','quality sunglasses','leather journal','bluetooth speaker'],
+    medium: ['board game','quality bluetooth speaker','leather journal','premium candle'],
     high:   ['massage gun','premium sneakers','portable speaker','activity tracker'],
     bigwed: ['noise cancelling headphones','gps running watch','quality jewellery'],
     lotto:  ['premium smart watch','dyson airwrap','premium headphones'],
@@ -712,15 +712,15 @@ Every product MUST be genuinely available in NZ at the user's budget in 2026.
 RULE 2B — BUDGET TIER RETAILER UNIVERSE:
 Each budget tier has a retailer universe. Products must feel at home in that universe.
 
-LOW (under NZ$50) → The Warehouse, Kmart, Farmers basics, Trade Me, supermarket aisles.
+LOW (under NZ$50) → The Warehouse, Kmart, Trade Me, supermarket aisles.
 Think: everyday essentials, novelty items, basic accessories, starter kits.
 Brand examples: Warehouse brand, Kmart home brand, basic unbranded.
 
-MEDIUM (NZ$50–$150) → Farmers, Rebel Sport, Paper Plus, Whitcoulls, Briscoes, Torpedo7, JB Hi-Fi entry-level.
+MEDIUM (NZ$50–$150) → Rebel Sport, Paper Plus, Whitcoulls, Briscoes, Torpedo7, JB Hi-Fi entry-level, Kmart premium.
 Think: solid mid-range products, known NZ brands, good quality everyday items.
 Brand examples: Breville entry, Kathmandu basics, Garmin entry, Fitbit, Anker.
 
-HIGH (NZ$150–$300) → Farmers premium, Noel Leeming, JB Hi-Fi, Rebel Sport premium, Mecca, Sephora, Torpedo7 premium.
+HIGH (NZ$150–$300) → Noel Leeming, JB Hi-Fi, Rebel Sport premium, Mecca, Sephora, Torpedo7 premium, Google Shopping NZ.
 Think: premium versions, branded names, quality that lasts, gift-worthy packaging.
 Brand examples: Garmin, Sony mid-range, KitchenAid entry, Dyson entry, Lululemon, Patagonia entry.
 
@@ -825,6 +825,19 @@ Before returning your answer, ask yourself these 3 questions about EACH product:
 2. "Does this product match the stated interests — or is it just vibe filler?"
 3. "Is this the best, most specific version of this product for this budget — or did I go generic?"
 If any answer is YES/NO in the wrong direction — replace the product. Do not output until all 3 pass.
+
+RULE 13 — BANNED PRODUCTS (NEVER RECOMMEND THESE):
+Sunglasses and eyewear are PERMANENTLY BANNED as gift recommendations unless the stated interest is specifically "Fishing", "Cycling", "Skiing" or "Water Sports".
+WHY: Sunglasses are a personal fit and style item — nobody buys them as a gift without trying them on first. They routinely cause disappointment. They are NOT an acceptable filler or vibe product.
+BANNED: "Quality Sunglasses", "Designer Sunglasses", "Premium Sunglasses", "Polarised Sunglasses", "Sports Sunglasses", "UV Sunglasses", "Blue Light Glasses" — ALL banned unless interest specifically requires eyewear.
+INSTEAD: Replace sunglasses with a genuinely relevant product for the recipient and vibe.
+
+RULE 14 — BANNED STORES (NEVER SUGGEST THESE AS STORES):
+The following stores have confirmed broken search URLs and MUST NEVER be suggested:
+- Sunglass Hutt — search URL returns 404 errors
+- Farmers — search URL returns dead pages
+NEVER include "Sunglass Hutt" or "Farmers" in any storeName, bestStoreName, or product description.
+Use Google Shopping NZ instead for any product that would have gone to these stores.
 
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
