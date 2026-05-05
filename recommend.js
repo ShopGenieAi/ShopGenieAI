@@ -174,7 +174,7 @@ const RETAILER_SEARCH = {
   kmart:           q => `https://www.kmart.co.nz/search?q=${q}`,
   briscoes:        q => `https://www.briscoes.co.nz/search?q=${q}`,
   torpedo7:        q => `https://www.torpedo7.co.nz/search?q=${q}`,
-  farmers:         q => `https://www.farmers.co.nz/search?q=${q}`,
+  // farmers: REMOVED — search URL confirmed dead (QA test 5/5/26). Use Google Shopping NZ.
   whitcoulls:      q => `https://www.whitcoulls.co.nz/search?q=${q}`,
   bunnings:        q => `https://www.bunnings.co.nz/search/products?q=${q}`,
   chemistwarehouse:q => `https://www.chemistwarehouse.co.nz/search?q=${q}`,
@@ -202,14 +202,18 @@ function detectProductCategory(name, type) {
   // Custom/personalised — always first
   if (/personalised|personalized|custom|constellation|star map|engraved|monogram|bespoke|name necklace|birthstone|keepsake|memorial|custom print|custom portrait/.test(s)) return 'custom';
 
-  // Eyewear — Google Shopping NZ (Sunglass Hutt search is dead)
-  if (/sunglass|sunglasses|eyewear|optical|reading glasses|sports glasses|aviator|polarised|polarized|sunnies/.test(s)) return 'eyewear';
+  // Leather — ANY product name containing 'leather' → dedicated leather category → Google Shopping NZ
+  // Catches all Claude variants: leather wallet, leather bifold, leather crossbody, leather dopp kit,
+  // leather desk organiser, leather journal, leather keychain, leather messenger bag, leather work gloves etc.
+  if (/\bleather\b/.test(s)) return 'leather';
 
-  // Accessories — leather goods, wallets, belts, card holders (NOT luggage)
-  if (/\bwallet\b|card holder|cardholder|money clip|\bbelt\b|leather belt|mens belt|leather card|rfid card/.test(s)) return 'accessories';
+  // Eyewear — BROAD catch. Claude generates many variations: "quality sunglasses", "designer sunglasses",
+  // "polarised sunglasses", "sports sunglasses", "premium sunglasses", "sunglasses", "goggles" etc.
+  // ANY product with 'sunglass', 'goggle', 'eyewear', 'sunnies', 'polarised' in name → eyewear category
+  if (/sunglass|sunglasses|eyewear|optical|reading glass|sports glass|aviator|polarised|polarized|sunnies|goggle|spectacle|\bglasses\b/.test(s)) return 'eyewear';
 
-  // Luggage & travel bags — before fashion catches these
-  if (/luggage|suitcase|travel bag|travel pack|business bag|briefcase|carry.on|duffel|duffle|weekender|passport wallet/.test(s)) return 'luggage';
+  // Luggage, wallets, travel bags — before fashion catches 'wallet'
+  if (/\bwallet\b|luggage|suitcase|travel bag|travel pack|business bag|briefcase|carry.on|duffel|duffle|weekender|passport wallet/.test(s)) return 'luggage';
 
   // Footwear — before fashion catches 'boots', 'shoes'
   if (/running shoes|sneakers|jandals|football boots|sports boots|trail shoes|court shoes|sandals|slides|\bshoe\b|\bshoes\b|\bboots\b/.test(s)) return 'footwear';
@@ -265,13 +269,16 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
-  // Eyewear — Google Shopping NZ (Sunglass Hutt search URL is dead/broken)
-  if (category === 'eyewear') {
+  // Leather products — always Google Shopping NZ. 
+  // The Warehouse doesn't stock quality leather goods. Google Shopping surfaces
+  // Barkers, Merchant 1948, Pagoni, Hallensteins, Hannahs, Deadly Ponies naturally.
+  if (category === 'leather') {
     return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
-  // Accessories (wallets, belts, leather goods) — Google Shopping NZ surfaces correct NZ retailers
-  if (category === 'accessories') {
+  // Eyewear — Google Shopping NZ only. Sunglass Hutt search URL is confirmed dead (QA test 5/5/26).
+  // Rebel Sport, Specsavers, Oscar Wylee all surface correctly through Google Shopping NZ.
+  if (category === 'eyewear') {
     return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
@@ -307,25 +314,27 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.torpedo7.co.nz/search?q=${q}`, storeName: 'Torpedo7' };
   }
 
-  // Luggage & travel — Farmers for premium, Warehouse for low
+  // Luggage & travel — Google Shopping NZ for premium (Farmers search confirmed dead QA 5/5/26)
   if (category === 'luggage') {
     if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.farmers.co.nz/search?q=${q}`, storeName: 'Farmers' };
+      return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
     return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
   }
 
   // Fashion & clothing — gender-aware routing
-  // Glassons is women's fashion only — never route male recipients there
+  // Glassons = women's fashion ONLY. Never route male/neutral recipients there.
+  // Male recipients (Partner Him, Father, Brother, Work Colleague etc) → Google Shopping NZ
   if (category === 'fashion') {
-    const isMale = gender === 'male';
+    const isMale = (gender === 'male');
     if (['high','bigwed','lotto'].includes(budgetTierKey))
       return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
     if (budgetTierKey === 'medium') {
-      // Glassons = women's only. Men and neutral → Google Shopping NZ
       if (isMale)
         return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
       return { url: `https://www.glassons.com/search?q=${q}`, storeName: 'Glassons' };
     }
+    if (isMale)
+      return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
     return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
   }
 
@@ -357,8 +366,8 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.whitcoulls.co.nz/search?q=${q}`, storeName: 'Whitcoulls' };
   }
 
-  // Universal fallback — Google Shopping NZ always works, surfaces correct NZ retailers naturally
-  // Never route to a specific retailer as fallback — too brittle, too many broken URLs
+  // General fallback — Google Shopping NZ is reliable across all budget tiers
+  // The Warehouse internal search confirmed by testers as returning irrelevant results (2/5 link quality)
   return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
 }
 
@@ -385,7 +394,7 @@ async function getApifyProduct(searchTerm, apifyKey, budgetMin, budgetMax) {
     };
 
     const res = await fetch(
-      `https://api.apify.com/v2/acts/nexgendata~google-shopping-scraper/run-sync-get-dataset-items?token=${apifyKey}&timeout=25`,
+      `https://api.apify.com/v2/acts/nexgendata~google-shopping-scraper/run-sync-get-dataset-items?token=${apifyKey}&timeout=40`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }
     );
 
@@ -539,14 +548,14 @@ const ADULT_VIBE_POOLS = {
   },
   'Luxe': {
     low:    ['scented candle','silk scrunchie set','luxury soap','quality notebook'],
-    medium: ['perfume','leather wallet','leather card holder','quality jewellery','silk pillowcase','leather journal','leather keyring'],
-    high:   ['luxury skincare set','leather belt','leather tote bag','cashmere throw','quality leather wallet'],
+    medium: ['perfume','leather wallet','quality jewellery','silk pillowcase','scented candle set'],
+    high:   ['luxury skincare set','quality sunglasses','cashmere throw','designer wallet'],
     bigwed: ['perfume gift set','cashmere throw','quality jewellery','designer sunglasses'],
     lotto:  ['dyson airwrap','luxury perfume','designer handbag','luxury watch'],
   },
   'Practical': {
     low:    ['reusable shopping bag','torch','first aid kit','cable organiser','quality umbrella'],
-    medium: ['quality backpack','travel adapter','leather wallet','tool kit','quality torch'],
+    medium: ['quality backpack','travel adapter','tool kit','quality torch'],
     high:   ['quality cookware set','premium backpack','travel organiser set'],
     bigwed: ['premium cookware','quality luggage','leather wallet'],
     lotto:  ['high end cookware set','premium luggage set','luxury bedding'],
@@ -567,7 +576,7 @@ const ADULT_VIBE_POOLS = {
   },
   'Trendy': {
     low:    ['scrunchie set','hair accessories set','nail art kit','fashion earrings','bucket hat'],
-    medium: ['tote bag','fashion jewellery','trendy backpack','leather belt bag','leather card holder'],
+    medium: ['tote bag','fashion jewellery','trendy backpack','quality sunglasses','belt bag'],
     high:   ['quality sunglasses','premium sneakers','leather tote bag','quality watch'],
     bigwed: ['designer sunglasses','premium sneakers','quality leather bag'],
     lotto:  ['designer bag','luxury sneakers','premium jewellery'],
@@ -773,15 +782,6 @@ Interests are the SINGLE MOST IMPORTANT signal — they override the vibe pool e
 - "Personalised" as an interest means ALL 3 products must have a personalised/custom angle.
 - Never use the vibe pool to justify ignoring stated interests. The interests win every time.
 
-RULE 7B — STYLE INTERESTS MEAN MATERIAL/CONSTRUCTION (STRICTLY ENFORCED):
-When a STYLE is selected as an interest (Leather, Gold, Silver, Eco-friendly, Luxury, Retro, Personalised), this describes the PHYSICAL MATERIAL or CONSTRUCTION of the product — not a vibe or theme.
-- "Leather" = products physically made from leather. Examples: leather wallet, leather belt, leather watch strap, leather journal, leather card holder, leather bag, leather keyring. NOT sunglasses, NOT cologne, NOT anything that merely has a "leather" scent or aesthetic.
-- "Gold" = gold jewellery or gold-accented accessories physically made with gold. NOT just yellow-coloured items.
-- "Silver" = silver jewellery or silver-finished accessories. NOT grey items.
-- "Eco-friendly" = products made from sustainable/recycled materials. NOT just nature-themed items.
-- "Retro" = products with genuine retro/vintage design or technology (e.g. record player, polaroid camera, vintage-style watch).
-CRITICAL: If interest is "Leather", ALL recommended products must be physically made from or feature leather as a primary material. A product like "Polarised Sunglasses" with zero leather content is BANNED when Leather is the stated interest.
-
 RULE 8 — CUSTOM/PERSONALISED:
 For personalised/custom products (star maps, custom portraits, name jewellery), use a simple search term like "personalised star map print".
 
@@ -800,9 +800,6 @@ Banned filler examples when interests are provided:
 - Interest: Fishing → Generic Notebook BANNED
 - Interest: Rugby → Luxury Hand Cream BANNED
 - Interest: Personalised → Generic Mug BANNED
-- Interest: Leather → Polarised Sunglasses BANNED (no leather content)
-- Interest: Leather → Cologne BANNED (no leather content)
-- Interest: Leather → ✅ Leather Wallet, Leather Belt, Leather Card Holder, Leather Watch Strap, Leather Journal — these ARE correct
 There are ALWAYS 3 genuinely relevant products. Find them. Never settle for filler.
 
 RULE 10 — NO LAZY HOODIE FILLER:
