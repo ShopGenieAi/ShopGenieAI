@@ -217,8 +217,8 @@ function detectProductCategory(name, type) {
   // Kids sport gear — before general
   if (/kids.*sport|kids.*running|kids.*football|kids.*cricket|kids.*hockey|kids.*soccer|kids.*rugby|kids.*shin|kids.*boot|kids.*racket|kids.*helmet|shin pad/.test(s)) return 'kidssport';
 
-  // Tech & Electronics — includes sports/GPS watches
-  if (/headphone|earbud|headset|speaker|audio|bluetooth\b|tv\b|television|laptop|tablet|\bphone\b|camera|projector|smart watch|smartwatch|gaming|gps watch|sports watch|running watch|activity tracker|fitness tracker|vr headset|mixed reality|spatial computing|vision pro/.test(s)) return 'tech';
+  // Tech & Electronics — includes sports/GPS watches AND premium hair appliances (Dyson etc)
+  if (/headphone|earbud|headset|speaker|audio|bluetooth\b|tv\b|television|laptop|tablet|\bphone\b|camera|projector|smart watch|smartwatch|gaming|gps watch|sports watch|running watch|activity tracker|fitness tracker|vr headset|mixed reality|spatial computing|vision pro|hair dryer|hair straightener|hair curler|airwrap|dyson|corrale/.test(s)) return 'tech';
 
   // Fitness gear
   if (/massage gun|weight vest|foam roller|resistance band|yoga mat|protein shaker|hydration pack|swim goggle|bike helmet|gym equipment|pull.up bar/.test(s)) return 'fitness';
@@ -246,6 +246,14 @@ function detectProductCategory(name, type) {
 // Google Shopping NZ chips remain as fallback on every card regardless.
 
 function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, budgetMin, budgetMax, interests) {
+  // ── Null safety — guard against undefined/null from Claude output ──────────
+  const safeName     = (productName  || '').toString().trim() || 'gift';
+  const safeType     = (productType  || '').toString().trim();
+  const safeSearch   = (cleanSearchTerm || safeName).toString().trim();
+  productName  = safeName;
+  productType  = safeType;
+  cleanSearchTerm = safeSearch;
+
   const category = detectProductCategory(productName, productType);
   const q  = encodeURIComponent(cleanSearchTerm);
 
@@ -298,10 +306,10 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
   }
 
-  // Fashion & clothing — Farmers premium, Glassons mid, Warehouse low
+  // Fashion & clothing — Google Shopping for premium (Farmers doesn't carry luxury), Glassons mid, Warehouse low
   if (category === 'fashion') {
     if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.farmers.co.nz/search?q=${q}`, storeName: 'Farmers' };
+      return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
     if (budgetTierKey === 'medium')
       return { url: `https://www.glassons.com/search?q=${q}`, storeName: 'Glassons' };
     return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
@@ -316,10 +324,12 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.chemistwarehouse.co.nz/search?q=${q}`, storeName: 'Chemist Warehouse' };
   }
 
-  // Home & kitchen — Briscoes for medium+, Kmart for low
+  // Home & kitchen — Google Shopping for premium cookware/luxury items, Briscoes for mid, Kmart for low
   if (category === 'home') {
     if (budgetTierKey === 'low')
       return { url: `https://www.kmart.co.nz/search?q=${q}`, storeName: 'Kmart' };
+    if (['bigwed','lotto'].includes(budgetTierKey))
+      return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
     return { url: `https://www.briscoes.co.nz/search?q=${q}`, storeName: 'Briscoes' };
   }
 
@@ -333,14 +343,9 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.whitcoulls.co.nz/search?q=${q}`, storeName: 'Whitcoulls' };
   }
 
-  // General fallback — Google Shopping for premium, Warehouse for low/mid
-  if (['high','bigwed','lotto'].includes(budgetTierKey)) {
-    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-  const warehouseUrl = budgetMax < 9999
-    ? `https://www.thewarehouse.co.nz/search?q=${q}&priceTo=${budgetMax}`
-    : `https://www.thewarehouse.co.nz/search?q=${q}`;
-  return { url: warehouseUrl, storeName: 'The Warehouse' };
+  // General fallback — Google Shopping NZ is reliable across all budget tiers
+  // The Warehouse internal search confirmed by testers as returning irrelevant results (2/5 link quality)
+  return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
 }
 
 // ── SHOPPING CHIPS ────────────────────────────────────────────────────────────
@@ -352,27 +357,71 @@ function buildShoppingChips(richSearchTerm) {
   ];
 }
 
-// ── BRAVE IMAGE SEARCH ────────────────────────────────────────────────────────
+// ── APIFY GOOGLE SHOPPING NZ ─────────────────────────────────────────────────
+// Primary product lookup — returns real NZ product URL, price, image, seller
+async function getApifyProduct(searchTerm, apifyKey, budgetMin, budgetMax) {
+  if (!apifyKey) return null;
+  try {
+    const input = {
+      queries: searchTerm + ' NZ',
+      countryCode: 'nz',
+      maxResults: 5,
+      ...(budgetMin && budgetMin > 0 ? { minPrice: budgetMin } : {}),
+      ...(budgetMax && budgetMax < 9999 ? { maxPrice: budgetMax } : {}),
+    };
+
+    const res = await fetch(
+      `https://api.apify.com/v2/acts/nexgendata~google-shopping-scraper/run-sync-get-dataset-items?token=${apifyKey}&timeout=25`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }
+    );
+
+    if (!res.ok) {
+      console.error('Apify error:', res.status);
+      return null;
+    }
+
+    const items = await res.json();
+    if (!Array.isArray(items) || items.length === 0) return null;
+
+    for (const item of items) {
+      const productUrl = item?.url || item?.productUrl || item?.link || null;
+      const imageUrl   = item?.imageUrl || item?.thumbnail || item?.image || null;
+      const price      = item?.price || item?.priceText || null;
+      const seller     = item?.merchant || item?.seller || item?.store || null;
+      if (productUrl && productUrl.startsWith('http')) {
+        console.log(`🛍️ Apify hit: "${item?.title}" | ${seller} | ${price}`);
+        return { productUrl, imageUrl, price, seller, title: item?.title };
+      }
+    }
+
+    // Image-only fallback
+    const fallback = items[0];
+    const imageUrl = fallback?.imageUrl || fallback?.thumbnail || null;
+    if (imageUrl) return { productUrl: null, imageUrl, price: null, seller: null };
+    return null;
+  } catch (e) {
+    console.error('Apify error:', e.message);
+    return null;
+  }
+}
+
+// ── BRAVE IMAGE SEARCH (tier-2 fallback) ─────────────────────────────────────
 async function getBraveImage(searchTerm, braveKey) {
   if (!braveKey) return null;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000); // 5s hard timeout
   try {
     const res = await fetch(
-      `https://api.search.brave.com/res/v1/images/search?q=${encodeURIComponent(searchTerm + ' product')}&count=3&safesearch=strict`,
-      { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey }, signal: controller.signal }
+      `https://api.search.brave.com/res/v1/images/search?q=${encodeURIComponent(searchTerm + ' product')}&count=5&safesearch=strict`,
+      { headers: { 'Accept': 'application/json', 'Accept-Encoding': 'gzip', 'X-Subscription-Token': braveKey } }
     );
-    clearTimeout(timeout);
     if (!res.ok) return null;
     const data = await res.json();
     for (const r of (data?.results || [])) {
       const url = r?.thumbnail?.src || r?.properties?.url || null;
-      if (url && !url.includes('logo') && !url.includes('icon')) return url;
+      if (url && !url.includes('logo') && !url.includes('icon') && !url.includes('placeholder')) return url;
     }
     return null;
   } catch (e) {
-    clearTimeout(timeout);
-    console.error('Brave image error:', e.message);
+    console.error('Brave fallback error:', e.message);
     return null;
   }
 }
@@ -563,6 +612,7 @@ export default async function handler(req, res) {
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   const BRAVE_KEY     = process.env.BRAVE_API_KEY;
+  const APIFY_KEY     = process.env.APIFY_API_KEY;
   const BREVO_KEY     = process.env.BREVO_API_KEY;
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'Missing Anthropic API key' });
 
@@ -636,6 +686,54 @@ Every product MUST be genuinely available in NZ at the user's budget in 2026.
 - Match budget: budget smartwatch (Promate/Xiaomi ~$80 at PB Tech) for Low/Medium. Apple Watch for Lotto only.
 - If unsure whether a product exists at this price in NZ, choose something safer.
 
+RULE 2B — BUDGET TIER RETAILER UNIVERSE:
+Each budget tier has a retailer universe. Products must feel at home in that universe.
+
+LOW (under NZ$50) → The Warehouse, Kmart, Farmers basics, Trade Me, supermarket aisles.
+Think: everyday essentials, novelty items, basic accessories, starter kits.
+Brand examples: Warehouse brand, Kmart home brand, basic unbranded.
+
+MEDIUM (NZ$50–$150) → Farmers, Rebel Sport, Paper Plus, Whitcoulls, Briscoes, Torpedo7, JB Hi-Fi entry-level.
+Think: solid mid-range products, known NZ brands, good quality everyday items.
+Brand examples: Breville entry, Kathmandu basics, Garmin entry, Fitbit, Anker.
+
+HIGH (NZ$150–$300) → Farmers premium, Noel Leeming, JB Hi-Fi, Rebel Sport premium, Mecca, Sephora, Torpedo7 premium.
+Think: premium versions, branded names, quality that lasts, gift-worthy packaging.
+Brand examples: Garmin, Sony mid-range, KitchenAid entry, Dyson entry, Lululemon, Patagonia entry.
+
+BIG WEDNESDAY (NZ$300–$500) → Noel Leeming, Harvey Norman, Camera Warehouse, premium boutiques, brand flagships.
+Think: flagship models, premium gifts, luxury everyday items, top-of-range versions.
+Brand examples: Dyson flagship, Sony Alpha cameras, Apple Watch, Le Creuset, KitchenAid Pro, Bose, Bang & Olufsen entry.
+
+LOTTO (NZ$500+) → Harvey Norman, Camera Warehouse, Apple Store, luxury brand flagships, specialist premium retailers.
+Think: elite luxury, professional-grade, top-of-market, the absolute best version of anything.
+Brand examples: Apple (flagship), Sony Alpha mirrorless, Garmin Fenix, Dyson Airwrap, Le Creuset full sets, Bang & Olufsen, premium jewellery, Vitamix, Weber premium BBQ, DJI drone.
+
+RULE 2C — ANTI-DOWNGRADE (STRICTLY ENFORCED):
+At bigwed or lotto budget tier, you are BANNED from recommending:
+- Entry-level or budget versions of any product
+- Generic unbranded products (e.g. "Camera Bag" — say "Peak Design Camera Bag" or "Lowepro Pro Backpack")
+- Products that would embarrass a professional personal shopper at this price point
+- Anything that could be bought at The Warehouse or Kmart
+At bigwed/lotto: always name the specific premium brand and model. Never generic.
+
+RULE 2D — EXPERIENCE GIFTS AT HIGH BUDGETS:
+At bigwed or lotto tier, consider recommending an experience gift where relevant:
+- Photography → photography masterclass, scenic flight with camera time
+- Fitness → personal training package, spa & wellness day, premium gym membership
+- Travel → weekend getaway voucher, scenic helicopter experience
+- Food → premium chef's dining experience, cooking class with a chef
+- Music → concert tickets, music production masterclass
+Experience gifts are often the most memorable option at high budgets. Use them wisely.
+
+RULE 2E — OCCASION + BUDGET MUST WORK TOGETHER:
+Never let a high budget occasion get a low-effort product.
+- Wedding/Engagement at any budget → gifts must feel celebratory and meaningful, never generic
+- Anniversary at bigwed/lotto → must be luxury, personalised, or experiential
+- Birthday at lotto → must feel genuinely special, not just expensive
+- Christmas at bigwed/lotto → premium, gift-wrapped worthy, top-of-range
+The occasion sets the emotional bar. The budget sets the price bar. Both must be met.
+
 RULE 3 — NZ TERMINOLOGY: jandals, togs, jersey, sports hoodie, sports bag, torch, running shoes, drink bottle, shin pads.
 Always use "sports hoodie" not "technical hoodie". Use NZ terms at all times.
 
@@ -653,10 +751,13 @@ RULE 6 — GENDER AWARENESS:
 Match products to the recipient's gender. If shopping for a male, ONLY suggest masculine or gender-neutral products.
 Never suggest womens handbags, feminine skincare, makeup, womens clothing, hair accessories, or female-coded items for a male recipient.
 
-RULE 7 — INTERESTS ARE MANDATORY:
-If the user has provided interests (hobbies, sports, brands etc), you MUST include at least 1 product that directly relates to those interests.
-If they say "shin pads" — one product must be shin pads. If they say "hockey" — one product must be hockey gear.
-Do NOT ignore the interests field. It is the most important personalisation signal.
+RULE 7 — INTERESTS ARE MANDATORY (STRICTLY ENFORCED):
+Interests are the SINGLE MOST IMPORTANT signal — they override the vibe pool entirely.
+- 1 interest provided → MINIMUM 2 of the 3 products must directly relate to that interest.
+- 2+ interests provided → ALL 3 products must each connect to at least one of those interests.
+- ZERO filler products allowed when interests are provided. Any product with no connection to stated interests is BANNED.
+- "Personalised" as an interest means ALL 3 products must have a personalised/custom angle.
+- Never use the vibe pool to justify ignoring stated interests. The interests win every time.
 
 RULE 8 — CUSTOM/PERSONALISED:
 For personalised/custom products (star maps, custom portraits, name jewellery), use a simple search term like "personalised star map print".
@@ -667,6 +768,16 @@ Swimming, yoga, running, cycling, sport, and fitness do NOT imply a drink bottle
 Same rule applies to: generic sports socks (unless "socks" mentioned), generic caps/beanies (unless mentioned), generic towels (unless mentioned).
 Always pick the most relevant and interesting gift — not the most obvious word association.
 
+RULE 11 — NO UNRELATED FILLER (ZERO TOLERANCE):
+Before finalising each product, ask yourself: "Does this connect to the stated interests OR the vibe?"
+If a product has ZERO connection to the stated interests and is just a generic vibe filler — it is BANNED.
+Banned filler examples when interests are provided:
+- Interest: Photography → Reusable Shopping Bag BANNED
+- Interest: Gaming → Scented Candle BANNED
+- Interest: Fishing → Generic Notebook BANNED
+- Interest: Rugby → Luxury Hand Cream BANNED
+- Interest: Personalised → Generic Mug BANNED
+There are ALWAYS 3 genuinely relevant products. Find them. Never settle for filler.
 
 RULE 10 — NO LAZY HOODIE FILLER:
 When a specific sport is identified in interests, ALL 3 products MUST be specific to that sport. A sports hoodie is NOT a sport-specific product — it is generic activewear filler. Never use a sports hoodie, generic jersey, or generic activewear as a filler third product when a specific sport has been identified.
@@ -684,6 +795,13 @@ There are ALWAYS 3 meaningful sport-specific products available:
 - Gym → resistance bands, lifting gloves, gym bag, foam roller, protein shaker
 - Mountain Biking → helmet, gloves, knee pads, bike lights, cycling jersey
 If you cannot think of 3 sport-specific products, look harder — they always exist.
+
+RULE 12 — THE EMBARRASSMENT TEST (FINAL CHECK BEFORE OUTPUT):
+Before returning your answer, ask yourself these 3 questions about EACH product:
+1. "Would a professional NZ personal shopper be embarrassed to recommend this at NZ$${budgetMin}–$${budgetMax}?"
+2. "Does this product match the stated interests — or is it just vibe filler?"
+3. "Is this the best, most specific version of this product for this budget — or did I go generic?"
+If any answer is YES/NO in the wrong direction — replace the product. Do not output until all 3 pass.
 
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
@@ -718,16 +836,21 @@ HARD BLOCK — FORBIDDEN (already shown): ${excludeProducts.length > 0 ? exclude
 SUGGESTED STARTING POINTS (use these as inspiration, but interests override everything): ${categorySuggestions}
 
 BUDGET: Every product MUST cost between NZ$${budgetMin} and NZ$${budgetMax} in New Zealand. HARD CEILING NZ$${budgetMax}.
+BUDGET TIER: ${budgetLabel} — think ${tier.hint}.
+${['bigwed','lotto'].includes(budgetTier) ? '🚨 PREMIUM TIER: Name specific premium brands and flagship models. Generic products are BANNED. No Warehouse, no Kmart, no entry-level versions. Every product must pass the embarrassment test.' : ''}
+${budgetTier === 'lotto' ? '💎 LOTTO TIER: Think Harvey Norman, Camera Warehouse, Apple flagship, luxury boutiques. Professional-grade or luxury ONLY. Consider experience gifts.' : ''}
 
 ${genderHint}
 ${sportHint}
-${interests && interests.trim() ? `INTERESTS OVERRIDE: The user typed "${interests.trim()}" — at least 1 product MUST directly relate to this. Do not ignore it.` : ''}
+${interests && interests.trim() ? `INTERESTS (MANDATORY — HIGHEST PRIORITY): "${interests.trim()}"\n⚠️ MINIMUM 2 of 3 products MUST directly relate to these interests. A product with zero connection to these interests is BANNED. Do not use the vibe pool to ignore this.` : 'No interests specified — use vibe pool only.'}
 ${isForChild ? 'CHILD GIFT: ONLY age-appropriate kids products. NO adult fitness gear, NO adult accessories, NO adult lifestyle items.' : ''}
 ${refreshInstruction ? `STRATEGY: ${refreshInstruction}` : ''}
 Session: ${Date.now().toString(36)}`;
 
   let products;
+  const debugLog = []; // collect debug info throughout the request
   try {
+    debugLog.push(`[Claude] Requesting ${vibe} | ${budgetTier} | ${whoFor} | interests: ${interests || 'none'}`);
     const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
@@ -738,9 +861,17 @@ Session: ${Date.now().toString(36)}`;
         messages: [{ role: 'user', content: userPrompt }]
       })
     });
-    if (!claudeRes.ok) throw new Error(`Claude API error: ${claudeRes.status}`);
+    if (!claudeRes.ok) {
+      const errBody = await claudeRes.text();
+      console.error(`[Claude] ${claudeRes.status} response:`, errBody.slice(0, 500));
+      throw new Error(`Claude API error: ${claudeRes.status} — ${errBody.slice(0, 200)}`);
+    }
     const claudeData = await claudeRes.json();
-    if (!claudeData?.content?.[0]?.text) throw new Error(`Unexpected Claude response shape: ${JSON.stringify(claudeData).slice(0, 200)}`);
+    debugLog.push(`[Claude] HTTP ${claudeRes.status} | model: ${claudeData.model || 'unknown'}`);
+    if (!claudeData.content || !claudeData.content[0] || !claudeData.content[0].text) {
+      console.error('[Claude] Unexpected response structure:', JSON.stringify(claudeData).slice(0, 500));
+      throw new Error(`Claude returned unexpected structure: ${JSON.stringify(claudeData).slice(0, 200)}`);
+    }
     let raw = claudeData.content[0].text.trim();
 
     // ── JSON sanitiser ──────────────────────────────────────────────────────
@@ -753,6 +884,7 @@ Session: ${Date.now().toString(36)}`;
     const jsonEnd   = raw.lastIndexOf('}');
     if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON found in Claude response');
     raw = raw.slice(jsonStart, jsonEnd + 1);
+    debugLog.push(`[Parse] JSON extracted (${raw.length} chars)`);
 
     let parsed;
     try {
@@ -766,7 +898,8 @@ Session: ${Date.now().toString(36)}`;
     if (!Array.isArray(products) || products.length === 0) throw new Error('No products returned');
   } catch (err) {
     console.error('Claude error:', err);
-    return res.status(500).json({ error: `AI recommendation failed: ${err.message}` });
+    console.error('Debug log:', debugLog.join('\n'));
+    return res.status(500).json({ error: `AI recommendation failed: ${err.message}`, debug: debugLog });
   }
 
   // ── STEP 1.5: Kids prefix ─────────────────────────────────────────────────
@@ -778,28 +911,96 @@ Session: ${Date.now().toString(36)}`;
     console.log('🧒 Child detected — prefixed all searchQuery with "kids"');
   }
 
-  // ── STEP 2: Normalise + build links + images ───────────────────────────────
-  let enriched;
-  try {
-    enriched = await Promise.all(products.map(async (product) => {
-      const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
-      const richSearchTerm  = (product.name + ' ' + (product.searchQuery || '')).toLowerCase().trim();
+  // ── STEP 1.6: Interest relevance validation ───────────────────────────────
+  // Code-level safety net — catches filler products Claude returns despite prompt rules.
+  // If interests were provided, every product must share at least one keyword with
+  // the interests OR the vibe. Filler products are flagged and replaced with a
+  // generic interest-anchored fallback so users never see irrelevant results.
+  if (interests && interests.trim()) {
+    const interestTokens = interests.toLowerCase()
+      .split(/[\s,\/\+\-&]+/)
+      .map(t => t.trim())
+      .filter(t => t.length > 2);
 
-      const { url: buyLink, storeName: bestStoreName } = buildBuyLink(
-        cleanSearchTerm, product.name, product.type, budgetTier, budgetMin, budgetMax, interests
-      );
+    // Common generic filler words that signal an unrelated product
+    const FILLER_SIGNALS = [
+      'shopping bag','reusable bag','tote bag','canvas bag',
+      'scented candle','candle set','bath bomb','bath set',
+      'generic mug','novelty mug','printed mug',
+      'notebook','journal','planner',
+      'hand cream','body lotion','moisturiser',
+      'socks','generic socks',
+      'phone case','generic phone',
+    ];
 
-      const stores   = buildShoppingChips(richSearchTerm);
-      const imageUrl = await getBraveImage(richSearchTerm, BRAVE_KEY).catch(() => null);
+    const vibeTokens = (vibe || '').toLowerCase().split(/\s+/);
 
-      console.log(`"${product.name}" | ${bestStoreName}: "${cleanSearchTerm}" | Tier: ${budgetTier} | Gender: ${gender} | Sport: ${sport || 'none'} | Child: ${isForChild}`);
+    products = products.map((p, idx) => {
+      const productLower = (p.name + ' ' + (p.type || '') + ' ' + (p.reason || '')).toLowerCase();
 
-      return { name: product.name, type: product.type, reason: product.reason, budgetLabel, bestStoreName, buyLink, imageUrl, stores };
-    }));
-  } catch (enrichErr) {
-    console.error('Enrichment error:', enrichErr.message);
-    return res.status(500).json({ error: 'Failed to build product links. Please try again.' });
+      // Check if product relates to interests
+      const matchesInterest = interestTokens.some(token => productLower.includes(token));
+
+      // Check if it's a known filler signal
+      const isFiller = FILLER_SIGNALS.some(filler => productLower.includes(filler));
+
+      if (!matchesInterest && isFiller) {
+        // Replace with an interest-anchored fallback
+        const primaryInterest = interestTokens[0] || interests.trim().split(' ')[0];
+        const fallbackName = `${primaryInterest.charAt(0).toUpperCase() + primaryInterest.slice(1)} Gift Set`;
+        console.log(`⚠️ Relevance check: "${p.name}" flagged as unrelated filler — replaced with "${fallbackName}"`);
+        debugLog.push(`[Relevance] FILLER REPLACED: "${p.name}" → "${fallbackName}" (interest: ${primaryInterest})`);
+        return {
+          ...p,
+          name: fallbackName,
+          searchQuery: primaryInterest + ' gift',
+          reason: `A great gift for someone who loves ${primaryInterest} — personalised to their passion.`,
+        };
+      }
+
+      if (!matchesInterest) {
+        // Log the miss but don't replace — might still be vibe-relevant
+        console.log(`⚠️ Relevance check: "${p.name}" has no interest keyword match (interests: ${interests})`);
+        debugLog.push(`[Relevance] WEAK MATCH: "${p.name}" — no interest keyword found`);
+      }
+
+      return p;
+    });
   }
+
+  // ── STEP 2: Normalise + build links + images ───────────────────────────────
+  const enriched = await Promise.all(products.map(async (product) => {
+    const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
+    const richSearchTerm  = (product.name + ' ' + (product.searchQuery || '')).toLowerCase().trim();
+
+    // ── Try Apify Google Shopping NZ first ──────────────────────────────────
+    let buyLink, bestStoreName, imageUrl;
+    const apifyResult = await getApifyProduct(richSearchTerm, APIFY_KEY, budgetMin, budgetMax);
+
+    if (apifyResult?.productUrl) {
+      // Apify returned a real product URL — use it directly
+      buyLink       = apifyResult.productUrl;
+      bestStoreName = apifyResult.seller || 'Google Shopping NZ';
+      imageUrl      = apifyResult.imageUrl || await getBraveImage(richSearchTerm, BRAVE_KEY);
+      debugLog.push(`[Apify] HIT: "${product.name}" → ${bestStoreName} | ${apifyResult.price || 'no price'}`);
+    } else {
+      // Apify miss — fall back to routing logic + Brave image
+      const routeResult = buildBuyLink(cleanSearchTerm, product.name, product.type, budgetTier, budgetMin, budgetMax, interests);
+      buyLink       = routeResult.url;
+      bestStoreName = routeResult.storeName;
+      imageUrl      = apifyResult?.imageUrl || await getBraveImage(richSearchTerm, BRAVE_KEY);
+      debugLog.push(`[Apify] MISS: "${product.name}" — using routing fallback → ${bestStoreName}`);
+    }
+
+    const stores   = buildShoppingChips(richSearchTerm);
+
+    const detectedCat = detectProductCategory(product.name, product.type || '');
+    const logLine = `"${product.name}" | cat:${detectedCat} | store:${bestStoreName} | search:"${cleanSearchTerm}" | tier:${budgetTier} | apify:${apifyResult?'hit':'miss'}`;
+    console.log(logLine);
+    debugLog.push(`[Route] ${logLine}`);
+
+    return { name: product.name, type: product.type, reason: product.reason, budgetLabel, bestStoreName, buyLink, imageUrl, stores };
+  }));
 
   // ── STEP 3a: Brevo contact logging — always log tester/user ────────────────
   // Logs every submission to Brevo contacts so Mark can track who used the app
@@ -878,5 +1079,5 @@ Session: ${Date.now().toString(36)}`;
     } catch(e) { console.error('Brevo error:', e); }
   }
 
-  return res.status(200).json({ products: enriched });
+  return res.status(200).json({ products: enriched, _debug: debugLog });
 }
