@@ -4,7 +4,7 @@
 // KEY CHANGES:
 // 1. INTERESTS → REQUIRED: Interests field now drives at least 1 product directly
 // 2. GOOGLE SHOPPING UNIVERSAL: Sport/footwear/eyewear all use Google Shopping NZ
-//    (reliable, surfaces Rebel Sport, Oscar Wylee, Number One Shoes, Specsavers etc)
+//    (reliable, surfaces Rebel Sport, Sunglass Hut, Number One Shoes etc)
 //    Direct retailer links reserved for retailers with verified working search URLs
 // 3. CORRECT SEARCH URLS: All retailer URLs verified and fixed
 // 4. GENDER AWARENESS: Male recipients never get female-coded products
@@ -174,7 +174,7 @@ const RETAILER_SEARCH = {
   kmart:           q => `https://www.kmart.co.nz/search?q=${q}`,
   briscoes:        q => `https://www.briscoes.co.nz/search?q=${q}`,
   torpedo7:        q => `https://www.torpedo7.co.nz/search?q=${q}`,
-  // farmers: REMOVED — search URL confirmed dead (QA test 5/5/26). Use Google Shopping NZ.
+  // farmers: REMOVED — search URLs confirmed dead
   whitcoulls:      q => `https://www.whitcoulls.co.nz/search?q=${q}`,
   bunnings:        q => `https://www.bunnings.co.nz/search/products?q=${q}`,
   chemistwarehouse:q => `https://www.chemistwarehouse.co.nz/search?q=${q}`,
@@ -202,18 +202,14 @@ function detectProductCategory(name, type) {
   // Custom/personalised — always first
   if (/personalised|personalized|custom|constellation|star map|engraved|monogram|bespoke|name necklace|birthstone|keepsake|memorial|custom print|custom portrait/.test(s)) return 'custom';
 
-  // Leather — ANY product name containing 'leather' → dedicated leather category → Google Shopping NZ
-  // Catches all Claude variants: leather wallet, leather bifold, leather crossbody, leather dopp kit,
-  // leather desk organiser, leather journal, leather keychain, leather messenger bag, leather work gloves etc.
+  // Leather — any product with 'leather' in name → Google Shopping NZ (The Warehouse doesn't stock quality leather goods)
   if (/\bleather\b/.test(s)) return 'leather';
 
-  // Eyewear — BROAD catch. Claude generates many variations: "quality sunglasses", "designer sunglasses",
-  // "polarised sunglasses", "sports sunglasses", "premium sunglasses", "sunglasses", "goggles" etc.
-  // ANY product with 'sunglass', 'goggle', 'eyewear', 'sunnies', 'polarised' in name → eyewear category
+  // Eyewear — broad catch. Sunglass Hutt search URLs confirmed dead.
   if (/sunglass|sunglasses|eyewear|optical|reading glass|sports glass|aviator|polarised|polarized|sunnies|goggle|spectacle|\bglasses\b/.test(s)) return 'eyewear';
 
   // Luggage, wallets, travel bags — before fashion catches 'wallet'
-  if (/\bwallet\b|luggage|suitcase|travel bag|travel pack|business bag|briefcase|carry.on|duffel|duffle|weekender|passport wallet/.test(s)) return 'luggage';
+  if (/luggage|suitcase|travel bag|travel pack|business bag|briefcase|carry.on|duffel|duffle|weekender/.test(s)) return 'luggage';
 
   // Footwear — before fashion catches 'boots', 'shoes'
   if (/running shoes|sneakers|jandals|football boots|sports boots|trail shoes|court shoes|sandals|slides|\bshoe\b|\bshoes\b|\bboots\b/.test(s)) return 'footwear';
@@ -269,16 +265,14 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
-  // Leather products — always Google Shopping NZ. 
-  // The Warehouse doesn't stock quality leather goods. Google Shopping surfaces
-  // Barkers, Merchant 1948, Pagoni, Hallensteins, Hannahs, Deadly Ponies naturally.
-  if (category === 'leather') {
+  // Eyewear — Sunglass Hutt for all budgets
+  // Eyewear — Google Shopping NZ (Sunglass Hutt search confirmed dead)
+  if (category === 'eyewear') {
     return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
-  // Eyewear — Google Shopping NZ only. Sunglass Hutt search URL is confirmed dead (QA test 5/5/26).
-  // Rebel Sport, Specsavers, Oscar Wylee all surface correctly through Google Shopping NZ.
-  if (category === 'eyewear') {
+  // Leather products — always Google Shopping NZ
+  if (category === 'leather') {
     return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
@@ -314,27 +308,22 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.torpedo7.co.nz/search?q=${q}`, storeName: 'Torpedo7' };
   }
 
-  // Luggage & travel — Google Shopping NZ for premium (Farmers search confirmed dead QA 5/5/26)
+  // Luggage & travel — Farmers for premium, Warehouse for low
   if (category === 'luggage') {
     if (['high','bigwed','lotto'].includes(budgetTierKey))
       return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
     return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
   }
 
-  // Fashion & clothing — gender-aware routing
-  // Glassons = women's fashion ONLY. Never route male/neutral recipients there.
-  // Male recipients (Partner Him, Father, Brother, Work Colleague etc) → Google Shopping NZ
+  // Fashion & clothing — Google Shopping for premium (Farmers doesn't carry luxury), Glassons mid, Warehouse low
   if (category === 'fashion') {
     const isMale = (gender === 'male');
     if (['high','bigwed','lotto'].includes(budgetTierKey))
       return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
     if (budgetTierKey === 'medium') {
-      if (isMale)
-        return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
+      if (isMale) return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
       return { url: `https://www.glassons.com/search?q=${q}`, storeName: 'Glassons' };
     }
-    if (isMale)
-      return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
     return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
   }
 
@@ -394,7 +383,7 @@ async function getApifyProduct(searchTerm, apifyKey, budgetMin, budgetMax) {
     };
 
     const res = await fetch(
-      `https://api.apify.com/v2/acts/nexgendata~google-shopping-scraper/run-sync-get-dataset-items?token=${apifyKey}&timeout=40`,
+      `https://api.apify.com/v2/acts/nexgendata~google-shopping-scraper/run-sync-get-dataset-items?token=${apifyKey}&timeout=25`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) }
     );
 
@@ -454,7 +443,7 @@ const KIDS_VIBE_POOLS = {
   'Sporty': {
     low:    ['kids football','kids frisbee','skipping rope','kids swim goggles','kids sports socks','kids drink bottle','kids headband','kids volleyball'],
     medium: ['kids bike helmet','kids football boots','kids shin pads','kids sports bag','kids running shoes','kids sports watch','kids swimming goggles','kids cricket set'],
-    high:   ['kids smartwatch','kids activity tracker','kids bike','kids scooter','kids helmet','kids wetsuit','kids tennis racket','kids skateboard'],
+    high:   ['kids smartwatch','kids activity tracker','kids bike','kids scooter','kids sports sunglasses','kids wetsuit','kids tennis racket','kids skateboard'],
     bigwed: ['kids GPS watch','kids electric scooter','kids trampoline','kids mountain bike','kids surfboard'],
     lotto:  ['premium kids bike','kids golf set','kids horse riding gear','premium kids trampoline'],
   },
@@ -502,8 +491,8 @@ const KIDS_VIBE_POOLS = {
   },
   'Trendy': {
     low:    ['kids bucket hat','kids scrunchie set','kids hair accessories','kids fun socks'],
-    medium: ['kids trendy backpack','kids fashion watch','kids belt bag','kids bluetooth speaker'],
-    high:   ['kids quality sneakers','kids trendy clothing set','kids smartwatch'],
+    medium: ['kids quality sunglasses','kids trendy backpack','kids fashion watch','kids belt bag'],
+    high:   ['kids designer sunglasses','kids quality sneakers','kids trendy clothing set'],
     bigwed: ['kids premium sneakers','kids designer backpack'],
     lotto:  ['kids designer outfit','kids premium sneakers','kids luxury accessories'],
   },
@@ -528,7 +517,7 @@ const ADULT_VIBE_POOLS = {
   'Sporty': {
     low:    ['foam roller','resistance bands','skipping rope','sports socks','swim goggles','volleyball','football','frisbee','sports drink bottle'],
     medium: ['yoga mat','sports bag','protein shaker','hydration pack','bike helmet','running cap','compression socks','football boots','shin pads'],
-    high:   ['massage gun','activity tracker','sports hoodie','trail running shoes','cycling shorts','foam roller','recovery slides'],
+    high:   ['massage gun','activity tracker','sports hoodie','trail running shoes','cycling shorts','sports sunglasses','recovery slides'],
     bigwed: ['gps running watch','noise cancelling headphones','smart watch','premium running shoes','wireless earbuds'],
     lotto:  ['premium smart watch','garmin fenix','polar vantage','premium headphones'],
   },
@@ -549,8 +538,8 @@ const ADULT_VIBE_POOLS = {
   'Luxe': {
     low:    ['scented candle','silk scrunchie set','luxury soap','quality notebook'],
     medium: ['perfume','leather wallet','quality jewellery','silk pillowcase','scented candle set'],
-    high:   ['luxury skincare set','premium watch','cashmere throw','designer wallet'],
-    bigwed: ['perfume gift set','cashmere throw','quality jewellery','luxury leather bag'],
+    high:   ['luxury skincare set','quality sunglasses','cashmere throw','designer wallet'],
+    bigwed: ['perfume gift set','cashmere throw','quality jewellery','designer sunglasses'],
     lotto:  ['dyson airwrap','luxury perfume','designer handbag','luxury watch'],
   },
   'Practical': {
@@ -576,9 +565,9 @@ const ADULT_VIBE_POOLS = {
   },
   'Trendy': {
     low:    ['scrunchie set','hair accessories set','nail art kit','fashion earrings','bucket hat'],
-    medium: ['tote bag','fashion jewellery','trendy backpack','leather card holder','belt bag'],
-    high:   ['premium sneakers','leather tote bag','quality watch','wireless earbuds'],
-    bigwed: ['designer watch','premium sneakers','quality leather bag'],
+    medium: ['tote bag','fashion jewellery','trendy backpack','quality sunglasses','belt bag'],
+    high:   ['quality sunglasses','premium sneakers','leather tote bag','quality watch'],
+    bigwed: ['designer sunglasses','premium sneakers','quality leather bag'],
     lotto:  ['designer bag','luxury sneakers','premium jewellery'],
   },
   'Quirky': {
@@ -590,7 +579,7 @@ const ADULT_VIBE_POOLS = {
   },
   'Surprise me': {
     low:    ['novelty socks','scented candle','phone case','funny book','card game'],
-    medium: ['board game','quality bluetooth speaker','leather journal','premium candle'],
+    medium: ['board game','quality sunglasses','leather journal','bluetooth speaker'],
     high:   ['massage gun','premium sneakers','portable speaker','activity tracker'],
     bigwed: ['noise cancelling headphones','gps running watch','quality jewellery'],
     lotto:  ['premium smart watch','dyson airwrap','premium headphones'],
@@ -712,15 +701,15 @@ Every product MUST be genuinely available in NZ at the user's budget in 2026.
 RULE 2B — BUDGET TIER RETAILER UNIVERSE:
 Each budget tier has a retailer universe. Products must feel at home in that universe.
 
-LOW (under NZ$50) → The Warehouse, Kmart, Trade Me, supermarket aisles.
+LOW (under NZ$50) → The Warehouse, Kmart, Farmers basics, Trade Me, supermarket aisles.
 Think: everyday essentials, novelty items, basic accessories, starter kits.
 Brand examples: Warehouse brand, Kmart home brand, basic unbranded.
 
-MEDIUM (NZ$50–$150) → Rebel Sport, Paper Plus, Whitcoulls, Briscoes, Torpedo7, JB Hi-Fi entry-level, Kmart premium.
+MEDIUM (NZ$50–$150) → Farmers, Rebel Sport, Paper Plus, Whitcoulls, Briscoes, Torpedo7, JB Hi-Fi entry-level.
 Think: solid mid-range products, known NZ brands, good quality everyday items.
 Brand examples: Breville entry, Kathmandu basics, Garmin entry, Fitbit, Anker.
 
-HIGH (NZ$150–$300) → Noel Leeming, JB Hi-Fi, Rebel Sport premium, Mecca, Sephora, Torpedo7 premium, Google Shopping NZ.
+HIGH (NZ$150–$300) → Farmers premium, Noel Leeming, JB Hi-Fi, Rebel Sport premium, Mecca, Sephora, Torpedo7 premium.
 Think: premium versions, branded names, quality that lasts, gift-worthy packaging.
 Brand examples: Garmin, Sony mid-range, KitchenAid entry, Dyson entry, Lululemon, Patagonia entry.
 
@@ -826,18 +815,11 @@ Before returning your answer, ask yourself these 3 questions about EACH product:
 3. "Is this the best, most specific version of this product for this budget — or did I go generic?"
 If any answer is YES/NO in the wrong direction — replace the product. Do not output until all 3 pass.
 
-RULE 13 — BANNED PRODUCTS (NEVER RECOMMEND THESE):
-Sunglasses and eyewear are PERMANENTLY BANNED as gift recommendations unless the stated interest is specifically "Fishing", "Cycling", "Skiing" or "Water Sports".
-WHY: Sunglasses are a personal fit and style item — nobody buys them as a gift without trying them on first. They routinely cause disappointment. They are NOT an acceptable filler or vibe product.
-BANNED: "Quality Sunglasses", "Designer Sunglasses", "Premium Sunglasses", "Polarised Sunglasses", "Sports Sunglasses", "UV Sunglasses", "Blue Light Glasses" — ALL banned unless interest specifically requires eyewear.
-INSTEAD: Replace sunglasses with a genuinely relevant product for the recipient and vibe.
+RULE 13 — SUNGLASSES BANNED:
+Never recommend sunglasses, polarised sunglasses, designer sunglasses, sports sunglasses, UV sunglasses, blue light glasses or any eyewear unless the interest is specifically Fishing, Cycling, Skiing or Water Sports. Sunglasses are a personal fit item — they are never an acceptable gift filler.
 
-RULE 14 — BANNED STORES (NEVER SUGGEST THESE AS STORES):
-The following stores have confirmed broken search URLs and MUST NEVER be suggested:
-- Sunglass Hutt — search URL returns 404 errors
-- Farmers — search URL returns dead pages
-NEVER include "Sunglass Hutt" or "Farmers" in any storeName, bestStoreName, or product description.
-Use Google Shopping NZ instead for any product that would have gone to these stores.
+RULE 14 — BANNED STORES:
+Never suggest Sunglass Hutt or Farmers as a store. Both have confirmed broken search URLs. Use Google Shopping NZ instead.
 
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
@@ -897,11 +879,7 @@ Session: ${Date.now().toString(36)}`;
         messages: [{ role: 'user', content: userPrompt }]
       })
     });
-    if (!claudeRes.ok) {
-      const errBody = await claudeRes.json().catch(() => ({}));
-      console.error(`[Claude 400] type:${errBody.error?.type} msg:${errBody.error?.message}`);
-      throw new Error(`Claude API error: ${claudeRes.status} — ${errBody.error?.type}: ${errBody.error?.message}`);
-    }
+    if (!claudeRes.ok) throw new Error(`Claude API error: ${claudeRes.status}`);
     const claudeData = await claudeRes.json();
     debugLog.push(`[Claude] HTTP ${claudeRes.status} | model: ${claudeData.model || 'unknown'}`);
     let raw = claudeData.content[0].text.trim();
@@ -1001,51 +979,6 @@ Session: ${Date.now().toString(36)}`;
   }
 
   // ── STEP 2: Normalise + build links + images ───────────────────────────────
-  // ── STEP 2.5: SAFETY NET — catches anything Claude or Apify slips through ──
-  // This is the last line of defence. Even if Claude ignores Rules 13+14,
-  // even if Apify returns a dead retailer URL — this function nukes it and
-  // replaces with Google Shopping NZ. No dead links ever reach the user.
-  function sanitiseProduct(name, buyLink, storeName) {
-    const BANNED_DOMAINS = [
-      'sunglasshut.com',
-      'farmers.co.nz',
-    ];
-    const BANNED_PRODUCT_KEYWORDS = [
-      // Sunglasses — banned unless fishing/cycling/skiing/water sports
-      // (Claude should catch this but safety net catches any that slip through)
-    ];
-
-    // Check if buyLink contains a banned domain
-    const hasBannedDomain = BANNED_DOMAINS.some(d => (buyLink || '').toLowerCase().includes(d));
-
-    // Check if Apify returned a URL from a banned domain as the product URL
-    if (hasBannedDomain) {
-      const safeUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' NZ')}&tbm=shop&gl=nz&hl=en`;
-      console.log(`[SAFETY NET] Banned domain caught: "${name}" was going to ${storeName} — redirected to Google Shopping NZ`);
-      return { buyLink: safeUrl, bestStoreName: 'Google Shopping NZ' };
-    }
-
-    // Check if it's a leather product going to The Warehouse
-    const isLeather = /\bleather\b/i.test(name);
-    const isWarehouse = (buyLink || '').includes('thewarehouse.co.nz');
-    if (isLeather && isWarehouse) {
-      const safeUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' NZ')}&tbm=shop&gl=nz&hl=en`;
-      console.log(`[SAFETY NET] Leather→Warehouse caught: "${name}" — redirected to Google Shopping NZ`);
-      return { buyLink: safeUrl, bestStoreName: 'Google Shopping NZ' };
-    }
-
-    // Check if it's a sunglasses product (any variant) going anywhere other than Google Shopping
-    const isSunglasses = /sunglass|sunglasses|polarised|polarized|sunnies|\bgoggles\b/i.test(name);
-    if (isSunglasses && !(buyLink || '').includes('google.com')) {
-      const safeUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' NZ')}&tbm=shop&gl=nz&hl=en`;
-      console.log(`[SAFETY NET] Sunglasses caught: "${name}" going to ${storeName} — redirected to Google Shopping NZ`);
-      return { buyLink: safeUrl, bestStoreName: 'Google Shopping NZ' };
-    }
-
-    // All good — pass through unchanged
-    return { buyLink, bestStoreName: storeName };
-  }
-
   const enriched = await Promise.all(products.map(async (product) => {
     const cleanSearchTerm = normalizeQuery(product.searchQuery || product.name);
     const richSearchTerm  = (product.name + ' ' + (product.searchQuery || '')).toLowerCase().trim();
@@ -1068,11 +1001,6 @@ Session: ${Date.now().toString(36)}`;
       imageUrl      = apifyResult?.imageUrl || await getBraveImage(richSearchTerm, BRAVE_KEY);
       debugLog.push(`[Apify] MISS: "${product.name}" — using routing fallback → ${bestStoreName}`);
     }
-
-    // ── Apply safety net — catches banned domains + leather→Warehouse + sunglasses ──
-    const sanitised = sanitiseProduct(product.name, buyLink, bestStoreName);
-    buyLink       = sanitised.buyLink;
-    bestStoreName = sanitised.bestStoreName;
 
     const stores   = buildShoppingChips(richSearchTerm);
 
