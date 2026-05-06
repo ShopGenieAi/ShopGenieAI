@@ -174,7 +174,7 @@ const RETAILER_SEARCH = {
   kmart:           q => `https://www.kmart.co.nz/search?q=${q}`,
   briscoes:        q => `https://www.briscoes.co.nz/search?q=${q}`,
   torpedo7:        q => `https://www.torpedo7.co.nz/search?q=${q}`,
-  farmers:         q => `https://www.farmers.co.nz/search?q=${q}`,
+  // farmers: REMOVED — confirmed dead QA 6/5/26
   whitcoulls:      q => `https://www.whitcoulls.co.nz/search?q=${q}`,
   bunnings:        q => `https://www.bunnings.co.nz/search/products?q=${q}`,
   chemistwarehouse:q => `https://www.chemistwarehouse.co.nz/search?q=${q}`,
@@ -202,11 +202,14 @@ function detectProductCategory(name, type) {
   // Custom/personalised — always first
   if (/personalised|personalized|custom|constellation|star map|engraved|monogram|bespoke|name necklace|birthstone|keepsake|memorial|custom print|custom portrait/.test(s)) return 'custom';
 
-  // Eyewear
-  if (/sunglass|sunglasses|eyewear|optical|reading glasses|sports glasses|aviator|polarised|polarized|sunnies/.test(s)) return 'eyewear';
+  // Leather — any product with 'leather' in name goes to Google Shopping NZ
+  if (/\bleather\b/.test(s)) return 'leather';
 
-  // Luggage, wallets, travel bags — before fashion catches 'wallet'
-  if (/\bwallet\b|luggage|suitcase|travel bag|travel pack|business bag|briefcase|carry.on|duffel|duffle|weekender|passport wallet/.test(s)) return 'luggage';
+  // Eyewear — broad catch. Sunglass Hutt confirmed dead QA 6/5/26.
+  if (/sunglass|sunglasses|eyewear|optical|reading glass|sports glass|aviator|polarised|polarized|sunnies|goggle|spectacle|\bglasses\b/.test(s)) return 'eyewear';
+
+  // Luggage — wallet removed (caught by leather above)
+  if (/luggage|suitcase|travel bag|travel pack|business bag|briefcase|carry.on|duffel|duffle|weekender/.test(s)) return 'luggage';
 
   // Footwear — before fashion catches 'boots', 'shoes'
   if (/running shoes|sneakers|jandals|football boots|sports boots|trail shoes|court shoes|sandals|slides|\bshoe\b|\bshoes\b|\bboots\b/.test(s)) return 'footwear';
@@ -245,7 +248,7 @@ function detectProductCategory(name, type) {
 // V3: Smart retailer routing — direct deep links per product category + budget tier.
 // Google Shopping NZ chips remain as fallback on every card regardless.
 
-function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, budgetMin, budgetMax, interests) {
+function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, budgetMin, budgetMax, interests, gender) {
   // ── Null safety — guard against undefined/null from Claude output ──────────
   const safeName     = (productName  || '').toString().trim() || 'gift';
   const safeType     = (productType  || '').toString().trim();
@@ -257,14 +260,19 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
   const category = detectProductCategory(productName, productType);
   const q  = encodeURIComponent(cleanSearchTerm);
 
-  // Custom/sentimental — personalised prints, star maps, engraved items
+  // Custom/sentimental
   if (category === 'custom') {
     return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
-  // Eyewear — Sunglass Hutt for all budgets
+  // Leather — always Google Shopping NZ
+  if (category === 'leather') {
+    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
+  }
+
+  // Eyewear — Google Shopping NZ (Sunglass Hutt confirmed dead QA 6/5/26)
   if (category === 'eyewear') {
-    return { url: `https://www.sunglasshut.com/nz/search?q=${q}`, storeName: 'Sunglass Hutt' };
+    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
   }
 
   // Footwear — Google Shopping NZ (Rebel Sport, Number One Shoes etc have JS-rendered search)
@@ -299,19 +307,22 @@ function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, 
     return { url: `https://www.torpedo7.co.nz/search?q=${q}`, storeName: 'Torpedo7' };
   }
 
-  // Luggage & travel — Farmers for premium, Warehouse for low
+  // Luggage — Google Shopping NZ for premium (Farmers confirmed dead)
   if (category === 'luggage') {
     if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.farmers.co.nz/search?q=${q}`, storeName: 'Farmers' };
+      return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
     return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
   }
 
-  // Fashion & clothing — Google Shopping for premium (Farmers doesn't carry luxury), Glassons mid, Warehouse low
+  // Fashion — gender-aware. Glassons = women only.
   if (category === 'fashion') {
+    const isMale = (gender === 'male');
     if (['high','bigwed','lotto'].includes(budgetTierKey))
       return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-    if (budgetTierKey === 'medium')
+    if (budgetTierKey === 'medium') {
+      if (isMale) return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
       return { url: `https://www.glassons.com/search?q=${q}`, storeName: 'Glassons' };
+    }
     return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
   }
 
@@ -803,6 +814,12 @@ Before returning your answer, ask yourself these 3 questions about EACH product:
 3. "Is this the best, most specific version of this product for this budget — or did I go generic?"
 If any answer is YES/NO in the wrong direction — replace the product. Do not output until all 3 pass.
 
+RULE 13 — SUNGLASSES BANNED:
+Never recommend sunglasses, polarised sunglasses, designer sunglasses, sports sunglasses, UV sunglasses, blue light glasses or any eyewear unless the interest is specifically Fishing, Cycling, Skiing or Water Sports. Sunglasses are a personal fit item — never an acceptable gift filler.
+
+RULE 14 — BANNED STORES:
+Never suggest Sunglass Hutt or Farmers as a store. Both have confirmed broken search URLs. Use Google Shopping NZ instead.
+
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
   "products": [
@@ -863,15 +880,11 @@ Session: ${Date.now().toString(36)}`;
     });
     if (!claudeRes.ok) {
       const errBody = await claudeRes.text();
-      console.error(`[Claude] ${claudeRes.status} response:`, errBody.slice(0, 500));
-      throw new Error(`Claude API error: ${claudeRes.status} — ${errBody.slice(0, 200)}`);
+      console.error(`[Claude] ${claudeRes.status}:`, errBody.slice(0, 500));
+      throw new Error(`Claude API error: ${claudeRes.status} --- ${errBody.slice(0, 200)}`);
     }
     const claudeData = await claudeRes.json();
     debugLog.push(`[Claude] HTTP ${claudeRes.status} | model: ${claudeData.model || 'unknown'}`);
-    if (!claudeData.content || !claudeData.content[0] || !claudeData.content[0].text) {
-      console.error('[Claude] Unexpected response structure:', JSON.stringify(claudeData).slice(0, 500));
-      throw new Error(`Claude returned unexpected structure: ${JSON.stringify(claudeData).slice(0, 200)}`);
-    }
     let raw = claudeData.content[0].text.trim();
 
     // ── JSON sanitiser ──────────────────────────────────────────────────────
@@ -985,7 +998,7 @@ Session: ${Date.now().toString(36)}`;
       debugLog.push(`[Apify] HIT: "${product.name}" → ${bestStoreName} | ${apifyResult.price || 'no price'}`);
     } else {
       // Apify miss — fall back to routing logic + Brave image
-      const routeResult = buildBuyLink(cleanSearchTerm, product.name, product.type, budgetTier, budgetMin, budgetMax, interests);
+      const routeResult = buildBuyLink(cleanSearchTerm, product.name, product.type, budgetTier, budgetMin, budgetMax, interests, gender);
       buyLink       = routeResult.url;
       bestStoreName = routeResult.storeName;
       imageUrl      = apifyResult?.imageUrl || await getBraveImage(richSearchTerm, BRAVE_KEY);
