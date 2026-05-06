@@ -897,7 +897,11 @@ Session: ${Date.now().toString(36)}`;
         messages: [{ role: 'user', content: userPrompt }]
       })
     });
-    if (!claudeRes.ok) throw new Error(`Claude API error: ${claudeRes.status}`);
+    if (!claudeRes.ok) {
+      const errBody = await claudeRes.json().catch(() => ({}));
+      console.error(`[Claude 400] type:${errBody.error?.type} msg:${errBody.error?.message}`);
+      throw new Error(`Claude API error: ${claudeRes.status} — ${errBody.error?.type}: ${errBody.error?.message}`);
+    }
     const claudeData = await claudeRes.json();
     debugLog.push(`[Claude] HTTP ${claudeRes.status} | model: ${claudeData.model || 'unknown'}`);
     let raw = claudeData.content[0].text.trim();
