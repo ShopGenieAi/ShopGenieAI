@@ -1032,7 +1032,6 @@ Session: ${Date.now().toString(36)}`;
 
     // Check if it's a sunglasses product (any variant) going anywhere other than Google Shopping
     const isSunglasses = /sunglass|sunglasses|polarised|polarized|sunnies|\bgoggles\b/i.test(name);
-    const isNonFishingContext = !/fishing|cycling|ski|water sport/i.test((content.interests || '') + name);
     if (isSunglasses && !(buyLink || '').includes('google.com')) {
       const safeUrl = `https://www.google.com/search?q=${encodeURIComponent(name + ' NZ')}&tbm=shop&gl=nz&hl=en`;
       console.log(`[SAFETY NET] Sunglasses caught: "${name}" going to ${storeName} — redirected to Google Shopping NZ`);
