@@ -174,6 +174,26 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 .btn-share:hover{background:rgba(122,158,126,.10);transform:translateY(-1px)}
 .share-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:#3d2b1a;color:#fff;font-family:var(--fb);font-size:.85rem;font-weight:500;padding:10px 22px;border-radius:50px;box-shadow:0 6px 28px rgba(61,43,26,.28);opacity:0;transition:all .35s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:9999;white-space:nowrap}
 .share-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── PIN GATE ─────────────────────────────────────────────────────────────── */
+#pinGate{position:fixed;inset:0;background:var(--cream);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeUp .5s ease both}
+#pinGate.hidden{display:none}
+.pin-card{background:var(--white);border-radius:20px;padding:40px 32px;box-shadow:0 8px 48px rgba(61,43,26,.16);border:2px solid var(--gold);text-align:center;max-width:380px;width:100%;animation:fadeUp .5s ease both}
+.pin-logo{width:80px;height:80px;border-radius:16px;object-fit:cover;margin:0 auto 18px;display:block;animation:float 3s ease-in-out infinite;box-shadow:0 4px 20px rgba(61,43,26,.15)}
+.pin-title{font-family:var(--fd);font-size:1.5rem;font-weight:900;color:var(--brown);margin-bottom:6px;line-height:1.2}
+.pin-sub{font-size:.85rem;color:#9a8878;margin-bottom:28px;line-height:1.5}
+.pin-input-wrap{position:relative;margin-bottom:14px}
+.pin-input{width:100%;padding:13px 48px 13px 16px;border:2px solid var(--border);border-radius:12px;font-family:var(--fb);font-size:1.05rem;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;text-align:center;letter-spacing:.08em}
+.pin-input:focus{border-color:var(--gold)}
+.pin-input::placeholder{color:#c4b09a;letter-spacing:0}
+.pin-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;opacity:.5;transition:opacity .2s;padding:0;line-height:1}
+.pin-toggle:hover{opacity:.9}
+.btn-pin{width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),var(--terra));color:white;font-family:var(--fb);font-size:.95rem;font-weight:600;border:none;border-radius:50px;cursor:pointer;box-shadow:0 4px 18px rgba(200,146,42,.35);transition:all .2s;margin-bottom:10px}
+.btn-pin:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(200,146,42,.45)}
+.btn-pin:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.pin-error{font-size:.8rem;color:var(--terra);font-weight:600;min-height:20px;transition:opacity .2s}
+.pin-footer{font-size:.7rem;color:#b5a190;margin-top:20px;line-height:1.5}
+.pin-kiwi{display:inline-block;font-size:.68rem;font-weight:500;color:var(--sage);background:rgba(122,158,126,.12);padding:3px 9px;border-radius:20px;letter-spacing:.04em;text-transform:uppercase;margin-top:8px}
 #lockout{display:none;animation:fadeUp .5s ease both}
 .lk-card{background:var(--white);border-radius:var(--r);padding:40px 28px;box-shadow:0 4px 24px rgba(61,43,26,.10);border:2px solid var(--gold);text-align:center;max-width:480px;margin:0 auto}
 .lk-title{font-family:var(--fd);font-size:1.55rem;font-weight:900;color:var(--brown);margin-bottom:12px;line-height:1.2}
@@ -230,6 +250,27 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 </style>
 </head>
 <body>
+
+<!-- ── PIN GATE ─────────────────────────────────────────────────────────────── -->
+<div id="pinGate">
+  <div class="pin-card">
+    <img class="pin-logo" src="https://raw.githubusercontent.com/ShopGenieAi/ShopGenieAI/main/logo.png" alt="ShopGenieAI"/>
+    <div class="pin-title">Kia ora! 👋</div>
+    <div class="pin-sub">ShopGenieAI is in private testing right now.<br>Pop in your access code to get started.</div>
+    <div class="pin-input-wrap">
+      <input class="pin-input" type="password" id="pinInput" placeholder="Enter access code"
+        maxlength="20" oninput="onPinInput()" onkeydown="if(event.key==='Enter')checkPin()"/>
+      <button class="pin-toggle" id="pinToggle" onclick="togglePinVis()" title="Show/hide">👁️</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <button class="btn-pin" id="btnPin" onclick="checkPin()" disabled>Unlock the Genie 🧞</button>
+    <div class="pin-footer">
+      Don't have a code? Flick Mark a message.<br>
+      <span class="pin-kiwi">Kiwi Made 🇳🇿</span>
+    </div>
+  </div>
+</div>
+
 <header>
   <div class="logo">
     <img class="logo-img" src="https://raw.githubusercontent.com/ShopGenieAi/ShopGenieAI/main/logo.png" alt="ShopGenieAI"/>
@@ -963,6 +1004,55 @@ function shareResults() {
     });
   }
 }
+
+// ── PIN GATE ──────────────────────────────────────────────────────────────────
+(function(){
+  const PIN = 'G3n1e@*';
+  const SESSION_KEY = 'sgai_unlocked';
+  const WRONG_MSGS = [
+    "Nope! That's not it mate — the Genie isn't letting just anyone in 🧞🔒",
+    "Haere atu! Wrong code — ask Mark for the right one 😂",
+    "Ka kino! Did you sit on the keyboard? That's not the code 😅",
+    "Close, but no pineapple lumps. Try again! 🍬",
+    "The Genie has raised an eyebrow. That ain't right, buddy 🤨",
+  ];
+  let wrongCount = 0;
+
+  // Check if already unlocked this session
+  if(sessionStorage.getItem(SESSION_KEY) === '1'){
+    document.getElementById('pinGate').classList.add('hidden');
+    return;
+  }
+
+  window.onPinInput = function(){
+    const val = document.getElementById('pinInput').value;
+    document.getElementById('btnPin').disabled = !val.length;
+    document.getElementById('pinError').textContent = '';
+  };
+
+  window.checkPin = function(){
+    const val = document.getElementById('pinInput').value;
+    if(val === PIN){
+      sessionStorage.setItem(SESSION_KEY, '1');
+      const gate = document.getElementById('pinGate');
+      gate.style.transition = 'opacity .4s ease';
+      gate.style.opacity = '0';
+      setTimeout(()=> gate.classList.add('hidden'), 400);
+    } else {
+      wrongCount++;
+      const msg = WRONG_MSGS[(wrongCount - 1) % WRONG_MSGS.length];
+      document.getElementById('pinError').textContent = msg;
+      document.getElementById('pinInput').value = '';
+      document.getElementById('btnPin').disabled = true;
+      document.getElementById('pinInput').focus();
+    }
+  };
+
+  window.togglePinVis = function(){
+    const inp = document.getElementById('pinInput');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+  };
+})();
 
 // ── PWA SERVICE WORKER REGISTRATION ──────────────────────────────────────────
 if ('serviceWorker' in navigator) {
