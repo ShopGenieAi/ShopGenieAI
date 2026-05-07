@@ -866,14 +866,18 @@ Session: ${Date.now().toString(36)}`;
 
   let products;
   const debugLog = []; // collect debug info throughout the request
-  try {
-    debugLog.push(`[Claude] Requesting ${vibe} | ${budgetTier} | ${whoFor} | interests: ${interests || 'none'}`);
+
+  // ── Claude call with retry ─────────────────────────────────────────────────
+  // Retries once on failure — covers edge cases where Claude times out or
+  // returns malformed JSON on tricky combos (niche sports, child + bigwed/lotto).
+  async function callClaude(attempt = 1) {
+    debugLog.push(`[Claude] Attempt ${attempt} — ${vibe} | ${budgetTier} | ${whoFor} | interests: ${interests || 'none'}`);
     const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1000,
+        max_tokens: 1200,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }]
       })
@@ -888,11 +892,8 @@ Session: ${Date.now().toString(36)}`;
     let raw = claudeData.content[0].text.trim();
 
     // ── JSON sanitiser ──────────────────────────────────────────────────────
-    // Strip markdown fences
     raw = raw.replace(/```json|```/g, '').trim();
-    // Remove control characters
     raw = raw.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-    // Extract just the JSON object — ignore any text before/after
     const jsonStart = raw.indexOf('{');
     const jsonEnd   = raw.lastIndexOf('}');
     if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON found in Claude response');
@@ -903,12 +904,31 @@ Session: ${Date.now().toString(36)}`;
     try {
       parsed = JSON.parse(raw);
     } catch (jsonErr) {
-      // Last resort — strip trailing commas before } or ]
       const fixed = raw.replace(/,([\s\r\n]*[\}\]])/g, '$1');
       parsed = JSON.parse(fixed);
     }
-    products = parsed.products;
-    if (!Array.isArray(products) || products.length === 0) throw new Error('No products returned');
+
+    // Accept 1, 2, or 3 products — partial is better than erroring out
+    if (!Array.isArray(parsed.products) || parsed.products.length === 0) {
+      throw new Error('No products returned');
+    }
+    if (parsed.products.length < 3) {
+      debugLog.push(`[Parse] ⚠️ Only ${parsed.products.length} products returned — using partial set`);
+      console.warn(`[Claude] Attempt ${attempt}: only ${parsed.products.length} products returned`);
+    }
+    return parsed.products;
+  }
+
+  try {
+    try {
+      products = await callClaude(1);
+    } catch (firstErr) {
+      console.warn('[Claude] Attempt 1 failed — retrying once:', firstErr.message);
+      debugLog.push(`[Claude] Attempt 1 failed: ${firstErr.message} — retrying...`);
+      // Small pause before retry to avoid hammering the API
+      await new Promise(r => setTimeout(r, 800));
+      products = await callClaude(2);
+    }
   } catch (err) {
     console.error('Claude error:', err);
     console.error('Debug log:', debugLog.join('\n'));
