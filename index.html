@@ -328,7 +328,8 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
       <div class="step-q">What are you shopping for?</div>
       <div class="opts">
         <div class="pill" onclick="pickPill(this,'q1')">A gift for someone</div>
-        <div class="pill" onclick="pickPill(this,'q1')">Something for myself</div>
+        <div class="pill" onclick="pickPill(this,'q1')">Something for myself (Male 👨)</div>
+        <div class="pill" onclick="pickPill(this,'q1')">Something for myself (Female 👩)</div>
       </div>
       <div class="step-nav"><span></span><button id="n1" onclick="fromStep1()" disabled class="btn-next hide">Next →</button></div>
     </div>
@@ -365,6 +366,7 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
         <div class="pill" onclick="pickPill(this,'q3')">Sporty</div>
         <div class="pill" onclick="pickPill(this,'q3')">Techy</div>
         <div class="pill" onclick="pickPill(this,'q3')">Sentimental</div>
+        <div class="pill" onclick="pickPill(this,'q3')">Pamper 🛁</div>
         <div class="pill" onclick="pickPill(this,'q3')">Surprise me</div>
       </div>
       <div class="step-nav">
@@ -744,7 +746,11 @@ function pickPill(el,key){
     if(key==='q4occ'){A.occ=el.textContent.trim();checkStep4();if(A.budgetTier)goTo(5);}
   },300);
 }
-function fromStep1(){if(A.q1==='Something for myself'){A.q2='Myself';goTo(3);}else goTo(2);}
+function fromStep1(){
+  if(A.q1==='Something for myself (Male 👨)'){A.q2='Myself Male';goTo(3);}
+  else if(A.q1==='Something for myself (Female 👩)'){A.q2='Myself Female';goTo(3);}
+  else goTo(2);
+}
 function pickBudget(el,tier){
   el.parentElement.querySelectorAll('.budget-pill').forEach(p=>p.classList.remove('sel'));
   el.classList.add('sel');A.budgetTier=tier;checkStep4();

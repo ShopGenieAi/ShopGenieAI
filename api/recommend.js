@@ -139,8 +139,8 @@ function prefixKids(searchQuery) {
 function detectGender(whoFor) {
   if (!whoFor) return 'neutral';
   const lower = whoFor.toLowerCase();
-  if (/\b(him|his|he|man|men|male|partner him|father|dad|brother|grandfather|grandad|uncle|boyfriend)\b/.test(lower)) return 'male';
-  if (/\b(her|hers|she|woman|women|female|partner her|mother|mum|sister|grandmother|nan|aunt|girlfriend)\b/.test(lower)) return 'female';
+  if (/\b(myself male|him|his|he|man|men|male|partner him|father|dad|brother|grandfather|grandad|uncle|boyfriend)\b/.test(lower)) return 'male';
+  if (/\b(myself female|her|hers|she|woman|women|female|partner her|mother|mum|sister|grandmother|nan|aunt|girlfriend)\b/.test(lower)) return 'female';
   return 'neutral';
 }
 
@@ -509,6 +509,13 @@ const KIDS_VIBE_POOLS = {
     bigwed: ['kids gaming console','kids premium tablet','kids electric scooter'],
     lotto:  ['kids premium gaming setup','kids quality tablet'],
   },
+  'Pamper 🛁': {
+    low:    ['kids bath bomb set','kids nail polish set','kids lip balm set','kids bubble bath set','kids face mask kit'],
+    medium: ['kids spa gift set','kids nail art kit','kids hair accessories set','kids skincare set','kids pamper hamper'],
+    high:   ['kids premium spa set','kids quality hair styling kit','kids luxury bath set','kids beauty gift set'],
+    bigwed: ['kids premium pamper hamper','kids quality nail salon kit','kids luxury spa experience set'],
+    lotto:  ['kids luxury pamper package','kids premium beauty gift set','kids spa day experience voucher'],
+  },
 };
 
 // ── ADULT VIBE POOLS ──────────────────────────────────────────────────────────
@@ -583,6 +590,13 @@ const ADULT_VIBE_POOLS = {
     bigwed: ['noise cancelling headphones','gps running watch','quality jewellery'],
     lotto:  ['premium smart watch','dyson airwrap','premium headphones'],
   },
+  'Pamper 🛁': {
+    low:    ['bath bomb set','face mask set','lip balm set','hand cream set','nail polish set','bath salts'],
+    medium: ['skincare gift set','massage candle','hair mask set','luxury soap set','silk eye mask set','bath oil gift set'],
+    high:   ['premium skincare set','hair straightener','luxury bath set','facial roller set','aromatherapy diffuser set','quality hair dryer'],
+    bigwed: ['dyson corrale','premium spa gift set','luxury skincare collection','professional hair styling set','massage gun','premium fragrance set'],
+    lotto:  ['dyson airwrap','luxury perfume collection','premium spa day voucher','high end skincare set','professional hair tool set'],
+  },
 };
 
 // ── MAIN HANDLER ──────────────────────────────────────────────────────────────
@@ -637,7 +651,7 @@ export default async function handler(req, res) {
   // ── Build context hints for Claude ────────────────────────────────────────
 
   const genderHint = gender === 'male'
-    ? 'GENDER: This is for a MALE. Suggest masculine or gender-neutral products ONLY. NEVER suggest: womens handbags, feminine skincare, makeup, cashmere scarves, womens clothing, hair accessories, nail products, or any female-coded fashion items.'
+    ? `GENDER: This is for a MALE. Suggest masculine or gender-neutral products ONLY. NEVER suggest: womens handbags, feminine skincare, makeup, cashmere scarves, womens clothing, hair accessories, nail products, hair straighteners, or any female-coded fashion items.${vibe === 'Pamper 🛁' ? ' PAMPER FOR MALE: Think mens grooming — beard care kit, mens skincare, massage gun, electric shaver, shower gel set, men\'s spa day voucher, cologne gift set. NOT hair straighteners, nail polish, face masks, or feminine bath products.' : ''}`
     : gender === 'female'
     ? 'GENDER: This is for a FEMALE. Suggest feminine or gender-neutral products.'
     : '';
