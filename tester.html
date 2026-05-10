@@ -243,6 +243,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);display:flex
           <optgroup label="── By Recipient">
             <option value="vibes_him">Partner Him — All Vibes × All Budgets</option>
             <option value="vibes_her">Partner Her — All Vibes × All Budgets</option>
+            <option value="vibes_myself_male">Myself Male — All Vibes × All Budgets</option>
+            <option value="vibes_myself_female">Myself Female — All Vibes × All Budgets</option>
             <option value="vibes_child">Child — All Vibes × All Budgets</option>
             <option value="vibes_grandparent">Grandparent — All Vibes × All Budgets</option>
             <option value="vibes_friend">Friend — All Vibes × All Budgets</option>
@@ -424,7 +426,7 @@ const ENDPOINT = 'https://shopgenieai.com/api/recommend';
 const SPORTS   = ['Football','Hockey','Rugby','Cricket','Swimming','Tennis','Golf','Cycling','Running','Gym','Surfing','Netball','Mountain Biking','Volleyball'];
 const STYLES   = ['Leather','Gold jewellery','Silver jewellery','Personalised','Eco-friendly','Luxury'];
 const HOBBIES  = ['Cooking','Gaming','Photography','Reading','Gardening','Music','Fishing','Travel','Art & Craft','DIY'];
-const VIBES    = ['Sporty','Practical','Fun','Quirky','Eco-friendly','Luxe','Techy','Sentimental','Trendy','Surprise me'];
+const VIBES    = ['Sporty','Practical','Fun','Quirky','Eco-friendly','Luxe','Techy','Sentimental','Trendy','Pamper 🛁','Surprise me'];
 const BUDGETS  = ['low','medium','high','bigwed','lotto'];
 const OCCASIONS= ['Birthday','Christmas','Anniversary',"Father's Day","Mother's Day","Valentine's Day","Just Because","Graduation"];
 
@@ -470,6 +472,8 @@ function buildQueue(suiteKey) {
     // By recipient — all vibes × all budgets
     case 'vibes_him':        return vibesBudgets('Partner Him', BUDGETS);
     case 'vibes_her':        return vibesBudgets('Partner Her', BUDGETS);
+    case 'vibes_myself_male':   return vibesBudgets('Myself Male', BUDGETS);
+    case 'vibes_myself_female': return vibesBudgets('Myself Female', BUDGETS);
     case 'vibes_child':      return vibesBudgets('Child', BUDGETS);
     case 'vibes_grandparent':return vibesBudgets('Grandparent', BUDGETS);
     case 'vibes_friend':     return vibesBudgets('Friend', BUDGETS);

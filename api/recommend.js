@@ -509,13 +509,6 @@ const KIDS_VIBE_POOLS = {
     bigwed: ['kids gaming console','kids premium tablet','kids electric scooter'],
     lotto:  ['kids premium gaming setup','kids quality tablet'],
   },
-  'Pamper 🛁': {
-    low:    ['kids bath bomb set','kids nail polish set','kids lip balm set','kids bubble bath set','kids face mask kit'],
-    medium: ['kids spa gift set','kids nail art kit','kids hair accessories set','kids skincare set','kids pamper hamper'],
-    high:   ['kids premium spa set','kids quality hair styling kit','kids luxury bath set','kids beauty gift set'],
-    bigwed: ['kids premium pamper hamper','kids quality nail salon kit','kids luxury spa experience set'],
-    lotto:  ['kids luxury pamper package','kids premium beauty gift set','kids spa day experience voucher'],
-  },
 };
 
 // ── ADULT VIBE POOLS ──────────────────────────────────────────────────────────
