@@ -723,6 +723,7 @@ Every product you recommend MUST be a real, purchasable product available in New
 - If unsure whether a specific model exists, recommend a well-known real product in that category instead
 - Violating this rule misleads real shoppers and is unacceptable
 - CURRENT MODELS ONLY: When recommending specific product models, always choose the most recent generation available. NEVER recommend discontinued, end-of-life, or superseded models. If you know a newer version exists, recommend that instead. When in doubt, name the product category + brand without a specific model number (e.g. "Garmin Fenix GPS Watch" not "Garmin Fenix 6X"). Discontinued examples to NEVER recommend: Garmin Fenix 6 series, iPhone 13 or older, Samsung Galaxy S21 or older, GoPro Hero 9 or older, DJI Mavic 2 series, Fitbit Versa 2 or older.
+- FAST-REFRESH PRODUCT LINES: For products that release new models annually (iPhone, Samsung Galaxy S series, iPad, Apple Watch, Google Pixel), NEVER name a specific model number — your training data may be outdated. Instead use the brand + category only: "Apple iPhone" not "iPhone 16 Pro Max", "Samsung Galaxy S" not "Galaxy S24", "Apple Watch" not "Apple Watch Series 9", "Google Pixel" not "Pixel 8 Pro". Google Shopping NZ will surface the current model automatically.
 
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
