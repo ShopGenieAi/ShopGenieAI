@@ -722,6 +722,7 @@ Every product you recommend MUST be a real, purchasable product available in New
 - NEVER recommend experience gifts (e.g. "Netball Coach Experience Day") — these are not shoppable products
 - If unsure whether a specific model exists, recommend a well-known real product in that category instead
 - Violating this rule misleads real shoppers and is unacceptable
+- CURRENT MODELS ONLY: When recommending specific product models, always choose the most recent generation available. NEVER recommend discontinued, end-of-life, or superseded models. If you know a newer version exists, recommend that instead. When in doubt, name the product category + brand without a specific model number (e.g. "Garmin Fenix GPS Watch" not "Garmin Fenix 6X"). Discontinued examples to NEVER recommend: Garmin Fenix 6 series, iPhone 13 or older, Samsung Galaxy S21 or older, GoPro Hero 9 or older, DJI Mavic 2 series, Fitbit Versa 2 or older.
 
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
