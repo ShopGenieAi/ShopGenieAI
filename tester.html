@@ -241,6 +241,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);display:flex
             <option value="sports_her">Partner Her — All Sports × All Budgets</option>
           </optgroup>
           <optgroup label="── By Recipient">
+            <option value="retry_fails">🔁 Retry Failed Tests (6)</option>
             <option value="vibes_him">Partner Him — All Vibes × All Budgets</option>
             <option value="vibes_her">Partner Her — All Vibes × All Budgets</option>
             <option value="vibes_myself_male">Myself Male — All Vibes × All Budgets</option>
@@ -468,6 +469,15 @@ function buildQueue(suiteKey) {
     // Sports
     case 'sports_him':   return sportsBudgets('Partner Him');
     case 'sports_her':   return sportsBudgets('Partner Her');
+
+    case 'retry_fails': return [
+      { whoFor:'Partner Him', vibe:'Quirky',      budgetTier:'medium', occasion:'Birthday', interests:'Eco-friendly' },
+      { whoFor:'Partner Her', vibe:'Sporty',      budgetTier:'lotto',  occasion:'Birthday', interests:'Netball' },
+      { whoFor:'Partner Her', vibe:'Sporty',      budgetTier:'bigwed', occasion:'Birthday', interests:'Football' },
+      { whoFor:'Brother',     vibe:'Pamper 🛁',   budgetTier:'high',   occasion:'Birthday', interests:'' },
+      { whoFor:'Work Colleague', vibe:'Techy',    budgetTier:'high',   occasion:'Birthday', interests:'' },
+      { whoFor:'Grandparent', vibe:'Surprise me', budgetTier:'high',   occasion:'Birthday', interests:'' },
+    ];
 
     // By recipient — all vibes × all budgets
     case 'vibes_him':        return vibesBudgets('Partner Him', BUDGETS);
