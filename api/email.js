@@ -30,12 +30,12 @@ export default async function handler(req, res) {
       <div style="font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#7a9e7e;margin-bottom:4px;">${p.type || 'Gift Idea'}</div>
       <div style="font-size:20px;font-weight:700;color:#3d2b1a;margin-bottom:8px;">${i + 1}. ${p.name}</div>
       <div style="font-size:14px;color:#7a6855;line-height:1.6;margin-bottom:12px;">${p.reason}</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-        <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-top:4px;">
+        <div style="flex:1;min-width:0;">
           <div style="font-size:15px;font-weight:600;color:#c8922a;">${p.budgetLabel || budgetLabel}</div>
           ${p.bestStoreName ? `<div style="font-size:12px;color:#9a8878;">Best match at ${p.bestStoreName}</div>` : ''}
         </div>
-        <a href="${p.buyLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 20px;border-radius:50px;text-decoration:none;">Shop This Gift →</a>
+        <a href="${p.buyLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#c8922a,#c4623a);color:white;font-weight:600;font-size:14px;padding:10px 24px;border-radius:50px;text-decoration:none;white-space:nowrap;flex-shrink:0;">Shop This Gift →</a>
       </div>
       ${(p.stores || []).length > 0 ? `
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e8ddd0;">
