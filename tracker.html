@@ -152,6 +152,30 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
 
 /* LEGEND */
 .legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+
+/* ADD TASK BUTTON */
+.btn-add-task{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--gold),var(--terra));color:white;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;padding:9px 20px;border-radius:50px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(200,146,42,.3);transition:all .2s;margin-bottom:24px}
+.btn-add-task:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(200,146,42,.4)}
+
+/* ADD TASK MODAL */
+.add-wrap{position:fixed;inset:0;background:rgba(26,18,8,.6);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.add-wrap.open{display:flex}
+.add-box{background:var(--white);border-radius:16px;padding:28px 24px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(61,43,26,.25)}
+.add-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;color:var(--brown);margin-bottom:18px}
+.add-label{font-size:.78rem;color:#9a8878;margin-bottom:5px;display:block}
+.add-input{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--brown);outline:none;transition:border-color .2s;margin-bottom:14px}
+.add-input:focus{border-color:var(--gold)}
+.add-textarea{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--brown);outline:none;transition:border-color .2s;margin-bottom:14px;resize:vertical;min-height:72px;line-height:1.5}
+.add-textarea:focus{border-color:var(--gold)}
+.add-row{display:flex;gap:10px;margin-bottom:14px}
+.add-select{flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--brown);outline:none;background:white;transition:border-color .2s}
+.add-select:focus{border-color:var(--gold)}
+.add-btns{display:flex;gap:8px;margin-top:4px}
+.btn-add-confirm{flex:1;padding:10px;border-radius:50px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--gold),var(--terra));color:white;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;transition:all .2s}
+.btn-add-confirm:hover{transform:translateY(-1px)}
+.btn-add-cancel{padding:10px 18px;border-radius:50px;border:2px solid var(--border);background:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;color:#9a8878;transition:all .2s}
+.btn-add-cancel:hover{border-color:var(--brown);color:var(--brown)}
+.task.custom-task{border-left:3px solid var(--gold)}
 .leg-item{display:flex;align-items:center;gap:6px;font-size:.75rem;color:#9a8878}
 .leg-dot{width:10px;height:10px;border-radius:3px}
 </style>
@@ -216,6 +240,9 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
     <div class="leg-item"><div class="leg-dot" style="background:var(--v4)"></div>v4</div>
   </div>
 
+  <!-- ADD TASK BUTTON -->
+  <button class="btn-add-task" onclick="openAddTask()">＋ Add Task</button>
+
   <!-- TASK LIST RENDERED BY JS -->
   <div id="taskList"></div>
 
@@ -233,6 +260,41 @@ main{max-width:960px;margin:0 auto;padding:28px 20px 60px}
     <div class="sig-btns">
       <button class="btn-cancel" onclick="closeSig()">Cancel</button>
       <button class="btn-approve" onclick="confirmSig()">Sign Off →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD TASK DIALOG -->
+<div class="add-wrap" id="addDlg">
+  <div class="add-box">
+    <div class="add-title">Add a task ＋</div>
+    <label class="add-label">Task title *</label>
+    <input class="add-input" id="addTitle" placeholder="e.g. Add dark mode toggle to results page" maxlength="120"/>
+    <label class="add-label">Notes (optional)</label>
+    <textarea class="add-textarea" id="addNote" placeholder="e.g. User requested, low effort, good UX win…"></textarea>
+    <div class="add-row">
+      <div style="flex:1">
+        <label class="add-label">Phase</label>
+        <select class="add-select" id="addPhase">
+          <option value="v4">v4 — Future Vision</option>
+          <option value="v3">v3 — Build the App</option>
+          <option value="parked">Parked 🅿️</option>
+        </select>
+      </div>
+      <div style="flex:1">
+        <label class="add-label">Tag</label>
+        <select class="add-select" id="addTag">
+          <option value="ui">UI</option>
+          <option value="api">API/Prompt</option>
+          <option value="backend">Backend</option>
+          <option value="data">Data</option>
+          <option value="infra">Infra</option>
+        </select>
+      </div>
+    </div>
+    <div class="add-btns">
+      <button class="btn-add-cancel" onclick="closeAddTask()">Cancel</button>
+      <button class="btn-add-confirm" onclick="confirmAddTask()">Add Task →</button>
     </div>
   </div>
 </div>
@@ -320,12 +382,24 @@ const PHASE_LABEL = {v3:'v3 — Build the App 🚀',v2:'v2 — Completed ✅',v4
 let state = {};
 let sigTarget = null;
 let activeFilter = 'all';
+let customTasks = [];
 
 function loadState(){
   try { state = JSON.parse(localStorage.getItem('sgai_tasks')||'{}'); } catch(e){ state={}; }
 }
 function saveState(){
   try { localStorage.setItem('sgai_tasks', JSON.stringify(state)); } catch(e){}
+}
+
+function loadCustomTasks(){
+  try { customTasks = JSON.parse(localStorage.getItem('sgai_custom_tasks')||'[]'); } catch(e){ customTasks=[]; }
+  // Merge into TASKS array (avoid duplication on re-render)
+  customTasks.forEach(ct => {
+    if(!TASKS.find(t=>t.id===ct.id)) TASKS.push(ct);
+  });
+}
+function saveCustomTasks(){
+  try { localStorage.setItem('sgai_custom_tasks', JSON.stringify(customTasks)); } catch(e){}
 }
 
 function getTaskState(id){ return state[id] || {status:'pending',signer:'',note:'',ts:''}; }
@@ -389,7 +463,7 @@ function render(){
       const unblockBtn = isBlocked ? `<button class="btn-block" onclick="event.stopPropagation();unblock('${t.id}')">Unblock</button>` : '';
       const moveBtn    = !isDone ? `<button class="btn-move" onclick="event.stopPropagation();openMove('${t.id}',this)">Move to… ↗</button>` : '';
 
-      html += `<div class="task ${cls}" onclick="clickTask('${t.id}','${t.title.replace(/'/g,"\'")}')">
+      html += `<div class="task ${cls}${t.custom?' custom-task':''}" onclick="clickTask('${t.id}','${t.title.replace(/'/g,"\'")}')">
         <div class="check"><span class="check-tick">✓</span><span class="check-block">!</span></div>
         <div class="task-num">${displayNum}</div>
         <div class="task-body">
@@ -474,8 +548,43 @@ function updateProgress(){
   });
 }
 
+// ── ADD TASK ──────────────────────────────────────────────────────────────────
+function openAddTask(){
+  document.getElementById('addTitle').value='';
+  document.getElementById('addNote').value='';
+  document.getElementById('addPhase').value='v4';
+  document.getElementById('addTag').value='ui';
+  document.getElementById('addDlg').classList.add('open');
+  setTimeout(()=>document.getElementById('addTitle').focus(),100);
+}
+
+function closeAddTask(){
+  document.getElementById('addDlg').classList.remove('open');
+}
+
+function confirmAddTask(){
+  const title = document.getElementById('addTitle').value.trim();
+  if(!title){ document.getElementById('addTitle').focus(); return; }
+  const note  = document.getElementById('addNote').value.trim();
+  const phase = document.getElementById('addPhase').value;
+  const tag   = document.getElementById('addTag').value;
+  const id    = 'custom-' + Date.now();
+  const newTask = {id, phase, title, tag, note, custom:true};
+  customTasks.push(newTask);
+  TASKS.push(newTask);
+  saveCustomTasks();
+  closeAddTask();
+  render();
+}
+
+// Close add dialog on outside click
+document.getElementById('addDlg').addEventListener('click', function(e){
+  if(e.target===this) closeAddTask();
+});
+
 // Init
 loadState();
+loadCustomTasks();
 render();
 
 // ── MOVE TASK ─────────────────────────────────────────────────────────────────
