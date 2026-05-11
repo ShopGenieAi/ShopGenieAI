@@ -245,118 +245,25 @@ function detectProductCategory(name, type) {
 }
 
 // ── BUILD BUY LINK ────────────────────────────────────────────────────────────
-// V3: Smart retailer routing — direct deep links per product category + budget tier.
-// Google Shopping NZ chips remain as fallback on every card regardless.
+// V4: Universal Google Shopping NZ routing — clean, reliable, affiliate-ready.
+// All products route to Google Shopping NZ. No direct retailer links.
 
 function buildBuyLink(cleanSearchTerm, productName, productType, budgetTierKey, budgetMin, budgetMax, interests, gender) {
-  // ── Null safety — guard against undefined/null from Claude output ──────────
-  const safeName     = (productName  || '').toString().trim() || 'gift';
-  const safeType     = (productType  || '').toString().trim();
-  const safeSearch   = (cleanSearchTerm || safeName).toString().trim();
-  productName  = safeName;
-  productType  = safeType;
-  cleanSearchTerm = safeSearch;
+  // ── Null safety ──────────────────────────────────────────────────────────────
+  const safeName   = (productName     || '').toString().trim() || 'gift';
+  const safeSearch = (cleanSearchTerm || safeName).toString().trim();
+  productName      = safeName;
+  cleanSearchTerm  = safeSearch;
 
-  const category = detectProductCategory(productName, productType);
-  const q  = encodeURIComponent(cleanSearchTerm);
+  const isKids = /^kids?\s/i.test(cleanSearchTerm);
+  const searchQ = isKids
+    ? encodeURIComponent('kids ' + productName + ' NZ')
+    : encodeURIComponent(productName + ' NZ');
 
-  // Custom/sentimental
-  if (category === 'custom') {
-    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // Leather — always Google Shopping NZ
-  if (category === 'leather') {
-    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // Eyewear — Google Shopping NZ (Sunglass Hutt confirmed dead QA 6/5/26)
-  if (category === 'eyewear') {
-    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // Footwear — Google Shopping NZ (Rebel Sport, Number One Shoes etc have JS-rendered search)
-  if (category === 'footwear') {
-    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // Sportswear / active apparel — Google Shopping NZ surfaces Rebel Sport reliably
-  if (category === 'sportswear') {
-    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // Kids sport gear
-  if (category === 'kidssport') {
-    return { url: `https://www.google.com/search?q=${encodeURIComponent('kids ' + productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // Tech & Electronics — PB Tech for all budgets
-  if (category === 'tech') {
-    return { url: `https://www.pbtech.co.nz/search?sf=${q}`, storeName: 'PB Tech' };
-  }
-
-  // Fitness gear — Google Shopping NZ surfaces Rebel Sport, Torpedo7, fitness specialists
-  if (category === 'fitness') {
-    return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-  }
-
-  // Outdoor & adventure — Torpedo7 for medium+, Warehouse for low
-  if (category === 'outdoor') {
-    if (budgetTierKey === 'low')
-      return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
-    return { url: `https://www.torpedo7.co.nz/search?q=${q}`, storeName: 'Torpedo7' };
-  }
-
-  // Luggage — Google Shopping NZ for premium (Farmers confirmed dead)
-  if (category === 'luggage') {
-    if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-    return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
-  }
-
-  // Fashion — gender-aware. Glassons = women only.
-  if (category === 'fashion') {
-    const isMale = (gender === 'male');
-    if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-    if (budgetTierKey === 'medium') {
-      if (isMale) return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-      return { url: `https://www.glassons.com/search?q=${q}`, storeName: 'Glassons' };
-    }
-    return { url: `https://www.thewarehouse.co.nz/search?q=${q}`, storeName: 'The Warehouse' };
-  }
-
-  // Beauty & health — Mecca premium, Sephora mid, Chemist Warehouse low
-  if (category === 'beauty') {
-    if (['high','bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.mecca.com/en-nz/search/?q=${q}`, storeName: 'Mecca' };
-    if (budgetTierKey === 'medium')
-      return { url: `https://www.sephora.nz/search?q=${q}`, storeName: 'Sephora' };
-    return { url: `https://www.chemistwarehouse.co.nz/search?q=${q}`, storeName: 'Chemist Warehouse' };
-  }
-
-  // Home & kitchen — Google Shopping for premium cookware/luxury items, Briscoes for mid, Kmart for low
-  if (category === 'home') {
-    if (budgetTierKey === 'low')
-      return { url: `https://www.kmart.co.nz/search?q=${q}`, storeName: 'Kmart' };
-    if (['bigwed','lotto'].includes(budgetTierKey))
-      return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
-    return { url: `https://www.briscoes.co.nz/search?q=${q}`, storeName: 'Briscoes' };
-  }
-
-  // Tools & hardware — Bunnings across all budgets
-  if (category === 'tools') {
-    return { url: `https://www.bunnings.co.nz/search/products?q=${q}`, storeName: 'Bunnings' };
-  }
-
-  // Books & stationery — Whitcoulls across all budgets
-  if (category === 'books') {
-    return { url: `https://www.whitcoulls.co.nz/search?q=${q}`, storeName: 'Whitcoulls' };
-  }
-
-  // General fallback — Google Shopping NZ is reliable across all budget tiers
-  // The Warehouse internal search confirmed by testers as returning irrelevant results (2/5 link quality)
-  return { url: `https://www.google.com/search?q=${encodeURIComponent(productName + ' NZ')}&tbm=shop&gl=nz&hl=en`, storeName: 'Google Shopping NZ' };
+  return {
+    url: `https://www.google.com/search?q=${searchQ}&tbm=shop&gl=nz&hl=en`,
+    storeName: 'Google Shopping NZ'
+  };
 }
 
 // ── SHOPPING CHIPS ────────────────────────────────────────────────────────────
@@ -704,28 +611,18 @@ Every product MUST be genuinely available in NZ at the user's budget in 2026.
 - Match budget: budget smartwatch (Promate/Xiaomi ~$80 at PB Tech) for Low/Medium. Apple Watch for Lotto only.
 - If unsure whether a product exists at this price in NZ, choose something safer.
 
-RULE 2B — BUDGET TIER RETAILER UNIVERSE:
-Each budget tier has a retailer universe. Products must feel at home in that universe.
+RULE 2B — BUDGET TIER BRAND UNIVERSE:
+Each budget tier has a quality level. Products must feel at home in that tier.
 
-LOW (under NZ$50) → The Warehouse, Kmart, Farmers basics, Trade Me, supermarket aisles.
-Think: everyday essentials, novelty items, basic accessories, starter kits.
-Brand examples: Warehouse brand, Kmart home brand, basic unbranded.
+LOW (under NZ$50) → Basic brands, unbranded, entry-level. Warehouse brand, Kmart home brand, basic accessories.
 
-MEDIUM (NZ$50–$150) → Farmers, Rebel Sport, Paper Plus, Whitcoulls, Briscoes, Torpedo7, JB Hi-Fi entry-level.
-Think: solid mid-range products, known NZ brands, good quality everyday items.
-Brand examples: Breville entry, Kathmandu basics, Garmin entry, Fitbit, Anker.
+MEDIUM (NZ$50–$150) → Solid mid-range known brands. Anker, Fitbit, Garmin entry, Kathmandu basics, Breville entry.
 
-HIGH (NZ$150–$300) → Farmers premium, Noel Leeming, JB Hi-Fi, Rebel Sport premium, Mecca, Sephora, Torpedo7 premium.
-Think: premium versions, branded names, quality that lasts, gift-worthy packaging.
-Brand examples: Garmin, Sony mid-range, KitchenAid entry, Dyson entry, Lululemon, Patagonia entry.
+HIGH (NZ$150–$300) → Premium brands, quality that lasts. Garmin, Sony mid-range, KitchenAid entry, Dyson entry, Lululemon, Patagonia entry.
 
-BIG WEDNESDAY (NZ$300–$500) → Noel Leeming, Harvey Norman, Camera Warehouse, premium boutiques, brand flagships.
-Think: flagship models, premium gifts, luxury everyday items, top-of-range versions.
-Brand examples: Dyson flagship, Sony Alpha cameras, Apple Watch, Le Creuset, KitchenAid Pro, Bose, Bang & Olufsen entry.
+BIG WEDNESDAY (NZ$300–$500) → Flagship models, premium gifts. Dyson flagship, Sony cameras, Apple Watch, Le Creuset, KitchenAid Pro, Bose, Bang & Olufsen entry.
 
-LOTTO (NZ$500+) → Harvey Norman, Camera Warehouse, Apple Store, luxury brand flagships, specialist premium retailers.
-Think: elite luxury, professional-grade, top-of-market, the absolute best version of anything.
-Brand examples: Apple (flagship), Sony Alpha mirrorless, Garmin Fenix, Dyson Airwrap, Le Creuset full sets, Bang & Olufsen, premium jewellery, Vitamix, Weber premium BBQ, DJI drone.
+LOTTO (NZ$500+) → Elite luxury, professional-grade. Apple flagship, Sony Alpha mirrorless, Garmin Fenix (real models only), Dyson Airwrap, Le Creuset full sets, Bang & Olufsen, Vitamix, Weber premium BBQ, DJI drone.
 
 RULE 2C — ANTI-DOWNGRADE (STRICTLY ENFORCED):
 At bigwed or lotto budget tier, you are BANNED from recommending:
@@ -735,14 +632,8 @@ At bigwed or lotto budget tier, you are BANNED from recommending:
 - Anything that could be bought at The Warehouse or Kmart
 At bigwed/lotto: always name the specific premium brand and model. Never generic.
 
-RULE 2D — EXPERIENCE GIFTS AT HIGH BUDGETS:
-At bigwed or lotto tier, consider recommending an experience gift where relevant:
-- Photography → photography masterclass, scenic flight with camera time
-- Fitness → personal training package, spa & wellness day, premium gym membership
-- Travel → weekend getaway voucher, scenic helicopter experience
-- Food → premium chef's dining experience, cooking class with a chef
-- Music → concert tickets, music production masterclass
-Experience gifts are often the most memorable option at high budgets. Use them wisely.
+RULE 2D — HIGH BUDGET PRODUCTS:
+At bigwed or lotto tier, recommend the premium real-world version of the product. Never recommend experience gifts — they are not shoppable products.
 
 RULE 2E — OCCASION + BUDGET MUST WORK TOGETHER:
 Never let a high budget occasion get a low-effort product.
@@ -824,8 +715,13 @@ If any answer is YES/NO in the wrong direction — replace the product. Do not o
 RULE 13 — SUNGLASSES BANNED:
 Never recommend sunglasses, polarised sunglasses, designer sunglasses, sports sunglasses, UV sunglasses, blue light glasses or any eyewear unless the interest is specifically Fishing, Cycling, Skiing or Water Sports. Sunglasses are a personal fit item — never an acceptable gift filler.
 
-RULE 14 — BANNED STORES:
-Never suggest Sunglass Hutt or Farmers as a store. Both have confirmed broken search URLs. Use Google Shopping NZ instead.
+RULE 15 — REAL PRODUCTS ONLY (STRICTLY ENFORCED):
+Every product you recommend MUST be a real, purchasable product available in New Zealand in 2026.
+- Use real brand names and real model names that actually exist (e.g. "Garmin Venu 2 Plus" not "Garmin Fenix 8X Diamond Edition")
+- NEVER invent product names, bundle names, editions, or experiences that don't exist in NZ retail
+- NEVER recommend experience gifts (e.g. "Netball Coach Experience Day") — these are not shoppable products
+- If unsure whether a specific model exists, recommend a well-known real product in that category instead
+- Violating this rule misleads real shoppers and is unacceptable
 
 OUTPUT — return ONLY this exact JSON, no preamble, no markdown:
 {
