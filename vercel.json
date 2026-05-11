@@ -40,6 +40,10 @@
     {
       "src": "api/click.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/autocomplete.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -58,6 +62,10 @@
     {
       "src": "/api/click",
       "dest": "/api/click.js"
+    },
+    {
+      "src": "/api/autocomplete",
+      "dest": "/api/autocomplete.js"
     },
     {
       "src": "/manifest.json",

@@ -63,6 +63,18 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 .int-pill.sel{border-color:var(--gold);background:linear-gradient(135deg,rgba(200,146,42,.14),rgba(196,98,58,.08));color:var(--brown);font-weight:600}
 .int-skip{font-size:.72rem;color:#b5a190;margin-top:10px;margin-bottom:4px}
 .int-selected-summary{font-size:.75rem;color:var(--sage);font-weight:600;margin-top:8px;min-height:18px;transition:opacity .2s}
+
+/* ── Q5 AUTOCOMPLETE ─────────────────────────────────────────────────────────── */
+.ac-wrap{position:relative}
+.ac-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--white);border:2px solid var(--gold);border-radius:12px;box-shadow:0 8px 24px rgba(61,43,26,.14);z-index:50;padding:8px;animation:fadeUp .15s ease both;max-height:220px;overflow-y:auto}
+.ac-dropdown.open{display:block}
+.ac-section-label{font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#b5a190;padding:2px 6px 4px;display:block}
+.ac-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.ac-pill{padding:5px 12px;border-radius:50px;border:1.5px solid var(--border);background:var(--warm);font-family:var(--fb);font-size:.8rem;font-weight:500;color:#6b5a47;cursor:pointer;transition:all .15s;user-select:none;min-height:32px;display:flex;align-items:center}
+.ac-pill:hover{border-color:var(--gold);background:rgba(200,146,42,.08);color:var(--brown)}
+.ac-pill.ac-ai{border-color:rgba(122,158,126,.4);color:var(--sage)}
+.ac-pill.ac-ai:hover{border-color:var(--sage);background:rgba(122,158,126,.1)}
+.ac-loading{font-size:.78rem;color:#b5a190;padding:4px 6px;font-style:italic}
 .step0{display:none;animation:fadeUp .4s ease both}
 .step0.active{display:block}
 .name-input-wrap input{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:12px;font-family:var(--fb);font-size:1.1rem;color:var(--ink);background:var(--warm);outline:none;transition:border-color .2s;text-align:center;font-weight:600}
@@ -165,7 +177,6 @@ main{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px
 .email-sent-msg{display:none;margin-top:10px;font-size:.82rem;color:var(--sage);font-weight:600}
 .email-privacy{font-size:.7rem;color:#b5a190;margin-top:8px}
 .act-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding-top:6px}
-@media(max-width:480px){.act-row{flex-direction:column;align-items:stretch}.act-row button{width:100%;justify-content:center}}
 .btn-restart{background:none;border:2px solid var(--border);font-family:var(--fb);font-size:.84rem;font-weight:500;color:#9a8878;padding:9px 20px;border-radius:50px;cursor:pointer;transition:all .2s}
 .btn-restart:hover{border-color:var(--brown);color:var(--brown)}
 .btn-refresh{background:none;border:2px solid var(--gold);font-family:var(--fb);font-size:.84rem;font-weight:600;color:var(--gold);padding:9px 20px;border-radius:50px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
@@ -476,7 +487,10 @@ footer{position:relative;z-index:1;text-align:center;padding:18px;font-size:.72r
 
       <div class="int-section">
         <div class="int-label">💬 Anything else? <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#b5a190;font-size:.68rem">favourite brand, specific item, extra info</span></div>
-        <textarea class="qinput" id="q5extra" rows="2" placeholder="e.g. loves Nike, fan of Kathmandu, wants something for the garden..." style="resize:none;line-height:1.5;font-size:.86rem"></textarea>
+        <div class="ac-wrap">
+          <textarea class="qinput" id="q5extra" rows="2" placeholder="e.g. loves Nike, fan of Kathmandu, wants something for the garden..." style="resize:none;line-height:1.5;font-size:.86rem" oninput="onAcInput()" onkeydown="onAcKeydown(event)"></textarea>
+          <div class="ac-dropdown" id="acDropdown"></div>
+        </div>
       </div>
 
       <div class="int-selected-summary" id="intSummary"></div>
@@ -983,6 +997,138 @@ function resetInterests(){
   const el=$('intSummary');
   if(el) el.textContent='';
 }
+
+// ── Q5 AUTOCOMPLETE ───────────────────────────────────────────────────────────
+const AC_LOCAL = [
+  // Sports & Outdoors
+  'Rugby','Football','Cricket','Netball','Hockey','Tennis','Golf','Cycling','Running',
+  'Swimming','Surfing','Mountain Biking','Volleyball','Tramping','Kayaking','Fishing',
+  'Hunting','Sailing','Skiing','Snowboarding','Boating','Camping',
+  // Hobbies & Passions
+  'Cooking','Baking','Gaming','Photography','Reading','Gardening','Music','Art & Craft',
+  'DIY','Travel','Yoga','Meditation','Knitting','Painting','Woodworking',
+  // NZ Clothing & Fashion
+  'Swanndri','Barkers','Karen Walker','Canterbury','Hallensteins','Glassons',
+  // Tech & Electronics
+  'Apple','Samsung','Google','Microsoft','HP','Lenovo','Sony','Logitech',
+  'Fisher & Paykel','Dyson','LG','Panasonic','Nintendo','Bose','JBL','DJI',
+  // Smart Home & Wearables
+  'Ring','Eufy','Fitbit','Garmin',
+  // NZ Outdoors Brands
+  'Kathmandu','Icebreaker','Macpac',
+  // Other Brands
+  'Nike','Adidas','Lego',
+  // Lifestyle & Personality
+  'Coffee lover','Foodie','Dog lover','Cat lover','Car enthusiast','Sneakerhead',
+  'Beach lover','Plant lover','Gym Junkie','CrossFitter','Tramper','Eco-Warrior',
+];
+
+let acDebounce = null;
+let acAiSuggestions = [];
+
+function getLastToken(val) {
+  // Get the last comma-separated term the user is currently typing
+  const parts = val.split(',');
+  return parts[parts.length - 1].trim();
+}
+
+function onAcInput() {
+  const val = ($('q5extra')||{}).value || '';
+  const token = getLastToken(val);
+  clearTimeout(acDebounce);
+  acAiSuggestions = [];
+
+  if (token.length < 2) { closeAc(); return; }
+
+  // Speed 1: instant local match
+  const localMatches = AC_LOCAL.filter(t =>
+    t.toLowerCase().includes(token.toLowerCase())
+  ).slice(0, 6);
+
+  renderAc(localMatches, [], true);
+
+  // Speed 2: Haiku debounce at 350ms
+  acDebounce = setTimeout(async () => {
+    try {
+      const resp = await fetch('/api/autocomplete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: token })
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      acAiSuggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
+      // Filter out anything already in local results
+      const filtered = acAiSuggestions.filter(s =>
+        !localMatches.some(l => l.toLowerCase() === s.toLowerCase())
+      ).slice(0, 4);
+      renderAc(localMatches, filtered, false);
+    } catch(e) { /* silent fail — local results still showing */ }
+  }, 350);
+}
+
+function renderAc(local, ai, loading) {
+  const dd = $('acDropdown');
+  if (!dd) return;
+  if (!local.length && !ai.length && !loading) { closeAc(); return; }
+
+  let html = '';
+
+  if (local.length) {
+    html += `<span class="ac-section-label">Suggestions</span><div class="ac-pills">`;
+    local.forEach(s => {
+      html += `<div class="ac-pill" onmousedown="acPick('${s.replace(/'/g,"\\'")}')">`;
+      html += `${s}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (loading && !ai.length) {
+    html += `<div class="ac-loading">✨ Finding more ideas…</div>`;
+  } else if (ai.length) {
+    html += `<span class="ac-section-label">💡 More ideas</span><div class="ac-pills">`;
+    ai.forEach(s => {
+      html += `<div class="ac-pill ac-ai" onmousedown="acPick('${s.replace(/'/g,"\\'")}')">`;
+      html += `${s}</div>`;
+    });
+    html += `</div>`;
+  }
+
+  dd.innerHTML = html;
+  dd.classList.add('open');
+}
+
+function acPick(term) {
+  const ta = $('q5extra');
+  if (!ta) return;
+  const val = ta.value;
+  const parts = val.split(',');
+  parts[parts.length - 1] = ' ' + term;
+  // Clean up leading space on first entry
+  ta.value = parts.join(',').replace(/^\s*,\s*/, '') + ', ';
+  // Tidy double spaces
+  ta.value = ta.value.replace(/,\s{2,}/g, ', ');
+  closeAc();
+  ta.focus();
+  // Move cursor to end
+  ta.selectionStart = ta.selectionEnd = ta.value.length;
+}
+
+function closeAc() {
+  clearTimeout(acDebounce);
+  const dd = $('acDropdown');
+  if (dd) { dd.classList.remove('open'); dd.innerHTML = ''; }
+}
+
+function onAcKeydown(e) {
+  if (e.key === 'Escape') closeAc();
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+  const wrap = e.target.closest('.ac-wrap');
+  if (!wrap) closeAc();
+});
 
 function comingSoon(){$('csMsg').style.display='block';setTimeout(()=>$('csMsg').style.display='none',3000);}
 window.addEventListener('DOMContentLoaded',()=>{$('n5').disabled=false;});
